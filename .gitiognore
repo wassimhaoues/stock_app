@@ -1,0 +1,68 @@
+############################
+# GENERAL
+############################
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+
+############################
+# ENV FILES (SECRETS)
+############################
+.env
+*.env
+.env.*
+!.env.example
+############################
+# JAVA / SPRING BOOT
+############################
+backend/target/
+backend/*.log
+backend/.classpath
+backend/.project
+backend/.settings/
+backend/.factorypath
+
+############################
+# MAVEN
+############################
+.mvn/wrapper/maven-wrapper.jar
+
+############################
+# ANGULAR / NODE
+############################
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
+
+############################
+# IDEs
+############################
+# Eclipse
+*.project
+*.classpath
+.settings/
+
+# VS Code
+.vscode
+
+############################
+# DOCKER
+############################
+**/mysql_stock_data/
+
+
+############################
+# OS / TEMP FILES
+############################
+*.pid
+*.seed
+*.out
+
+############################
+# TEST / COVERAGE
+############################
+coverage/

@@ -1,0 +1,14 @@
+START TRANSACTION;
+SET time_zone = "+01:00";
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS=0;
+
+CREATE DATABASE IF NOT EXISTS `stock_app_db`
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE `stock_app_db`;
+
+
+
+COMMIT;
+SET FOREIGN_KEY_CHECKS=1;

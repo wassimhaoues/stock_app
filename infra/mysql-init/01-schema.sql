@@ -8,6 +8,15 @@ CREATE DATABASE IF NOT EXISTS `stock_app_db`
 
 USE `stock_app_db`;
 
+CREATE TABLE IF NOT EXISTS `utilisateurs` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `nom` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `mot_de_passe` VARCHAR(255) NOT NULL,
+  `role` ENUM('ADMIN', 'GESTIONNAIRE', 'OBSERVATEUR') NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_utilisateurs_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 COMMIT;

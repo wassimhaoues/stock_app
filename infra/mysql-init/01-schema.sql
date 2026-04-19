@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS `utilisateurs` (
   `email` VARCHAR(255) NOT NULL,
   `mot_de_passe` VARCHAR(255) NOT NULL,
   `role` ENUM('ADMIN', 'GESTIONNAIRE', 'OBSERVATEUR') NOT NULL,
+  `entrepot_nom` VARCHAR(255) NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_utilisateurs_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

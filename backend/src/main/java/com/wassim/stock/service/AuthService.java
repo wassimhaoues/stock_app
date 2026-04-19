@@ -46,7 +46,8 @@ public class AuthService {
                 utilisateur.getId(),
                 utilisateur.getNom(),
                 utilisateur.getEmail(),
-                utilisateur.getRole()
+                utilisateur.getRole(),
+                utilisateur.getEntrepotNom()
         );
     }
 }

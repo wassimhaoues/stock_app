@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -8,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { finalize } from 'rxjs';
+import { finalize, startWith } from 'rxjs';
 
 import { Role } from '../../core/models/role.model';
 import { Utilisateur } from '../../core/models/utilisateur.model';
@@ -62,9 +63,9 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
 
           <mat-form-field appearance="outline">
             <mat-label>Mot de passe</mat-label>
-            <input matInput type="text" formControlName="motDePasse" />
+            <input matInput type="password" formControlName="motDePasse" />
             <mat-hint>
-              {{ isEditing() ? 'Saisissez un nouveau mot de passe pour confirmer la mise a jour.' : 'Minimum recommande: 8 caracteres.' }}
+              {{ isEditing() ? 'Laissez vide pour conserver le mot de passe actuel.' : 'Minimum recommande: 8 caracteres.' }}
             </mat-hint>
           </mat-form-field>
 
@@ -76,6 +77,14 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
               }
             </mat-select>
           </mat-form-field>
+
+          @if (requiresEntrepotRole()) {
+            <mat-form-field appearance="outline">
+              <mat-label>Entrepot affecte</mat-label>
+              <input matInput formControlName="entrepotNom" />
+              <mat-hint>Ce compte travaille uniquement dans cet entrepot.</mat-hint>
+            </mat-form-field>
+          }
 
           @if (feedbackMessage()) {
             <p class="feedback" [class.feedback--error]="feedbackState() === 'error'">
@@ -127,6 +136,12 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
                     <span class="role">{{ utilisateur.role }}</span>
                   </div>
                   <p>{{ utilisateur.email }}</p>
+                  @if (utilisateur.role !== 'ADMIN' && utilisateur.entrepotNom) {
+                    <p class="assignment">
+                      <mat-icon>warehouse</mat-icon>
+                      {{ utilisateur.entrepotNom }}
+                    </p>
+                  }
                 </div>
 
                 <div class="user-card__actions">
@@ -273,6 +288,19 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
       flex-wrap: wrap;
     }
 
+    .assignment {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 600;
+    }
+
+    .assignment mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+    }
+
     .danger {
       color: var(--stockpro-danger);
     }
@@ -312,19 +340,31 @@ export class UtilisateursPageComponent {
   protected readonly feedbackMessage = signal('');
   protected readonly feedbackState = signal<'success' | 'error'>('success');
   protected readonly isEditing = computed(() => this.selectedUserId() !== null);
+  protected readonly requiresEntrepotRole = signal(true);
 
   protected readonly form = this.formBuilder.nonNullable.group({
     nom: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     motDePasse: ['', [Validators.required, Validators.minLength(8)]],
     role: ['GESTIONNAIRE' as Role, [Validators.required]],
+    entrepotNom: ['', [Validators.required]],
   });
 
   constructor() {
+    this.form.controls.role.valueChanges
+      .pipe(startWith(this.form.controls.role.value), takeUntilDestroyed())
+      .subscribe((role) => {
+        this.requiresEntrepotRole.set(this.roleRequiresEntrepot(role));
+        this.updateEntrepotValidators();
+      });
+
     this.loadUtilisateurs();
   }
 
   protected save(): void {
+    this.updatePasswordValidators();
+    this.updateEntrepotValidators();
+
     if (this.form.invalid || this.isSubmitting()) {
       this.form.markAllAsTouched();
       return;
@@ -333,7 +373,12 @@ export class UtilisateursPageComponent {
     this.feedbackMessage.set('');
     this.isSubmitting.set(true);
 
-    const request = this.form.getRawValue();
+    const rawRequest = this.form.getRawValue();
+    const request = {
+      ...rawRequest,
+      motDePasse: rawRequest.motDePasse.trim() || null,
+      entrepotNom: this.roleRequiresEntrepot(rawRequest.role) ? rawRequest.entrepotNom.trim() : null,
+    };
     const selectedUserId = this.selectedUserId();
     const action$ =
       selectedUserId === null
@@ -368,7 +413,10 @@ export class UtilisateursPageComponent {
       email: utilisateur.email,
       motDePasse: '',
       role: utilisateur.role,
+      entrepotNom: utilisateur.entrepotNom ?? '',
     });
+    this.updatePasswordValidators();
+    this.updateEntrepotValidators();
   }
 
   protected remove(utilisateur: Utilisateur): void {
@@ -406,7 +454,10 @@ export class UtilisateursPageComponent {
       email: '',
       motDePasse: '',
       role: 'GESTIONNAIRE',
+      entrepotNom: '',
     });
+    this.updatePasswordValidators();
+    this.updateEntrepotValidators();
   }
 
   private loadUtilisateurs(): void {
@@ -429,5 +480,29 @@ export class UtilisateursPageComponent {
     }
 
     return 'Une erreur est survenue.';
+  }
+
+  private updatePasswordValidators(): void {
+    const validators = this.isEditing()
+      ? [Validators.minLength(8)]
+      : [Validators.required, Validators.minLength(8)];
+
+    this.form.controls.motDePasse.setValidators(validators);
+    this.form.controls.motDePasse.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private updateEntrepotValidators(): void {
+    if (this.roleRequiresEntrepot(this.form.controls.role.value)) {
+      this.form.controls.entrepotNom.setValidators([Validators.required]);
+    } else {
+      this.form.controls.entrepotNom.clearValidators();
+      this.form.controls.entrepotNom.setValue('', { emitEvent: false });
+    }
+
+    this.form.controls.entrepotNom.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private roleRequiresEntrepot(role: Role): boolean {
+    return role === 'GESTIONNAIRE' || role === 'OBSERVATEUR';
   }
 }

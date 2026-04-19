@@ -46,13 +46,13 @@ public class DataInitializer {
     public CommandLineRunner seedUtilisateurs() {
         return args -> {
             utilisateurService.seedUtilisateur(
-                    new UtilisateurRequest(adminNom, adminEmail, adminPassword, Role.ADMIN)
+                    new UtilisateurRequest(adminNom, adminEmail, adminPassword, Role.ADMIN, null)
             );
             utilisateurService.seedUtilisateur(
-                    new UtilisateurRequest(gestionnaireNom, gestionnaireEmail, gestionnairePassword, Role.GESTIONNAIRE)
+                    new UtilisateurRequest(gestionnaireNom, gestionnaireEmail, gestionnairePassword, Role.GESTIONNAIRE, "Entrepot principal")
             );
             utilisateurService.seedUtilisateur(
-                    new UtilisateurRequest(observateurNom, observateurEmail, observateurPassword, Role.OBSERVATEUR)
+                    new UtilisateurRequest(observateurNom, observateurEmail, observateurPassword, Role.OBSERVATEUR, "Entrepot principal")
             );
         };
     }

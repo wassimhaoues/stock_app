@@ -2,10 +2,12 @@ package com.wassim.stock.service;
 
 import com.wassim.stock.dto.request.UtilisateurRequest;
 import com.wassim.stock.dto.response.UtilisateurResponse;
+import com.wassim.stock.entity.Entrepot;
 import com.wassim.stock.entity.Role;
 import com.wassim.stock.entity.Utilisateur;
 import com.wassim.stock.exception.BadRequestException;
 import com.wassim.stock.exception.ResourceNotFoundException;
+import com.wassim.stock.repository.EntrepotRepository;
 import com.wassim.stock.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +21,7 @@ import java.util.List;
 public class UtilisateurService {
 
     private final UtilisateurRepository utilisateurRepository;
+    private final EntrepotRepository entrepotRepository;
     private final PasswordEncoder passwordEncoder;
 
     public List<UtilisateurResponse> findAll() {
@@ -69,8 +72,8 @@ public class UtilisateurService {
         validateAssignedEntrepot(request);
 
         utilisateurRepository.findByEmail(request.email()).ifPresent(existing -> {
-            if (requiresEntrepot(existing.getRole()) && !StringUtils.hasText(existing.getEntrepotNom())) {
-                existing.setEntrepotNom(request.entrepotNom().trim());
+            if (requiresEntrepot(existing.getRole()) && existing.getEntrepot() == null) {
+                existing.setEntrepot(findEntrepotById(request.entrepotId()));
                 utilisateurRepository.save(existing);
             }
         });
@@ -93,7 +96,7 @@ public class UtilisateurService {
         utilisateur.setNom(request.nom());
         utilisateur.setEmail(request.email());
         utilisateur.setRole(request.role());
-        utilisateur.setEntrepotNom(requiresEntrepot(request.role()) ? request.entrepotNom().trim() : null);
+        utilisateur.setEntrepot(requiresEntrepot(request.role()) ? findEntrepotById(request.entrepotId()) : null);
 
         if (requirePassword || StringUtils.hasText(request.motDePasse())) {
             utilisateur.setMotDePasse(passwordEncoder.encode(request.motDePasse()));
@@ -115,7 +118,7 @@ public class UtilisateurService {
     }
 
     private void validateAssignedEntrepot(UtilisateurRequest request) {
-        if (requiresEntrepot(request.role()) && !StringUtils.hasText(request.entrepotNom())) {
+        if (requiresEntrepot(request.role()) && request.entrepotId() == null) {
             throw new BadRequestException("Ce role doit etre affecte a un entrepot");
         }
     }
@@ -124,13 +127,20 @@ public class UtilisateurService {
         return role == Role.GESTIONNAIRE || role == Role.OBSERVATEUR;
     }
 
+    private Entrepot findEntrepotById(Long id) {
+        return entrepotRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Entrepot introuvable : " + id));
+    }
+
     private UtilisateurResponse toResponse(Utilisateur utilisateur) {
+        Entrepot entrepot = utilisateur.getEntrepot();
         return new UtilisateurResponse(
                 utilisateur.getId(),
                 utilisateur.getNom(),
                 utilisateur.getEmail(),
                 utilisateur.getRole(),
-                utilisateur.getEntrepotNom()
+                entrepot != null ? entrepot.getId() : null,
+                entrepot != null ? entrepot.getNom() : null
         );
     }
 }

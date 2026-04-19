@@ -5,5 +5,5 @@ export type UtilisateurRequest = {
   email: string;
   motDePasse: string | null;
   role: Role;
-  entrepotNom: string | null;
+  entrepotId: number | null;
 };

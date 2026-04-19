@@ -26,6 +26,13 @@ export const routes: Routes = [
           import('./features/home/home-page.component').then((m) => m.HomePageComponent),
       },
       {
+        path: 'entrepots',
+        loadComponent: () =>
+          import('./features/entrepots/entrepots-page.component').then(
+            (m) => m.EntrepotsPageComponent
+          ),
+      },
+      {
         path: 'utilisateurs',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },

@@ -3,6 +3,7 @@ package com.wassim.stock.service;
 import com.wassim.stock.dto.request.LoginRequest;
 import com.wassim.stock.dto.response.AuthResponse;
 import com.wassim.stock.dto.response.UtilisateurResponse;
+import com.wassim.stock.entity.Entrepot;
 import com.wassim.stock.entity.Utilisateur;
 import com.wassim.stock.repository.UtilisateurRepository;
 import com.wassim.stock.security.JwtUtil;
@@ -42,12 +43,14 @@ public class AuthService {
     }
 
     private UtilisateurResponse toResponse(Utilisateur utilisateur) {
+        Entrepot entrepot = utilisateur.getEntrepot();
         return new UtilisateurResponse(
                 utilisateur.getId(),
                 utilisateur.getNom(),
                 utilisateur.getEmail(),
                 utilisateur.getRole(),
-                utilisateur.getEntrepotNom()
+                entrepot != null ? entrepot.getId() : null,
+                entrepot != null ? entrepot.getNom() : null
         );
     }
 }

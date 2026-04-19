@@ -65,7 +65,7 @@
 | 1     | Fondations : backend + frontend    | ✅ DONE |
 | 2     | Authentification & sécurité        | ✅ DONE |
 | 3     | Administration utilisateurs & permissions | ✅ DONE |
-| 4     | Gestion des entrepôts (end-to-end) | ⬜ TODO |
+| 4     | Gestion des entrepôts (end-to-end) | ✅ DONE |
 | 5     | Gestion des produits (end-to-end)  | ⬜ TODO |
 | 6     | Stocks & mouvements (end-to-end)   | ⬜ TODO |
 | 7     | Alertes & dashboard analytique     | ⬜ TODO |
@@ -184,7 +184,7 @@
 
 ---
 
-## Phase 4 — Gestion des entrepôts (end-to-end)
+## Phase 4 — Gestion des entrepôts (end-to-end) [DONE]
 
 **Objectif :** CRUD complet pour les entrepôts : liste, création, édition, suppression.
 
@@ -193,31 +193,31 @@
 **Accès :**
 
 - `ADMIN` : CRUD complet
-- `GESTIONNAIRE stock` : lecture seule
+- `GESTIONNAIRE stock` : lecture seule uniquement sur son entrepôt affecté
 - `OBSERVATEUR` : lecture seule uniquement sur son entrepôt affecté
 
 **Infra :**
 
-- Ajouter la table `entrepots` dans `infra/mysql-init/01-schema.sql`
-- Remplacer l'affectation provisoire `Utilisateur.entrepotNom` par une relation propre `Utilisateur.entrepot` / `entrepot_id` pour les comptes `GESTIONNAIRE` et `OBSERVATEUR`, ou prévoir une migration claire si le champ texte est conservé temporairement
+- Ajouter la table `entrepots` dans `infra/mysql-init/01-schema.sql` ✅
+- Remplacer l'affectation provisoire `Utilisateur.entrepotNom` par une relation propre `Utilisateur.entrepot` / `entrepot_id` pour les comptes `GESTIONNAIRE` et `OBSERVATEUR` ✅
 
 **Endpoints :**
 
-- `GET /api/entrepots`
-- `POST /api/entrepots`
-- `GET /api/entrepots/{id}`
-- `PUT /api/entrepots/{id}`
-- `DELETE /api/entrepots/{id}`
+- `GET /api/entrepots` ✅
+- `POST /api/entrepots` ✅
+- `GET /api/entrepots/{id}` ✅
+- `PUT /api/entrepots/{id}` ✅
+- `DELETE /api/entrepots/{id}` ✅
 
 **Frontend :**
 
-- Route `/entrepots`
-- Tableau avec actions (éditer, supprimer)
-- Formulaire create/edit (dialog ou page)
-- Dialogue de confirmation avant suppression
-- États : chargement, vide, erreur
-- Masquer les actions create/edit/delete si le rôle courant n'est pas `ADMIN`
-- Adapter le formulaire utilisateurs pour sélectionner un entrepôt existant au lieu de saisir un nom libre pour les `GESTIONNAIRE` et `OBSERVATEUR`
+- Route `/entrepots` ✅
+- Tableau avec actions (éditer, supprimer) ✅
+- Formulaire create/edit (dialog ou page) ✅
+- Dialogue de confirmation avant suppression ✅
+- États : chargement, vide, erreur ✅
+- Masquer les actions create/edit/delete si le rôle courant n'est pas `ADMIN` ✅
+- Adapter le formulaire utilisateurs pour sélectionner un entrepôt existant au lieu de saisir un nom libre pour les `GESTIONNAIRE` et `OBSERVATEUR` ✅
 
 **Branch git :** `feature/phase-4-entrepots`
 

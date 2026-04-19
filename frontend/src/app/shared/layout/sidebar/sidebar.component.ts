@@ -125,7 +125,7 @@ export class SidebarComponent {
   protected readonly entries = computed<SidebarEntry[]>(() => {
     const commonEntries: SidebarEntry[] = [
       { label: 'Accueil', icon: 'home', route: '/' },
-      { label: 'Entrepots', icon: 'warehouse' },
+      { label: 'Entrepots', icon: 'warehouse', route: '/entrepots' },
       { label: 'Produits', icon: 'category' },
       { label: 'Stocks', icon: 'inventory' },
     ];

@@ -1,7 +1,10 @@
 package com.wassim.stock.config;
 
+import com.wassim.stock.dto.request.EntrepotRequest;
 import com.wassim.stock.dto.request.UtilisateurRequest;
+import com.wassim.stock.entity.Entrepot;
 import com.wassim.stock.entity.Role;
+import com.wassim.stock.service.EntrepotService;
 import com.wassim.stock.service.UtilisateurService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 @RequiredArgsConstructor
 public class DataInitializer {
 
+    private final EntrepotService entrepotService;
     private final UtilisateurService utilisateurService;
 
     @Value("${stockpro.seed.admin.nom}")
@@ -45,14 +49,30 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner seedUtilisateurs() {
         return args -> {
+            Entrepot entrepotPrincipal = entrepotService.seedEntrepot(
+                    new EntrepotRequest("Entrepot principal", "Zone industrielle principale", 1000)
+            );
+
             utilisateurService.seedUtilisateur(
                     new UtilisateurRequest(adminNom, adminEmail, adminPassword, Role.ADMIN, null)
             );
             utilisateurService.seedUtilisateur(
-                    new UtilisateurRequest(gestionnaireNom, gestionnaireEmail, gestionnairePassword, Role.GESTIONNAIRE, "Entrepot principal")
+                    new UtilisateurRequest(
+                            gestionnaireNom,
+                            gestionnaireEmail,
+                            gestionnairePassword,
+                            Role.GESTIONNAIRE,
+                            entrepotPrincipal.getId()
+                    )
             );
             utilisateurService.seedUtilisateur(
-                    new UtilisateurRequest(observateurNom, observateurEmail, observateurPassword, Role.OBSERVATEUR, "Entrepot principal")
+                    new UtilisateurRequest(
+                            observateurNom,
+                            observateurEmail,
+                            observateurPassword,
+                            Role.OBSERVATEUR,
+                            entrepotPrincipal.getId()
+                    )
             );
         };
     }

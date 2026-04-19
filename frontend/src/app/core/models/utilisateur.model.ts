@@ -5,5 +5,6 @@ export type Utilisateur = {
   nom: string;
   email: string;
   role: Role;
+  entrepotId: number | null;
   entrepotNom: string | null;
 };

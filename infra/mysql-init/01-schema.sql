@@ -8,15 +8,27 @@ CREATE DATABASE IF NOT EXISTS `stock_app_db`
 
 USE `stock_app_db`;
 
+CREATE TABLE IF NOT EXISTS `entrepots` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `nom` VARCHAR(255) NOT NULL,
+  `adresse` VARCHAR(255) NOT NULL,
+  `capacite` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_entrepots_nom` (`nom`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `utilisateurs` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `nom` VARCHAR(255) NOT NULL,
   `email` VARCHAR(255) NOT NULL,
   `mot_de_passe` VARCHAR(255) NOT NULL,
   `role` ENUM('ADMIN', 'GESTIONNAIRE', 'OBSERVATEUR') NOT NULL,
-  `entrepot_nom` VARCHAR(255) NULL,
+  `entrepot_id` BIGINT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_utilisateurs_email` (`email`)
+  UNIQUE KEY `uk_utilisateurs_email` (`email`),
+  KEY `idx_utilisateurs_entrepot_id` (`entrepot_id`),
+  CONSTRAINT `fk_utilisateurs_entrepot`
+    FOREIGN KEY (`entrepot_id`) REFERENCES `entrepots` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

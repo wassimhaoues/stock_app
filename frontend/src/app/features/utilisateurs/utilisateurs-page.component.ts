@@ -11,8 +11,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { finalize, startWith } from 'rxjs';
 
+import { Entrepot } from '../../core/models/entrepot.model';
 import { Role } from '../../core/models/role.model';
 import { Utilisateur } from '../../core/models/utilisateur.model';
+import { EntrepotService } from '../../core/services/entrepot.service';
 import { UtilisateurService } from '../../core/services/utilisateur.service';
 
 @Component({
@@ -81,7 +83,11 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
           @if (requiresEntrepotRole()) {
             <mat-form-field appearance="outline">
               <mat-label>Entrepot affecte</mat-label>
-              <input matInput formControlName="entrepotNom" />
+              <mat-select formControlName="entrepotId">
+                @for (entrepot of entrepots(); track entrepot.id) {
+                  <mat-option [value]="entrepot.id">{{ entrepot.nom }}</mat-option>
+                }
+              </mat-select>
               <mat-hint>Ce compte travaille uniquement dans cet entrepot.</mat-hint>
             </mat-form-field>
           }
@@ -330,24 +336,30 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
 })
 export class UtilisateursPageComponent {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly entrepotService = inject(EntrepotService);
   private readonly utilisateurService = inject(UtilisateurService);
 
   protected readonly roles: Role[] = ['ADMIN', 'GESTIONNAIRE', 'OBSERVATEUR'];
+  protected readonly entrepots = signal<Entrepot[]>([]);
   protected readonly utilisateurs = signal<Utilisateur[]>([]);
   protected readonly selectedUserId = signal<number | null>(null);
   protected readonly isLoading = signal(true);
+  protected readonly isLoadingEntrepots = signal(true);
   protected readonly isSubmitting = signal(false);
   protected readonly feedbackMessage = signal('');
   protected readonly feedbackState = signal<'success' | 'error'>('success');
   protected readonly isEditing = computed(() => this.selectedUserId() !== null);
   protected readonly requiresEntrepotRole = signal(true);
 
-  protected readonly form = this.formBuilder.nonNullable.group({
-    nom: ['', [Validators.required]],
-    email: ['', [Validators.required, Validators.email]],
-    motDePasse: ['', [Validators.required, Validators.minLength(8)]],
-    role: ['GESTIONNAIRE' as Role, [Validators.required]],
-    entrepotNom: ['', [Validators.required]],
+  protected readonly form = this.formBuilder.group({
+    nom: this.formBuilder.nonNullable.control('', [Validators.required]),
+    email: this.formBuilder.nonNullable.control('', [Validators.required, Validators.email]),
+    motDePasse: this.formBuilder.nonNullable.control('', [
+      Validators.required,
+      Validators.minLength(8),
+    ]),
+    role: this.formBuilder.nonNullable.control<Role>('GESTIONNAIRE', [Validators.required]),
+    entrepotId: this.formBuilder.control<number | null>(null, [Validators.required]),
   });
 
   constructor() {
@@ -358,6 +370,7 @@ export class UtilisateursPageComponent {
         this.updateEntrepotValidators();
       });
 
+    this.loadEntrepots();
     this.loadUtilisateurs();
   }
 
@@ -377,7 +390,7 @@ export class UtilisateursPageComponent {
     const request = {
       ...rawRequest,
       motDePasse: rawRequest.motDePasse.trim() || null,
-      entrepotNom: this.roleRequiresEntrepot(rawRequest.role) ? rawRequest.entrepotNom.trim() : null,
+      entrepotId: this.roleRequiresEntrepot(rawRequest.role) ? rawRequest.entrepotId : null,
     };
     const selectedUserId = this.selectedUserId();
     const action$ =
@@ -413,7 +426,7 @@ export class UtilisateursPageComponent {
       email: utilisateur.email,
       motDePasse: '',
       role: utilisateur.role,
-      entrepotNom: utilisateur.entrepotNom ?? '',
+      entrepotId: utilisateur.entrepotId,
     });
     this.updatePasswordValidators();
     this.updateEntrepotValidators();
@@ -454,7 +467,7 @@ export class UtilisateursPageComponent {
       email: '',
       motDePasse: '',
       role: 'GESTIONNAIRE',
-      entrepotNom: '',
+      entrepotId: null,
     });
     this.updatePasswordValidators();
     this.updateEntrepotValidators();
@@ -467,6 +480,20 @@ export class UtilisateursPageComponent {
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (utilisateurs) => this.utilisateurs.set(utilisateurs),
+        error: (error: unknown) => {
+          this.feedbackState.set('error');
+          this.feedbackMessage.set(this.extractErrorMessage(error));
+        },
+      });
+  }
+
+  private loadEntrepots(): void {
+    this.isLoadingEntrepots.set(true);
+    this.entrepotService
+      .findAll()
+      .pipe(finalize(() => this.isLoadingEntrepots.set(false)))
+      .subscribe({
+        next: (entrepots) => this.entrepots.set(entrepots),
         error: (error: unknown) => {
           this.feedbackState.set('error');
           this.feedbackMessage.set(this.extractErrorMessage(error));
@@ -493,13 +520,13 @@ export class UtilisateursPageComponent {
 
   private updateEntrepotValidators(): void {
     if (this.roleRequiresEntrepot(this.form.controls.role.value)) {
-      this.form.controls.entrepotNom.setValidators([Validators.required]);
+      this.form.controls.entrepotId.setValidators([Validators.required]);
     } else {
-      this.form.controls.entrepotNom.clearValidators();
-      this.form.controls.entrepotNom.setValue('', { emitEvent: false });
+      this.form.controls.entrepotId.clearValidators();
+      this.form.controls.entrepotId.setValue(null, { emitEvent: false });
     }
 
-    this.form.controls.entrepotNom.updateValueAndValidity({ emitEvent: false });
+    this.form.controls.entrepotId.updateValueAndValidity({ emitEvent: false });
   }
 
   private roleRequiresEntrepot(role: Role): boolean {

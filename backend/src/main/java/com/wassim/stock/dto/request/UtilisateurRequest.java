@@ -18,6 +18,6 @@ public record UtilisateurRequest(
         @NotNull(message = "Le role est obligatoire")
         Role role,
 
-        String entrepotNom
+        Long entrepotId
 ) {
 }

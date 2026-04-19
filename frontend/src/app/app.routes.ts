@@ -33,6 +33,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'produits',
+        loadComponent: () =>
+          import('./features/produits/produits-page.component').then(
+            (m) => m.ProduitsPageComponent
+          ),
+      },
+      {
         path: 'utilisateurs',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },

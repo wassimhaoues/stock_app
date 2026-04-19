@@ -39,7 +39,7 @@
 | ---------------- | --------- | ------------------------------------------- | -------------------------------------------- |
 | Utilisateurs     | Gérer     | Aucun accès                                 | Aucun accès                                  |
 | Entrepôts        | Gérer     | Lecture seule                               | Lecture seule sur son entrepôt affecté       |
-| Produits         | Gérer     | Gérer dans son entrepôt affecté             | Lecture seule dans son entrepôt affecté      |
+| Produits         | Gérer     | Lecture seule                               | Lecture seule                                |
 | Stocks           | Gérer     | Gérer dans son entrepôt affecté             | Lecture seule dans son entrepôt affecté      |
 | Mouvements stock | Gérer     | Gérer dans son entrepôt affecté             | Lecture seule dans son entrepôt affecté      |
 | Alertes          | Consulter | Voir les alertes de son entrepôt affecté    | Voir les alertes de son entrepôt affecté     |
@@ -48,9 +48,9 @@
 **Règles globales :**
 
 - `ADMIN` peut créer, modifier, supprimer et consulter les modules métier, et il est le seul rôle autorisé à gérer les utilisateurs.
-- `GESTIONNAIRE stock` est affecté à un seul entrepôt. Il peut créer, modifier, supprimer et consulter les produits, stocks et mouvements stock uniquement dans son entrepôt affecté. Il peut consulter les alertes et le dashboard filtrés sur son entrepôt.
-- `OBSERVATEUR` est aussi affecté à un seul entrepôt. Il peut consulter le dashboard et voir les données de son entrepôt affecté uniquement en lecture seule, sans action de création, modification ou suppression.
-- Côté API, les requêtes `GET` des modules métier doivent rester accessibles aux trois rôles authentifiés, mais les données retournées doivent être filtrées par entrepôt pour `GESTIONNAIRE stock` et `OBSERVATEUR`.
+- `GESTIONNAIRE stock` est affecté à un seul entrepôt. Il peut consulter les produits globaux, et créer, modifier, supprimer et consulter les stocks et mouvements stock uniquement dans son entrepôt affecté. Il peut consulter les alertes et le dashboard filtrés sur son entrepôt.
+- `OBSERVATEUR` est aussi affecté à un seul entrepôt. Il peut consulter les produits globaux, le dashboard et les données de son entrepôt affecté uniquement en lecture seule, sans action de création, modification ou suppression.
+- Côté API, les requêtes `GET` des modules métier doivent rester accessibles aux trois rôles authentifiés. Les produits sont globaux; les données liées à un entrepôt sont filtrées par entrepôt pour `GESTIONNAIRE stock` et `OBSERVATEUR`.
 - Côté API, les requêtes d'écriture sont limitées selon la matrice ci-dessus.
 - Côté Angular, les menus, boutons d'action et routes doivent suivre la même matrice pour éviter d'afficher des actions interdites.
 - Toute règle backend liée aux données d'entrepôt doit contrôler l'entrepôt affecté du `GESTIONNAIRE` et de l'`OBSERVATEUR` à partir de l'utilisateur authentifié, pas seulement depuis les paramètres envoyés par le frontend.
@@ -66,7 +66,7 @@
 | 2     | Authentification & sécurité        | ✅ DONE |
 | 3     | Administration utilisateurs & permissions | ✅ DONE |
 | 4     | Gestion des entrepôts (end-to-end) | ✅ DONE |
-| 5     | Gestion des produits (end-to-end)  | ⬜ TODO |
+| 5     | Gestion des produits (end-to-end)  | ✅ DONE |
 | 6     | Stocks & mouvements (end-to-end)   | ⬜ TODO |
 | 7     | Alertes & dashboard analytique     | ⬜ TODO |
 | 8     | Revue UX/UI frontend professionnelle | ⬜ TODO |
@@ -177,8 +177,8 @@
 - Les composants Angular doivent masquer les boutons create/edit/delete pour `OBSERVATEUR`.
 - Les composants Angular doivent masquer les actions non autorisées au `GESTIONNAIRE stock`, notamment les actions d'écriture sur les entrepôts.
 - Les services frontend peuvent garder les méthodes d'écriture, mais les pages doivent ne les appeler que si le rôle courant y est autorisé.
-- Les tableaux/lists doivent rester consultables par `OBSERVATEUR` en lecture seule, filtrés sur son entrepôt affecté.
-- Les pages produits, stocks, mouvements, alertes et dashboard doivent filtrer les données du `GESTIONNAIRE stock` et de l'`OBSERVATEUR` sur leur entrepôt affecté.
+- Les tableaux/lists doivent rester consultables par `OBSERVATEUR` en lecture seule, avec filtrage par entrepôt uniquement pour les données liées à un entrepôt.
+- Les pages stocks, mouvements, alertes et dashboard doivent filtrer les données du `GESTIONNAIRE stock` et de l'`OBSERVATEUR` sur leur entrepôt affecté; les produits restent un catalogue global en lecture seule pour ces rôles.
 
 **Branch git :** `feature/phase-3-user-management`
 
@@ -223,26 +223,39 @@
 
 ---
 
-## Phase 5 — Gestion des produits (end-to-end)
+## Phase 5 — Gestion des produits (end-to-end) [DONE]
 
 **Objectif :** CRUD complet pour les produits.
 
-**Entité :** `Produit` (id, nom, categorie, prix, fournisseur, seuilMin)
+**Entité :** `Produit` (id, nom, categorie, prix, fournisseur, seuilMin) ✅
 
 **Accès :**
 
-- `ADMIN` : CRUD complet
-- `GESTIONNAIRE stock` : CRUD complet uniquement dans son entrepôt affecté
-- `OBSERVATEUR` : lecture seule uniquement dans son entrepôt affecté
+- `ADMIN` : CRUD complet ✅
+- `GESTIONNAIRE stock` : lecture seule sur le catalogue global ✅
+- `OBSERVATEUR` : lecture seule sur le catalogue global ✅
 
 **Infra :**
 
-- Ajouter la table `produits` dans `infra/mysql-init/01-schema.sql`
+- Ajouter la table `produits` dans `infra/mysql-init/01-schema.sql` ✅
+
+**Endpoints :**
+
+- `GET /api/produits` ✅
+- `POST /api/produits` réservé à `ADMIN` ✅
+- `GET /api/produits/{id}` ✅
+- `PUT /api/produits/{id}` réservé à `ADMIN` ✅
+- `DELETE /api/produits/{id}` réservé à `ADMIN` ✅
 
 **Frontend :**
 
-- Masquer les actions create/edit/delete pour `OBSERVATEUR`
-- Filtrer ou préremplir l'entrepôt affecté pour `GESTIONNAIRE stock` et `OBSERVATEUR`
+- Route `/produits` ✅
+- Tableau avec actions (éditer, supprimer) ✅
+- Formulaire create/edit ✅
+- Dialogue de confirmation avant suppression ✅
+- États : chargement, vide, erreur ✅
+- Masquer les actions create/edit/delete pour `GESTIONNAIRE stock` et `OBSERVATEUR` ✅
+- Afficher le catalogue global des produits aux trois rôles authentifiés ✅
 
 **Branch git :** `feature/phase-5-produits`
 

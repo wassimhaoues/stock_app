@@ -31,6 +31,16 @@ CREATE TABLE IF NOT EXISTS `utilisateurs` (
     FOREIGN KEY (`entrepot_id`) REFERENCES `entrepots` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `produits` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `nom` VARCHAR(255) NOT NULL,
+  `categorie` VARCHAR(255) NOT NULL,
+  `prix` DECIMAL(12, 2) NOT NULL,
+  `fournisseur` VARCHAR(255) NOT NULL,
+  `seuil_min` INT NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 COMMIT;
 SET FOREIGN_KEY_CHECKS=1;

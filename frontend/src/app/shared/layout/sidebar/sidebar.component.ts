@@ -126,7 +126,7 @@ export class SidebarComponent {
     const commonEntries: SidebarEntry[] = [
       { label: 'Accueil', icon: 'home', route: '/' },
       { label: 'Entrepots', icon: 'warehouse', route: '/entrepots' },
-      { label: 'Produits', icon: 'category' },
+      { label: 'Produits', icon: 'category', route: '/produits' },
       { label: 'Stocks', icon: 'inventory' },
     ];
 

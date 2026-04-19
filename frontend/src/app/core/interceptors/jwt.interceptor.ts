@@ -6,24 +6,21 @@ import { AuthService } from '../services/auth.service';
 
 export const jwtInterceptor: HttpInterceptorFn = (request, next) => {
   const authService = inject(AuthService);
-  const token = authService.token();
 
-  const requestWithToken = token
-    ? request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+  const requestWithCredentials = request.url.startsWith('/api')
+    ? request.clone({ withCredentials: true })
     : request;
 
-  return next(requestWithToken).pipe(
+  return next(requestWithCredentials).pipe(
     catchError((error: unknown) => {
       if (
         error instanceof HttpErrorResponse &&
         error.status === 401 &&
-        !request.url.includes('/api/auth/login')
+        !request.url.includes('/api/auth/login') &&
+        !request.url.includes('/api/auth/me') &&
+        !request.url.includes('/api/auth/logout')
       ) {
-        authService.logout({ redirect: true });
+        authService.clearSession({ redirect: true });
       }
 
       return throwError(() => error);

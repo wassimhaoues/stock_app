@@ -2,6 +2,7 @@ package com.wassim.stock.service;
 
 import com.wassim.stock.dto.request.UtilisateurRequest;
 import com.wassim.stock.dto.response.UtilisateurResponse;
+import com.wassim.stock.entity.Role;
 import com.wassim.stock.entity.Utilisateur;
 import com.wassim.stock.exception.BadRequestException;
 import com.wassim.stock.exception.ResourceNotFoundException;
@@ -9,6 +10,7 @@ import com.wassim.stock.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -34,14 +36,18 @@ public class UtilisateurService {
         if (utilisateurRepository.existsByEmail(request.email())) {
             throw new BadRequestException("Un utilisateur avec cet email existe deja");
         }
+        validatePasswordForCreate(request.motDePasse());
+        validateAssignedEntrepot(request);
 
         Utilisateur utilisateur = new Utilisateur();
-        applyRequest(utilisateur, request);
+        applyRequest(utilisateur, request, true);
         return toResponse(utilisateurRepository.save(utilisateur));
     }
 
     public UtilisateurResponse update(Long id, UtilisateurRequest request) {
         Utilisateur utilisateur = findEntityById(id);
+        validatePasswordForUpdate(request.motDePasse());
+        validateAssignedEntrepot(request);
 
         utilisateurRepository.findByEmail(request.email())
                 .filter(existing -> !existing.getId().equals(id))
@@ -49,7 +55,7 @@ public class UtilisateurService {
                     throw new BadRequestException("Un utilisateur avec cet email existe deja");
                 });
 
-        applyRequest(utilisateur, request);
+        applyRequest(utilisateur, request, false);
         return toResponse(utilisateurRepository.save(utilisateur));
     }
 
@@ -59,12 +65,22 @@ public class UtilisateurService {
     }
 
     public void seedUtilisateur(UtilisateurRequest request) {
+        validatePasswordForCreate(request.motDePasse());
+        validateAssignedEntrepot(request);
+
+        utilisateurRepository.findByEmail(request.email()).ifPresent(existing -> {
+            if (requiresEntrepot(existing.getRole()) && !StringUtils.hasText(existing.getEntrepotNom())) {
+                existing.setEntrepotNom(request.entrepotNom().trim());
+                utilisateurRepository.save(existing);
+            }
+        });
+
         if (utilisateurRepository.existsByEmail(request.email())) {
             return;
         }
 
         Utilisateur utilisateur = new Utilisateur();
-        applyRequest(utilisateur, request);
+        applyRequest(utilisateur, request, true);
         utilisateurRepository.save(utilisateur);
     }
 
@@ -73,11 +89,39 @@ public class UtilisateurService {
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + id));
     }
 
-    private void applyRequest(Utilisateur utilisateur, UtilisateurRequest request) {
+    private void applyRequest(Utilisateur utilisateur, UtilisateurRequest request, boolean requirePassword) {
         utilisateur.setNom(request.nom());
         utilisateur.setEmail(request.email());
-        utilisateur.setMotDePasse(passwordEncoder.encode(request.motDePasse()));
         utilisateur.setRole(request.role());
+        utilisateur.setEntrepotNom(requiresEntrepot(request.role()) ? request.entrepotNom().trim() : null);
+
+        if (requirePassword || StringUtils.hasText(request.motDePasse())) {
+            utilisateur.setMotDePasse(passwordEncoder.encode(request.motDePasse()));
+        }
+    }
+
+    private void validatePasswordForCreate(String motDePasse) {
+        if (!StringUtils.hasText(motDePasse)) {
+            throw new BadRequestException("Le mot de passe est obligatoire");
+        }
+
+        validatePasswordForUpdate(motDePasse);
+    }
+
+    private void validatePasswordForUpdate(String motDePasse) {
+        if (StringUtils.hasText(motDePasse) && motDePasse.length() < 8) {
+            throw new BadRequestException("Le mot de passe doit contenir au moins 8 caracteres");
+        }
+    }
+
+    private void validateAssignedEntrepot(UtilisateurRequest request) {
+        if (requiresEntrepot(request.role()) && !StringUtils.hasText(request.entrepotNom())) {
+            throw new BadRequestException("Ce role doit etre affecte a un entrepot");
+        }
+    }
+
+    private boolean requiresEntrepot(Role role) {
+        return role == Role.GESTIONNAIRE || role == Role.OBSERVATEUR;
     }
 
     private UtilisateurResponse toResponse(Utilisateur utilisateur) {
@@ -85,7 +129,8 @@ public class UtilisateurService {
                 utilisateur.getId(),
                 utilisateur.getNom(),
                 utilisateur.getEmail(),
-                utilisateur.getRole()
+                utilisateur.getRole(),
+                utilisateur.getEntrepotNom()
         );
     }
 }

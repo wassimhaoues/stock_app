@@ -32,18 +32,41 @@
 
 ---
 
+## Matrice des rôles et permissions
+
+| Module | ADMIN | GESTIONNAIRE stock | OBSERVATEUR |
+|--------|-------|--------------------|-------------|
+| Utilisateurs | Gérer | Aucun accès | Aucun accès |
+| Entrepôts | Gérer | Lecture seule | Lecture seule |
+| Produits | Gérer | Gérer | Lecture seule |
+| Stocks | Gérer | Gérer | Lecture seule |
+| Mouvements stock | Gérer | Gérer | Lecture seule |
+| Alertes | Consulter | Voir | Lecture seule |
+| Dashboard | Consulter | Consulter | Consulter |
+
+**Règles globales :**
+- `ADMIN` peut créer, modifier, supprimer et consulter les modules métier, et il est le seul rôle autorisé à gérer les utilisateurs.
+- `GESTIONNAIRE stock` est affecté à un seul entrepôt. Il peut créer, modifier, supprimer et consulter les produits, stocks et mouvements stock uniquement dans son entrepôt affecté. Il peut consulter les alertes et le dashboard filtrés sur son entrepôt. Les autres entrepôts restent en lecture seule ou invisibles selon l'écran.
+- `OBSERVATEUR` est aussi affecté à un seul entrepôt. Il peut consulter le dashboard et voir les données de son entrepôt affecté uniquement en lecture seule, sans action de création, modification ou suppression.
+- Côté API, les requêtes `GET` des modules métier doivent rester accessibles aux trois rôles authentifiés, tandis que les requêtes d'écriture sont limitées selon la matrice ci-dessus.
+- Côté Angular, les menus, boutons d'action et routes doivent suivre la même matrice pour éviter d'afficher des actions interdites.
+- Toute règle backend liée au stock doit contrôler l'entrepôt affecté du `GESTIONNAIRE` et de l'`OBSERVATEUR` à partir de l'utilisateur authentifié, pas seulement depuis les paramètres envoyés par le frontend.
+
+---
+
 ## Suivi des phases
 
 | Phase | Nom | Statut |
 |-------|-----|--------|
 | 0 | Planification & décisions | ✅ DONE |
 | 1 | Fondations : backend + frontend | ✅ DONE |
-| 2 | Authentification & utilisateurs | ✅ DONE |
-| 3 | Gestion des entrepôts (end-to-end) | ⬜ TODO |
-| 4 | Gestion des produits (end-to-end) | ⬜ TODO |
-| 5 | Stocks & mouvements (end-to-end) | ⬜ TODO |
-| 6 | Alertes & dashboard | ⬜ TODO |
-| 7 | Tests, Docker, nettoyage final | ⬜ TODO |
+| 2 | Authentification & sécurité | ✅ DONE |
+| 3 | Administration utilisateurs & permissions | ✅ DONE |
+| 4 | Gestion des entrepôts (end-to-end) | ⬜ TODO |
+| 5 | Gestion des produits (end-to-end) | ⬜ TODO |
+| 6 | Stocks & mouvements (end-to-end) | ⬜ TODO |
+| 7 | Alertes & dashboard | ⬜ TODO |
+| 8 | Tests, Docker, nettoyage final | ⬜ TODO |
 
 ---
 
@@ -81,8 +104,8 @@
 
 **Définition of done :**
 - `mvn spring-boot:run` démarre sans erreur ✅
-- `GET http://localhost:8085/api/health` → 200 ✅
-- `http://localhost:8085/swagger-ui.html` → charge ✅
+- `GET /api/health` sur le port défini par `BACKEND_PORT` → 200 ✅
+- Swagger UI sur le port défini par `BACKEND_PORT` → charge ✅
 - `ng serve` → Angular sur port 4200 ✅
 - La page Angular affiche "Backend connecté" ✅
 
@@ -90,15 +113,14 @@
 
 ---
 
-## Phase 2 — Authentification & utilisateurs [DONE]
+## Phase 2 — Authentification & sécurité [DONE]
 
-**Objectif :** Login fonctionnel avec JWT. Utilisateur ADMIN seedé. Guards Angular sur les routes.
+**Objectif :** Login fonctionnel avec JWT. Utilisateurs seedés par rôle. Guards Angular sur les routes.
 
 **Backend :**
 - Entité `Utilisateur` (id, nom, email, motDePasse, role) ✅
 - Enum `Role` : ADMIN, GESTIONNAIRE, OBSERVATEUR ✅
 - `AuthController` : `POST /api/auth/login` → JWT ✅
-- `UtilisateurController` : CRUD (ADMIN uniquement) ✅
 - `JwtUtil`, `JwtAuthFilter`, `UserDetailsServiceImpl` ✅
 - `SecurityConfig` complet avec règles par rôle ✅
 - `DataInitializer` : seède 3 utilisateurs configurables dans la base MySQL active (1 par rôle) ✅
@@ -115,14 +137,53 @@
 
 ---
 
-## Phase 3 — Gestion des entrepôts (end-to-end)
+## Phase 3 — Administration utilisateurs & permissions [DONE]
+
+**Objectif :** Permettre à l'ADMIN de gérer les comptes utilisateurs avant d'ouvrir les modules métier suivants, puis définir la matrice de permissions utilisée par toutes les phases.
+
+**Backend :**
+- `UtilisateurController` : CRUD utilisateurs réservé à `ADMIN` ✅
+- `UtilisateurService` : création, modification, suppression, unicité email, hash mot de passe ✅
+- Edition utilisateur : le mot de passe est optionnel, il reste inchangé si le champ est vide ✅
+- Champ provisoire `entrepotNom` sur `Utilisateur` pour affecter un `GESTIONNAIRE` ou `OBSERVATEUR` à un entrepôt avant la création de l'entité `Entrepot` ✅
+- Règle métier : `entrepotNom` est obligatoire pour `GESTIONNAIRE` / `OBSERVATEUR` et ignoré pour `ADMIN` ✅
+- Endpoints `/api/utilisateurs/**` protégés par `hasRole("ADMIN")` ✅
+- Règle sécurité globale : les `GET /api/**` métier restent accessibles aux rôles authentifiés, les écritures restent limitées par rôle ✅
+
+**Frontend :**
+- Route `/utilisateurs` visible et accessible uniquement pour `ADMIN` ✅
+- Page administration utilisateurs : liste, création, édition, suppression ✅
+- Sélecteur de rôle : `ADMIN`, `GESTIONNAIRE`, `OBSERVATEUR` ✅
+- Champ `Entrepot affecte` affiché et requis pour `GESTIONNAIRE` / `OBSERVATEUR` ✅
+- En édition, laisser le mot de passe vide conserve le mot de passe actuel ✅
+- `RoleGuard` appliqué sur les routes réservées ✅
+
+**Modifications à appliquer aux phases suivantes :**
+- Chaque nouveau module doit définir ses accès backend avec `@PreAuthorize` ou `SecurityConfig` selon la matrice des rôles.
+- Les composants Angular doivent masquer les boutons create/edit/delete pour `OBSERVATEUR`.
+- Les composants Angular doivent masquer les actions non autorisées au `GESTIONNAIRE stock`, notamment les actions d'écriture sur les entrepôts.
+- Les services frontend peuvent garder les méthodes d'écriture, mais les pages doivent ne les appeler que si le rôle courant y est autorisé.
+- Les tableaux/lists doivent rester consultables par `OBSERVATEUR` en lecture seule, filtrés sur son entrepôt affecté.
+- Les pages produits, stocks, mouvements, alertes et dashboard doivent filtrer les données du `GESTIONNAIRE stock` et de l'`OBSERVATEUR` sur leur entrepôt affecté.
+
+**Branch git :** `feature/phase-3-user-management`
+
+---
+
+## Phase 4 — Gestion des entrepôts (end-to-end)
 
 **Objectif :** CRUD complet pour les entrepôts : liste, création, édition, suppression.
 
 **Entité :** `Entrepot` (id, nom, adresse, capacite)
 
+**Accès :**
+- `ADMIN` : CRUD complet
+- `GESTIONNAIRE stock` : lecture seule
+- `OBSERVATEUR` : lecture seule uniquement sur son entrepôt affecté
+
 **Infra :**
 - Ajouter la table `entrepots` dans `infra/mysql-init/01-schema.sql`
+- Remplacer l'affectation provisoire `Utilisateur.entrepotNom` par une relation propre `Utilisateur.entrepot` / `entrepot_id` pour les comptes `GESTIONNAIRE` et `OBSERVATEUR`, ou prévoir une migration claire si le champ texte est conservé temporairement
 
 **Endpoints :**
 - `GET /api/entrepots`
@@ -137,25 +198,36 @@
 - Formulaire create/edit (dialog ou page)
 - Dialogue de confirmation avant suppression
 - États : chargement, vide, erreur
+- Masquer les actions create/edit/delete si le rôle courant n'est pas `ADMIN`
+- Adapter le formulaire utilisateurs pour sélectionner un entrepôt existant au lieu de saisir un nom libre pour les `GESTIONNAIRE` et `OBSERVATEUR`
 
-**Branch git :** `feature/phase-3-entrepots`
+**Branch git :** `feature/phase-4-entrepots`
 
 ---
 
-## Phase 4 — Gestion des produits (end-to-end)
+## Phase 5 — Gestion des produits (end-to-end)
 
 **Objectif :** CRUD complet pour les produits.
 
 **Entité :** `Produit` (id, nom, categorie, prix, fournisseur, seuilMin)
 
+**Accès :**
+- `ADMIN` : CRUD complet
+- `GESTIONNAIRE stock` : CRUD complet uniquement dans son entrepôt affecté
+- `OBSERVATEUR` : lecture seule uniquement dans son entrepôt affecté
+
 **Infra :**
 - Ajouter la table `produits` dans `infra/mysql-init/01-schema.sql`
 
-**Branch git :** `feature/phase-4-produits`
+**Frontend :**
+- Masquer les actions create/edit/delete pour `OBSERVATEUR`
+- Filtrer ou préremplir l'entrepôt affecté pour `GESTIONNAIRE stock` et `OBSERVATEUR`
+
+**Branch git :** `feature/phase-5-produits`
 
 ---
 
-## Phase 5 — Stocks & mouvements (end-to-end)
+## Phase 6 — Stocks & mouvements (end-to-end)
 
 **Objectif :** Gestion des stocks par entrepôt + enregistrement des entrées/sorties.
 
@@ -163,20 +235,37 @@
 - `Stock` (id, produit FK, entrepot FK, quantite, seuilAlerte)
 - `MouvementStock` (id, produit FK, entrepot FK, type [ENTREE/SORTIE], quantite, date)
 
+**Accès :**
+- `ADMIN` : CRUD stocks + création/consultation mouvements
+- `GESTIONNAIRE stock` : CRUD stocks + création/consultation mouvements uniquement dans son entrepôt affecté
+- `OBSERVATEUR` : lecture seule sur stocks et mouvements uniquement dans son entrepôt affecté
+
 **Infra :**
 - Ajouter les tables `stocks` et `mouvement_stock` dans `infra/mysql-init/01-schema.sql`
 
 **Règles métier :**
 - Une SORTIE est rejetée si stock insuffisant (409 Conflict)
 - Badge d'alerte inline quand `quantite <= seuilAlerte`
+- `OBSERVATEUR` ne peut déclencher aucun mouvement de stock
+- `GESTIONNAIRE stock` ne peut pas lire, créer, modifier ou supprimer un stock/mouvement lié à un autre entrepôt que celui affecté à son compte
+- `OBSERVATEUR` ne peut pas lire un stock/mouvement lié à un autre entrepôt que celui affecté à son compte
 
-**Branch git :** `feature/phase-5-stocks`
+**Frontend :**
+- Masquer les formulaires et actions de mouvement pour `OBSERVATEUR`
+- Pour `GESTIONNAIRE stock` et `OBSERVATEUR`, verrouiller ou filtrer le choix d'entrepôt sur l'entrepôt affecté
+
+**Branch git :** `feature/phase-6-stocks`
 
 ---
 
-## Phase 6 — Alertes & dashboard
+## Phase 7 — Alertes & dashboard
 
 **Objectif :** Système d'alertes stock faible + dashboard avec métriques clés.
+
+**Accès :**
+- `ADMIN` : consultation alertes + dashboard
+- `GESTIONNAIRE stock` : consultation alertes + dashboard filtrés sur son entrepôt affecté
+- `OBSERVATEUR` : consultation alertes + dashboard en lecture seule filtrés sur son entrepôt affecté
 
 **Endpoints :**
 - `GET /api/alertes` : stocks où `quantite <= seuilAlerte`
@@ -190,11 +279,11 @@
 - Tableau des alertes actives
 - Badge alerte dans la sidebar
 
-**Branch git :** `feature/phase-6-dashboard`
+**Branch git :** `feature/phase-7-dashboard`
 
 ---
 
-## Phase 7 — Tests, Docker, nettoyage final
+## Phase 8 — Tests, Docker, nettoyage final
 
 **Objectif :** Packaging production-ready, Docker full-stack, README complet.
 
@@ -211,9 +300,10 @@
 **Infra :**
 - `docker-compose.yml` racine : MySQL + backend + frontend
 - Review `01-schema.sql` (index, FK, contraintes)
-- Vérifier que toutes les tables ajoutées dans les phases 2 à 6 sont présentes dans `infra/mysql-init/01-schema.sql`
+- Vérifier que toutes les tables ajoutées dans les phases 2 à 7 sont présentes dans `infra/mysql-init/01-schema.sql`
+- Vérifier la matrice des rôles sur les routes backend et frontend avant livraison finale
 
-**Branch git :** `feature/phase-7-docker-cleanup`
+**Branch git :** `feature/phase-8-docker-cleanup`
 
 ---
 

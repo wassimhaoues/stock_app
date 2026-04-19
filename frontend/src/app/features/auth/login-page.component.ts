@@ -30,24 +30,9 @@ import { AuthService } from '../../core/services/auth.service';
         <p class="login-copy__eyebrow">Phase 2</p>
         <h1>Authentification JWT et gestion des roles.</h1>
         <p>
-          Connectez-vous avec un compte seedé pour acceder aux routes protegees et a
-          l'administration des utilisateurs.
+          Connectez-vous avec un compte existant en base pour acceder aux routes protegees
+          et a l'administration des utilisateurs.
         </p>
-
-        <div class="credentials">
-          <div>
-            <strong>ADMIN</strong>
-            <span>admin@stockpro.local / Admin123!</span>
-          </div>
-          <div>
-            <strong>GESTIONNAIRE</strong>
-            <span>gestionnaire@stockpro.local / Gestion123!</span>
-          </div>
-          <div>
-            <strong>OBSERVATEUR</strong>
-            <span>observateur@stockpro.local / Observe123!</span>
-          </div>
-        </div>
       </div>
 
       <mat-card class="login-card">
@@ -154,24 +139,6 @@ import { AuthService } from '../../core/services/auth.service';
       max-width: 52ch;
       color: var(--stockpro-muted);
       line-height: 1.65;
-    }
-
-    .credentials {
-      display: grid;
-      gap: 0.75rem;
-      margin-top: 2rem;
-    }
-
-    .credentials div {
-      display: grid;
-      gap: 0.2rem;
-      padding: 1rem 1.1rem;
-      border-radius: 1rem;
-      background: rgba(22, 33, 47, 0.05);
-    }
-
-    .credentials strong {
-      color: var(--stockpro-ink);
     }
 
     .login-card {

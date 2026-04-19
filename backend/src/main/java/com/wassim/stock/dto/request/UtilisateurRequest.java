@@ -13,10 +13,11 @@ public record UtilisateurRequest(
         @NotBlank(message = "L'email est obligatoire")
         String email,
 
-        @NotBlank(message = "Le mot de passe est obligatoire")
         String motDePasse,
 
         @NotNull(message = "Le role est obligatoire")
-        Role role
+        Role role,
+
+        String entrepotNom
 ) {
 }

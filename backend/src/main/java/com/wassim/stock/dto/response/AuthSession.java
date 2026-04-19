@@ -1,6 +1,7 @@
 package com.wassim.stock.dto.response;
 
-public record AuthResponse(
+public record AuthSession(
+        String token,
         UtilisateurResponse utilisateur
 ) {
 }

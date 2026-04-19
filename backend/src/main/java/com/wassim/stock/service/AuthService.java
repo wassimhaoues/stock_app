@@ -2,8 +2,10 @@ package com.wassim.stock.service;
 
 import com.wassim.stock.dto.request.LoginRequest;
 import com.wassim.stock.dto.response.AuthResponse;
+import com.wassim.stock.dto.response.AuthSession;
 import com.wassim.stock.dto.response.UtilisateurResponse;
 import com.wassim.stock.entity.Utilisateur;
+import com.wassim.stock.exception.ResourceNotFoundException;
 import com.wassim.stock.repository.UtilisateurRepository;
 import com.wassim.stock.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +22,7 @@ public class AuthService {
     private final UtilisateurRepository utilisateurRepository;
     private final JwtUtil jwtUtil;
 
-    public AuthResponse login(LoginRequest request) {
+    public AuthSession login(LoginRequest request) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.email(), request.motDePasse())
@@ -34,11 +36,17 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(utilisateur.getEmail(), utilisateur.getRole().name());
 
-        return new AuthResponse(
+        return new AuthSession(
                 token,
-                "Bearer",
                 toResponse(utilisateur)
         );
+    }
+
+    public AuthResponse currentUser(String email) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
+
+        return new AuthResponse(toResponse(utilisateur));
     }
 
     private UtilisateurResponse toResponse(Utilisateur utilisateur) {
@@ -46,7 +54,8 @@ public class AuthService {
                 utilisateur.getId(),
                 utilisateur.getNom(),
                 utilisateur.getEmail(),
-                utilisateur.getRole()
+                utilisateur.getRole(),
+                utilisateur.getEntrepotNom()
         );
     }
 }

@@ -314,7 +314,7 @@ export class HomePageComponent {
         of({
           state: 'error',
           message:
-            "Demarre le backend sur le port 8085, puis recharge la page pour afficher 'Backend connecte'.",
+            "Demarre le backend avec le port defini dans infra/.env, puis recharge la page pour afficher 'Backend connecte'.",
         } satisfies ViewModel)
       ),
       startWith({ state: 'loading' } satisfies ViewModel)

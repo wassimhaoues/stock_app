@@ -26,7 +26,7 @@
 | -------------------- | ------------------------------------ |
 | UI Framework         | Angular Material                     |
 | Langue UI            | Français                             |
-| Style dashboard      | Cards statistiques + tableau alertes |
+| Style dashboard      | Section analytique KPI + cards + graphiques + tableau alertes |
 | Authentification     | JWT stateless                        |
 | Rôles utilisateurs   | ADMIN / GESTIONNAIRE / OBSERVATEUR   |
 | Nom de l'application | StockPro                             |
@@ -68,8 +68,10 @@
 | 4     | Gestion des entrepôts (end-to-end) | ⬜ TODO |
 | 5     | Gestion des produits (end-to-end)  | ⬜ TODO |
 | 6     | Stocks & mouvements (end-to-end)   | ⬜ TODO |
-| 7     | Alertes & dashboard                | ⬜ TODO |
-| 8     | Tests, Docker, nettoyage final     | ⬜ TODO |
+| 7     | Alertes & dashboard analytique     | ⬜ TODO |
+| 8     | Revue UX/UI frontend professionnelle | ⬜ TODO |
+| 9     | Validation métier, sécurité & données réalistes | ⬜ TODO |
+| 10    | Tests, Docker, nettoyage final     | ⬜ TODO |
 
 ---
 
@@ -282,20 +284,23 @@
 
 ---
 
-## Phase 7 — Alertes & dashboard
+## Phase 7 — Alertes & dashboard analytique
 
-**Objectif :** Système d'alertes stock faible + dashboard avec métriques clés.
+**Objectif :** Système d'alertes stock faible + dashboard analytique avec des KPI réels, utiles pour piloter l'activité et améliorer les décisions métier.
 
 **Accès :**
 
-- `ADMIN` : consultation alertes + dashboard
+- `ADMIN` : consultation alertes + dashboard global avec vision multi-entrepôts et analytics avancés
 - `GESTIONNAIRE stock` : consultation alertes + dashboard filtrés sur son entrepôt affecté
 - `OBSERVATEUR` : consultation alertes + dashboard en lecture seule filtrés sur son entrepôt affecté
 
 **Endpoints :**
 
 - `GET /api/alertes` : stocks où `quantite <= seuilAlerte`
-- `GET /api/dashboard/stats` : totaux (entrepôts, produits, alertes, mouvements du jour)
+- `GET /api/dashboard/stats` : totaux opérationnels selon le rôle connecté
+- `GET /api/dashboard/kpis` : KPI métier calculés depuis les vrais produits, stocks, mouvements et entrepôts
+- `GET /api/dashboard/analytics` : séries et répartitions pour graphiques, tendances et comparaisons
+- `GET /api/dashboard/admin/analytics` : analytics globaux réservés à `ADMIN`
 
 **Infra :**
 
@@ -303,15 +308,102 @@
 
 **Dashboard :**
 
-- 4 cards statistiques
-- Tableau des alertes actives
+- Section analytique principale en haut du dashboard `ADMIN`, large et prioritaire visuellement
+- KPI `ADMIN` calculés depuis les données réelles :
+  - valeur totale du stock
+  - valeur du stock par entrepôt
+  - nombre de produits actifs
+  - produits sous seuil critique
+  - taux de risque de rupture
+  - mouvements entrants/sortants du jour, de la semaine et du mois
+  - tendance des mouvements par période
+  - produits les plus mouvementés
+  - produits avec stock dormant ou faible rotation
+  - entrepôts les plus actifs
+  - couverture estimée du stock quand les mouvements permettent de la calculer
+- Cards synthétiques pour les indicateurs rapides
+- Graphiques clairs : mouvements dans le temps, répartition par entrepôt, top produits, alertes par gravité
+- Tableau des alertes actives avec priorité, produit, entrepôt, quantité, seuil et action attendue
 - Badge alerte dans la sidebar
+- Dashboard `GESTIONNAIRE stock` limité à son entrepôt affecté : KPI, graphiques, stocks, mouvements et alertes uniquement pour cet entrepôt
+- Dashboard `OBSERVATEUR` limité à son entrepôt affecté et strictement en lecture seule
+- Aucun KPI fictif : chaque chiffre affiché doit être calculé depuis la base de données ou masqué si les données nécessaires n'existent pas encore
 
-**Branch git :** `feature/phase-7-dashboard`
+**Branch git :** `feature/phase-7-analytics-dashboard`
 
 ---
 
-## Phase 8 — Tests, Docker, nettoyage final
+## Phase 8 — Revue UX/UI frontend professionnelle
+
+**Objectif :** Reprendre tout le frontend pour obtenir une interface moderne, organisée, cohérente et crédible, sans traces de préparation, de démo technique ou d'apparence "vibe-coded".
+
+**Périmètre :**
+
+- Revoir toutes les pages : login, layout, sidebar, header, dashboard, utilisateurs, entrepôts, produits, stocks, mouvements et alertes
+- Supprimer tout texte visible de type préparation, phase, placeholder, explication technique, "Backend connecté", "TODO", "demo", ou description qui ne fait pas partie de l'expérience utilisateur finale
+- Garder une interface 100 % en français, avec des libellés métier courts, professionnels et homogènes
+- Harmoniser la hiérarchie visuelle : titres, sous-titres utiles, spacing, densité, alignements, tailles de tableaux, actions principales et actions secondaires
+- Donner à StockPro une identité visuelle propre : moderne, sobre, mémorable, adaptée à une application professionnelle de gestion de stocks
+- Vérifier que l'application ne ressemble pas à un assemblage généré : cohérence des composants, pages finies, pas de sections inutiles, pas de textes décoratifs sans valeur métier
+
+**Frontend :**
+
+- Revoir le layout global pour une navigation claire par rôle
+- Rendre la sidebar et le header cohérents avec les permissions réelles
+- Moderniser les tableaux : colonnes utiles, actions lisibles, états vide/chargement/erreur propres, filtres si nécessaires
+- Moderniser les formulaires : validation claire, messages d'erreur métier, champs requis visibles, boutons d'action bien placés
+- Revoir toutes les cartes KPI et graphiques pour une lecture rapide et professionnelle
+- Ajouter ou ajuster les états responsives pour desktop et mobile
+- S'assurer qu'aucun bouton interdit n'apparaît pour `GESTIONNAIRE stock` ou `OBSERVATEUR`
+- S'assurer que `OBSERVATEUR` voit uniquement des interfaces read-only
+- Vérifier les contrastes, focus clavier, aria-labels utiles et cohérence Angular Material
+
+**Définition of done :**
+
+- Aucune page ne contient de texte de préparation, de phase, de mock technique ou de description hors produit final
+- Les pages principales ont un rendu professionnel en desktop et mobile
+- Les permissions visuelles correspondent à la matrice des rôles
+- Les données vides, erreurs API et chargements sont traités proprement
+- Le dashboard `ADMIN` met réellement en avant les KPI analytiques de la Phase 7
+- Le projet donne l'impression d'un produit fini, organisé et unique
+
+**Branch git :** `feature/phase-8-frontend-polish`
+
+---
+
+## Phase 9 — Validation métier, sécurité & données réalistes
+
+**Objectif :** Vérifier le projet de bout en bout avec des scénarios réalistes, renforcer les règles de sécurité métier et préparer une démonstration crédible.
+
+**Backend :**
+
+- Ajouter ou compléter un jeu de données réaliste : plusieurs entrepôts, produits, stocks, mouvements, alertes et utilisateurs affectés
+- Vérifier tous les scénarios de rôles :
+  - `ADMIN` voit et administre tout
+  - `GESTIONNAIRE stock` travaille uniquement dans son entrepôt affecté
+  - `OBSERVATEUR` consulte uniquement son entrepôt en lecture seule
+- Tester les accès directs API pour empêcher le contournement par modification d'id d'entrepôt
+- Vérifier les règles métier critiques : stock insuffisant, seuils d'alerte, unicité email, affectation obligatoire d'entrepôt
+- Revoir les erreurs API pour qu'elles soient compréhensibles et cohérentes
+
+**Frontend :**
+
+- Parcours de démonstration complet par rôle
+- Vérifier les redirections, menus et pages interdites selon le rôle
+- Vérifier que les filtres d'entrepôt affichés correspondent réellement aux données autorisées
+- Préparer une expérience de démo fluide avec des données assez riches pour montrer les KPI
+
+**Documentation :**
+
+- Mettre à jour `README.md` avec lancement local, comptes de test, ports et commandes utiles
+- Mettre à jour `docs/API.md` ou Swagger avec les endpoints finaux
+- Ajouter une section courte expliquant la matrice des rôles et le filtrage par entrepôt
+
+**Branch git :** `feature/phase-9-business-validation-security`
+
+---
+
+## Phase 10 — Tests, Docker, nettoyage final
 
 **Objectif :** Packaging production-ready, Docker full-stack, README complet.
 
@@ -331,10 +423,10 @@
 
 - `docker-compose.yml` racine : MySQL + backend + frontend
 - Review `01-schema.sql` (index, FK, contraintes)
-- Vérifier que toutes les tables ajoutées dans les phases 2 à 7 sont présentes dans `infra/mysql-init/01-schema.sql`
+- Vérifier que toutes les tables ajoutées dans les phases 2 à 9 sont présentes dans `infra/mysql-init/01-schema.sql`
 - Vérifier la matrice des rôles sur les routes backend et frontend avant livraison finale
 
-**Branch git :** `feature/phase-8-docker-cleanup`
+**Branch git :** `feature/phase-10-docker-cleanup`
 
 ---
 
@@ -357,7 +449,8 @@ exception/       GlobalExceptionHandler, ResourceNotFoundException,
 repository/      (un par entité)
 security/        JwtUtil, JwtAuthFilter, UserDetailsServiceImpl
 service/         EntrepotService, ProduitService, StockService,
-                 MouvementStockService, AlerteService, UtilisateurService
+                 MouvementStockService, AlerteService, DashboardService,
+                 UtilisateurService
 ```
 
 ### Frontend — `src/app`

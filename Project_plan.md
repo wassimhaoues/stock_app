@@ -67,7 +67,7 @@
 | 3     | Administration utilisateurs & permissions | ✅ DONE |
 | 4     | Gestion des entrepôts (end-to-end) | ✅ DONE |
 | 5     | Gestion des produits (end-to-end)  | ✅ DONE |
-| 6     | Stocks & mouvements (end-to-end)   | ⬜ TODO |
+| 6     | Stocks & mouvements (end-to-end)   | ✅ DONE |
 | 7     | Alertes & dashboard analytique     | ⬜ TODO |
 | 8     | Revue UX/UI frontend professionnelle | ⬜ TODO |
 | 9     | Validation métier, sécurité & données réalistes | ⬜ TODO |
@@ -261,37 +261,53 @@
 
 ---
 
-## Phase 6 — Stocks & mouvements (end-to-end)
+## Phase 6 — Stocks & mouvements (end-to-end) [DONE]
 
 **Objectif :** Gestion des stocks par entrepôt + enregistrement des entrées/sorties.
 
 **Entités :**
 
-- `Stock` (id, produit FK, entrepot FK, quantite, seuilAlerte)
-- `MouvementStock` (id, produit FK, entrepot FK, type [ENTREE/SORTIE], quantite, date)
+- `Stock` (id, produit FK, entrepot FK, quantite, seuilAlerte) ✅
+- `MouvementStock` (id, produit FK, entrepot FK, type [ENTREE/SORTIE], quantite, date) ✅
 
 **Accès :**
 
-- `ADMIN` : CRUD stocks + création/consultation mouvements
-- `GESTIONNAIRE stock` : CRUD stocks + création/consultation mouvements uniquement dans son entrepôt affecté
-- `OBSERVATEUR` : lecture seule sur stocks et mouvements uniquement dans son entrepôt affecté
+- `ADMIN` : CRUD stocks + création/consultation mouvements ✅
+- `GESTIONNAIRE stock` : CRUD stocks + création/consultation mouvements uniquement dans son entrepôt affecté ✅
+- `OBSERVATEUR` : lecture seule sur stocks et mouvements uniquement dans son entrepôt affecté ✅
 
 **Infra :**
 
-- Ajouter les tables `stocks` et `mouvement_stock` dans `infra/mysql-init/01-schema.sql`
+- Ajouter les tables `stocks` et `mouvement_stock` dans `infra/mysql-init/01-schema.sql` ✅
+
+**Endpoints :**
+
+- `GET /api/stocks` ✅
+- `POST /api/stocks` réservé à `ADMIN` et `GESTIONNAIRE` ✅
+- `GET /api/stocks/{id}` ✅
+- `PUT /api/stocks/{id}` réservé à `ADMIN` et `GESTIONNAIRE` ✅
+- `DELETE /api/stocks/{id}` réservé à `ADMIN` et `GESTIONNAIRE` ✅
+- `GET /api/mouvements-stock` ✅
+- `GET /api/mouvements-stock/{id}` ✅
+- `POST /api/mouvements-stock` réservé à `ADMIN` et `GESTIONNAIRE` ✅
 
 **Règles métier :**
 
-- Une SORTIE est rejetée si stock insuffisant (409 Conflict)
-- Badge d'alerte inline quand `quantite <= seuilAlerte`
-- `OBSERVATEUR` ne peut déclencher aucun mouvement de stock
-- `GESTIONNAIRE stock` ne peut pas lire, créer, modifier ou supprimer un stock/mouvement lié à un autre entrepôt que celui affecté à son compte
-- `OBSERVATEUR` ne peut pas lire un stock/mouvement lié à un autre entrepôt que celui affecté à son compte
+- Une SORTIE est rejetée si stock insuffisant (409 Conflict) ✅
+- Les mouvements ENTREE/SORTIE mettent à jour la quantité du stock existant produit + entrepôt ✅
+- Un stock est unique par couple produit + entrepôt ✅
+- Badge d'alerte inline quand `quantite <= seuilAlerte` ✅
+- `OBSERVATEUR` ne peut déclencher aucun mouvement de stock ✅
+- `GESTIONNAIRE stock` ne peut pas lire, créer, modifier ou supprimer un stock/mouvement lié à un autre entrepôt que celui affecté à son compte ✅
+- `OBSERVATEUR` ne peut pas lire un stock/mouvement lié à un autre entrepôt que celui affecté à son compte ✅
 
 **Frontend :**
 
-- Masquer les formulaires et actions de mouvement pour `OBSERVATEUR`
-- Pour `GESTIONNAIRE stock` et `OBSERVATEUR`, verrouiller ou filtrer le choix d'entrepôt sur l'entrepôt affecté
+- Route `/stocks` ✅
+- Page stocks + mouvements avec formulaires, listes, états chargement/vide/erreur ✅
+- Masquer les formulaires et actions de mouvement pour `OBSERVATEUR` ✅
+- Masquer les actions create/edit/delete stock pour `OBSERVATEUR` ✅
+- Pour `GESTIONNAIRE stock` et `OBSERVATEUR`, filtrer le choix d'entrepôt sur l'entrepôt affecté ✅
 
 **Branch git :** `feature/phase-6-stocks`
 

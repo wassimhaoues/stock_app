@@ -41,6 +41,39 @@ CREATE TABLE IF NOT EXISTS `produits` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `stocks` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `produit_id` BIGINT NOT NULL,
+  `entrepot_id` BIGINT NOT NULL,
+  `quantite` INT NOT NULL,
+  `seuil_alerte` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_stocks_produit_entrepot` (`produit_id`, `entrepot_id`),
+  KEY `idx_stocks_produit_id` (`produit_id`),
+  KEY `idx_stocks_entrepot_id` (`entrepot_id`),
+  CONSTRAINT `fk_stocks_produit`
+    FOREIGN KEY (`produit_id`) REFERENCES `produits` (`id`),
+  CONSTRAINT `fk_stocks_entrepot`
+    FOREIGN KEY (`entrepot_id`) REFERENCES `entrepots` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `mouvement_stock` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `produit_id` BIGINT NOT NULL,
+  `entrepot_id` BIGINT NOT NULL,
+  `type` ENUM('ENTREE', 'SORTIE') NOT NULL,
+  `quantite` INT NOT NULL,
+  `date` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_mouvement_stock_produit_id` (`produit_id`),
+  KEY `idx_mouvement_stock_entrepot_id` (`entrepot_id`),
+  KEY `idx_mouvement_stock_date` (`date`),
+  CONSTRAINT `fk_mouvement_stock_produit`
+    FOREIGN KEY (`produit_id`) REFERENCES `produits` (`id`),
+  CONSTRAINT `fk_mouvement_stock_entrepot`
+    FOREIGN KEY (`entrepot_id`) REFERENCES `entrepots` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 COMMIT;
 SET FOREIGN_KEY_CHECKS=1;

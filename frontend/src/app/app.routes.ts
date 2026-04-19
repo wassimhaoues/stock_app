@@ -40,6 +40,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'stocks',
+        loadComponent: () =>
+          import('./features/stocks/stocks-page.component').then(
+            (m) => m.StocksPageComponent
+          ),
+      },
+      {
         path: 'utilisateurs',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },

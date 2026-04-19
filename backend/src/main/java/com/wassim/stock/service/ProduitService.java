@@ -3,8 +3,11 @@ package com.wassim.stock.service;
 import com.wassim.stock.dto.request.ProduitRequest;
 import com.wassim.stock.dto.response.ProduitResponse;
 import com.wassim.stock.entity.Produit;
+import com.wassim.stock.exception.BadRequestException;
 import com.wassim.stock.exception.ResourceNotFoundException;
+import com.wassim.stock.repository.MouvementStockRepository;
 import com.wassim.stock.repository.ProduitRepository;
+import com.wassim.stock.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +18,8 @@ import java.util.List;
 public class ProduitService {
 
     private final ProduitRepository produitRepository;
+    private final StockRepository stockRepository;
+    private final MouvementStockRepository mouvementStockRepository;
 
     public List<ProduitResponse> findAll() {
         return produitRepository.findAll()
@@ -42,6 +47,9 @@ public class ProduitService {
 
     public void delete(Long id) {
         Produit produit = findEntityById(id);
+        if (stockRepository.existsByProduitId(id) || mouvementStockRepository.existsByProduitId(id)) {
+            throw new BadRequestException("Impossible de supprimer un produit lie a des stocks ou mouvements");
+        }
         produitRepository.delete(produit);
     }
 

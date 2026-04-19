@@ -127,7 +127,7 @@ export class SidebarComponent {
       { label: 'Accueil', icon: 'home', route: '/' },
       { label: 'Entrepots', icon: 'warehouse', route: '/entrepots' },
       { label: 'Produits', icon: 'category', route: '/produits' },
-      { label: 'Stocks', icon: 'inventory' },
+      { label: 'Stocks', icon: 'inventory', route: '/stocks' },
     ];
 
     if (this.authService.hasRole('ADMIN')) {

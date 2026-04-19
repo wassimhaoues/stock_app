@@ -8,6 +8,8 @@ import com.wassim.stock.entity.Utilisateur;
 import com.wassim.stock.exception.BadRequestException;
 import com.wassim.stock.exception.ResourceNotFoundException;
 import com.wassim.stock.repository.EntrepotRepository;
+import com.wassim.stock.repository.MouvementStockRepository;
+import com.wassim.stock.repository.StockRepository;
 import com.wassim.stock.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +23,8 @@ public class EntrepotService {
 
     private final EntrepotRepository entrepotRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final StockRepository stockRepository;
+    private final MouvementStockRepository mouvementStockRepository;
 
     public List<EntrepotResponse> findAll() {
         Utilisateur currentUser = getCurrentUser();
@@ -64,6 +68,9 @@ public class EntrepotService {
         Entrepot entrepot = findEntityById(id);
         if (utilisateurRepository.existsByEntrepotId(id)) {
             throw new BadRequestException("Impossible de supprimer un entrepot affecte a un utilisateur");
+        }
+        if (stockRepository.existsByEntrepotId(id) || mouvementStockRepository.existsByEntrepotId(id)) {
+            throw new BadRequestException("Impossible de supprimer un entrepot lie a des stocks ou mouvements");
         }
 
         entrepotRepository.delete(entrepot);

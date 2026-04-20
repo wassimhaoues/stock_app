@@ -68,10 +68,11 @@
 | 4     | Gestion des entrepôts (end-to-end) | ✅ DONE |
 | 5     | Gestion des produits (end-to-end)  | ✅ DONE |
 | 6     | Stocks & mouvements (end-to-end)   | ✅ DONE |
-| 7     | Alertes & dashboard analytique     | ⬜ TODO |
-| 8     | Revue UX/UI frontend professionnelle | ⬜ TODO |
-| 9     | Validation métier, sécurité & données réalistes | ⬜ TODO |
-| 10    | Tests, Docker, nettoyage final     | ⬜ TODO |
+| 7     | Gestion de la capacité des entrepôts | ⬜ TODO |
+| 8     | Alertes & dashboard analytique     | ⬜ TODO |
+| 9     | Revue UX/UI frontend professionnelle | ⬜ TODO |
+| 10    | Validation métier, sécurité & données réalistes | ⬜ TODO |
+| 11    | Tests, Docker, nettoyage final     | ⬜ TODO |
 
 ---
 
@@ -313,7 +314,92 @@
 
 ---
 
-## Phase 7 — Alertes & dashboard analytique
+## Phase 7 — Gestion de la capacité des entrepôts
+
+**Objectif :** Transformer `Entrepot.capacite` en contrainte métier réelle. La capacité disponible d'un entrepôt doit être calculée depuis les quantités de stock réellement présentes dans cet entrepôt, affichée aux endroits utiles, et bloquer toute entrée de stock qui dépasserait la capacité maximale.
+
+**Hypothèse de calcul :**
+
+- 1 unité de `Stock.quantite` consomme 1 unité de `Entrepot.capacite`.
+- Capacité utilisée = somme des `Stock.quantite` de tous les stocks liés à l'entrepôt.
+- Capacité disponible = `Entrepot.capacite - capacité utilisée`.
+- Taux d'occupation = `capacité utilisée / Entrepot.capacite`.
+
+**Backend :**
+
+- Ajouter les champs calculés dans la réponse entrepôt, par exemple `capaciteUtilisee`, `capaciteDisponible` et `tauxOccupation`.
+- Ajouter les méthodes repository nécessaires pour calculer la somme des quantités de stock par entrepôt.
+- Adapter `EntrepotService` pour enrichir les réponses liste/détail avec les indicateurs de capacité.
+- Empêcher la modification d'un entrepôt si la nouvelle `capacite` devient inférieure à la capacité déjà utilisée.
+- Adapter `StockService` pour refuser la création ou modification d'un stock si la quantité finale dépasse la capacité disponible de l'entrepôt.
+- Adapter `MouvementStockService` pour refuser un mouvement `ENTREE` si la quantité ajoutée dépasse la capacité disponible de l'entrepôt.
+- Conserver le comportement existant des mouvements `SORTIE` : une sortie diminue le stock et libère de la capacité.
+- Retourner une erreur métier claire, idéalement `409 Conflict`, quand une opération dépasse la capacité disponible.
+- Respecter les règles d'accès existantes : `ADMIN` global, `GESTIONNAIRE stock` uniquement sur son entrepôt affecté, `OBSERVATEUR` lecture seule uniquement sur son entrepôt affecté.
+- Mettre à jour `infra/mysql-init/01-schema.sql` seulement si une contrainte ou un index supplémentaire est nécessaire. Aucun nouveau champ persistant n'est requis pour les valeurs calculées.
+
+**Frontend :**
+
+- Mettre à jour le modèle `Entrepot` pour inclure `capaciteUtilisee`, `capaciteDisponible` et `tauxOccupation`.
+- Sur la page `/entrepots`, afficher dans la liste :
+  - capacité totale
+  - capacité utilisée
+  - capacité disponible
+  - taux d'occupation avec un indicateur visuel simple et lisible
+- Dans le formulaire de création/modification d'entrepôt, afficher près du champ `Capacité` :
+  - en création : indication que la capacité définira la limite maximale de stock
+  - en modification : capacité utilisée actuelle, capacité disponible actuelle et capacité disponible après modification si la valeur change
+- Dans la page `/stocks`, afficher la capacité disponible de l'entrepôt sélectionné dans les formulaires de stock et de mouvement.
+- Dans le formulaire de stock, bloquer côté UI la soumission si la quantité finale dépasse la capacité disponible, tout en laissant le backend comme source de vérité.
+- Dans le formulaire de mouvement, pour un mouvement `ENTREE`, afficher la capacité restante avant/après mouvement et bloquer la soumission si l'entrée dépasse la capacité disponible.
+- Dans les tableaux stocks/mouvements, afficher l'information de capacité seulement là où elle aide la décision, sans surcharger l'interface.
+- Pour `GESTIONNAIRE stock` et `OBSERVATEUR`, n'afficher que les indicateurs de capacité de leur entrepôt affecté.
+- Pour `OBSERVATEUR`, conserver une interface strictement en lecture seule.
+
+**Règles métier :**
+
+- Un entrepôt ne peut jamais contenir une quantité totale de stock supérieure à sa capacité.
+- Toute création de stock consomme de la capacité dans l'entrepôt ciblé.
+- Toute augmentation de stock consomme uniquement la différence ajoutée.
+- Toute diminution de stock libère de la capacité.
+- Un mouvement `ENTREE` consomme de la capacité.
+- Un mouvement `SORTIE` libère de la capacité après validation du stock suffisant.
+- La suppression d'un stock libère la capacité correspondant à sa quantité.
+- La capacité disponible doit être recalculée depuis les stocks réels et ne doit pas être stockée comme valeur persistante.
+
+**Validation :**
+
+- `Entrepot.capacite` doit rester strictement positive.
+- Une modification de capacité est rejetée si `nouvelle capacite < capaciteUtilisee`.
+- Une création de stock est rejetée si `quantite > capaciteDisponible`.
+- Une modification de stock est rejetée si la quantité finale de l'entrepôt dépasse sa capacité.
+- Un mouvement `ENTREE` est rejeté si `quantite > capaciteDisponible`.
+- Les messages d'erreur doivent expliquer la capacité disponible et la quantité demandée.
+- Les validations frontend doivent guider l'utilisateur, mais toutes les règles critiques doivent être appliquées côté backend.
+
+**Comportement UI attendu :**
+
+- L'utilisateur voit toujours la capacité restante avant d'ajouter du stock ou d'enregistrer une entrée.
+- Les champs et boutons deviennent clairement invalides/désactivés quand la capacité serait dépassée.
+- La liste des entrepôts permet d'identifier rapidement les entrepôts pleins ou presque pleins.
+- Les erreurs API de capacité sont affichées comme des messages métier compréhensibles.
+- Le dashboard de la phase suivante pourra réutiliser ces indicateurs pour afficher des KPI de saturation des entrepôts.
+
+**Définition of done :**
+
+- Les indicateurs de capacité sont calculés depuis les stocks réels et visibles dans les réponses entrepôt.
+- Les listes et formulaires frontend affichent la capacité utilisée/disponible aux endroits nécessaires.
+- Le système empêche réellement toute création, modification ou entrée de stock qui dépasse la capacité d'un entrepôt.
+- Le `GESTIONNAIRE stock` ne voit et n'utilise que la capacité de son entrepôt affecté.
+- L'`OBSERVATEUR` voit uniquement les informations de capacité de son entrepôt affecté, sans action d'écriture.
+- Les cas limites sont testés : entrepôt vide, entrepôt presque plein, entrepôt plein, réduction de capacité, entrée trop grande, sortie qui libère de la capacité.
+- `mvn test`, `npm run build` et `git diff --check` passent.
+
+**Branch git :** `feature/phase-7-capacite-entrepots`
+
+---
+
+## Phase 8 — Alertes & dashboard analytique
 
 **Objectif :** Système d'alertes stock faible + dashboard analytique avec des KPI réels, utiles pour piloter l'activité et améliorer les décisions métier.
 
@@ -349,6 +435,7 @@
   - produits les plus mouvementés
   - produits avec stock dormant ou faible rotation
   - entrepôts les plus actifs
+  - capacité utilisée, capacité disponible et taux de saturation par entrepôt
   - couverture estimée du stock quand les mouvements permettent de la calculer
 - Cards synthétiques pour les indicateurs rapides
 - Graphiques clairs : mouvements dans le temps, répartition par entrepôt, top produits, alertes par gravité
@@ -358,11 +445,11 @@
 - Dashboard `OBSERVATEUR` limité à son entrepôt affecté et strictement en lecture seule
 - Aucun KPI fictif : chaque chiffre affiché doit être calculé depuis la base de données ou masqué si les données nécessaires n'existent pas encore
 
-**Branch git :** `feature/phase-7-analytics-dashboard`
+**Branch git :** `feature/phase-8-analytics-dashboard`
 
 ---
 
-## Phase 8 — Revue UX/UI frontend professionnelle
+## Phase 9 — Revue UX/UI frontend professionnelle
 
 **Objectif :** Reprendre tout le frontend pour obtenir une interface moderne, organisée, cohérente et crédible, sans traces de préparation, de démo technique ou d'apparence "vibe-coded".
 
@@ -393,14 +480,14 @@
 - Les pages principales ont un rendu professionnel en desktop et mobile
 - Les permissions visuelles correspondent à la matrice des rôles
 - Les données vides, erreurs API et chargements sont traités proprement
-- Le dashboard `ADMIN` met réellement en avant les KPI analytiques de la Phase 7
+- Le dashboard `ADMIN` met réellement en avant les KPI analytiques de la Phase 8
 - Le projet donne l'impression d'un produit fini, organisé et unique
 
-**Branch git :** `feature/phase-8-frontend-polish`
+**Branch git :** `feature/phase-9-frontend-polish`
 
 ---
 
-## Phase 9 — Validation métier, sécurité & données réalistes
+## Phase 10 — Validation métier, sécurité & données réalistes
 
 **Objectif :** Vérifier le projet de bout en bout avec des scénarios réalistes, renforcer les règles de sécurité métier et préparer une démonstration crédible.
 
@@ -428,11 +515,11 @@
 - Mettre à jour `docs/API.md` ou Swagger avec les endpoints finaux
 - Ajouter une section courte expliquant la matrice des rôles et le filtrage par entrepôt
 
-**Branch git :** `feature/phase-9-business-validation-security`
+**Branch git :** `feature/phase-10-business-validation-security`
 
 ---
 
-## Phase 10 — Tests, Docker, nettoyage final
+## Phase 11 — Tests, Docker, nettoyage final
 
 **Objectif :** Packaging production-ready, Docker full-stack, README complet.
 
@@ -452,10 +539,10 @@
 
 - `docker-compose.yml` racine : MySQL + backend + frontend
 - Review `01-schema.sql` (index, FK, contraintes)
-- Vérifier que toutes les tables ajoutées dans les phases 2 à 9 sont présentes dans `infra/mysql-init/01-schema.sql`
+- Vérifier que toutes les tables ajoutées dans les phases 2 à 10 sont présentes dans `infra/mysql-init/01-schema.sql`
 - Vérifier la matrice des rôles sur les routes backend et frontend avant livraison finale
 
-**Branch git :** `feature/phase-10-docker-cleanup`
+**Branch git :** `feature/phase-11-docker-cleanup`
 
 ---
 

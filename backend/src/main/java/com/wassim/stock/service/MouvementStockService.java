@@ -70,6 +70,7 @@ public class MouvementStockService {
         }
 
         if (request.type() == TypeMouvement.ENTREE) {
+            validateCapacityForEntry(entrepot, request.quantite());
             stock.setQuantite(stock.getQuantite() + request.quantite());
         } else {
             stock.setQuantite(stock.getQuantite() - request.quantite());
@@ -94,6 +95,26 @@ public class MouvementStockService {
     private Entrepot findEntrepotById(Long id) {
         return entrepotRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Entrepot introuvable : " + id));
+    }
+
+    private void validateCapacityForEntry(Entrepot entrepot, Integer requestedQuantity) {
+        long usedCapacity = getUsedCapacity(entrepot.getId());
+        long finalCapacity = usedCapacity + requestedQuantity;
+
+        if (finalCapacity > entrepot.getCapacite()) {
+            long availableCapacity = Math.max(entrepot.getCapacite() - usedCapacity, 0);
+            throw new ConflictException(
+                    "Capacite insuffisante pour cet entrepot. Capacite disponible : "
+                            + availableCapacity
+                            + ", quantite demandee : "
+                            + requestedQuantity
+            );
+        }
+    }
+
+    private long getUsedCapacity(Long entrepotId) {
+        Long usedCapacity = stockRepository.sumQuantiteByEntrepotId(entrepotId);
+        return usedCapacity == null ? 0 : usedCapacity;
     }
 
     private void validateReadable(MouvementStock mouvementStock) {

@@ -6,6 +6,7 @@ import com.wassim.stock.entity.Entrepot;
 import com.wassim.stock.entity.Role;
 import com.wassim.stock.entity.Utilisateur;
 import com.wassim.stock.exception.BadRequestException;
+import com.wassim.stock.exception.ConflictException;
 import com.wassim.stock.exception.ResourceNotFoundException;
 import com.wassim.stock.repository.EntrepotRepository;
 import com.wassim.stock.repository.MouvementStockRepository;
@@ -60,6 +61,7 @@ public class EntrepotService {
     public EntrepotResponse update(Long id, EntrepotRequest request) {
         Entrepot entrepot = findEntityById(id);
         validateUniqueName(request.nom(), id);
+        validateCapacityLimit(entrepot, request.capacite());
         applyRequest(entrepot, request);
         return toResponse(entrepotRepository.save(entrepot));
     }
@@ -104,6 +106,18 @@ public class EntrepotService {
                 });
     }
 
+    private void validateCapacityLimit(Entrepot entrepot, Integer requestedCapacity) {
+        int usedCapacity = getUsedCapacity(entrepot.getId());
+        if (requestedCapacity < usedCapacity) {
+            throw new ConflictException(
+                    "Capacite insuffisante pour cet entrepot. Capacite utilisee : "
+                            + usedCapacity
+                            + ", capacite demandee : "
+                            + requestedCapacity
+            );
+        }
+    }
+
     private Utilisateur getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return utilisateurRepository.findByEmail(email)
@@ -119,11 +133,25 @@ public class EntrepotService {
     }
 
     private EntrepotResponse toResponse(Entrepot entrepot) {
+        int usedCapacity = getUsedCapacity(entrepot.getId());
+        int availableCapacity = Math.max(entrepot.getCapacite() - usedCapacity, 0);
+        double occupancyRate = entrepot.getCapacite() == 0
+                ? 0
+                : (double) usedCapacity / entrepot.getCapacite();
+
         return new EntrepotResponse(
                 entrepot.getId(),
                 entrepot.getNom(),
                 entrepot.getAdresse(),
-                entrepot.getCapacite()
+                entrepot.getCapacite(),
+                usedCapacity,
+                availableCapacity,
+                occupancyRate
         );
+    }
+
+    private int getUsedCapacity(Long entrepotId) {
+        Long usedCapacity = stockRepository.sumQuantiteByEntrepotId(entrepotId);
+        return usedCapacity == null ? 0 : Math.toIntExact(usedCapacity);
     }
 }

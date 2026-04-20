@@ -8,6 +8,7 @@ import com.wassim.stock.entity.Role;
 import com.wassim.stock.entity.Stock;
 import com.wassim.stock.entity.Utilisateur;
 import com.wassim.stock.exception.BadRequestException;
+import com.wassim.stock.exception.ConflictException;
 import com.wassim.stock.exception.ResourceNotFoundException;
 import com.wassim.stock.repository.EntrepotRepository;
 import com.wassim.stock.repository.MouvementStockRepository;
@@ -56,6 +57,7 @@ public class StockService {
         Produit produit = findProduitById(request.produitId());
         Entrepot entrepot = resolveWritableEntrepot(request.entrepotId());
         validateUniqueStock(produit.getId(), entrepot.getId(), null);
+        validateCapacity(entrepot, request.quantite(), null);
 
         Stock stock = new Stock();
         stock.setProduit(produit);
@@ -72,6 +74,7 @@ public class StockService {
         Produit produit = findProduitById(request.produitId());
         Entrepot entrepot = resolveWritableEntrepot(request.entrepotId());
         validateUniqueStock(produit.getId(), entrepot.getId(), id);
+        validateCapacity(entrepot, request.quantite(), id);
 
         stock.setProduit(produit);
         stock.setEntrepot(entrepot);
@@ -128,6 +131,33 @@ public class StockService {
                 .ifPresent(existing -> {
                     throw new BadRequestException("Ce produit existe deja dans cet entrepot");
                 });
+    }
+
+    private void validateCapacity(Entrepot entrepot, Integer requestedQuantity, Long currentStockId) {
+        long usedCapacity = currentStockId == null
+                ? getUsedCapacity(entrepot.getId())
+                : getUsedCapacityExcludingStock(entrepot.getId(), currentStockId);
+        long finalCapacity = usedCapacity + requestedQuantity;
+
+        if (finalCapacity > entrepot.getCapacite()) {
+            long availableCapacity = Math.max(entrepot.getCapacite() - usedCapacity, 0);
+            throw new ConflictException(
+                    "Capacite insuffisante pour cet entrepot. Capacite disponible : "
+                            + availableCapacity
+                            + ", quantite demandee : "
+                            + requestedQuantity
+            );
+        }
+    }
+
+    private long getUsedCapacity(Long entrepotId) {
+        Long usedCapacity = stockRepository.sumQuantiteByEntrepotId(entrepotId);
+        return usedCapacity == null ? 0 : usedCapacity;
+    }
+
+    private long getUsedCapacityExcludingStock(Long entrepotId, Long stockId) {
+        Long usedCapacity = stockRepository.sumQuantiteByEntrepotIdExcludingStock(entrepotId, stockId);
+        return usedCapacity == null ? 0 : usedCapacity;
     }
 
     private void validateReadable(Stock stock) {

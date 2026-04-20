@@ -67,6 +67,15 @@ import { EntrepotService } from '../../core/services/entrepot.service';
               <mat-label>Capacite</mat-label>
               <input matInput type="number" min="1" formControlName="capacite" />
             </mat-form-field>
+            @if (selectedEntrepot(); as entrepot) {
+              <div class="capacity-note" [class.capacity-note--error]="isCapacityReductionInvalid()">
+                <span>Utilisee : {{ entrepot.capaciteUtilisee }}</span>
+                <span>Disponible actuelle : {{ entrepot.capaciteDisponible }}</span>
+                <span>Disponible apres modification : {{ availableAfterEdit() }}</span>
+              </div>
+            } @else {
+              <p class="capacity-note">Cette valeur definit la limite maximale de stock de l'entrepot.</p>
+            }
 
             @if (feedbackMessage()) {
               <p class="feedback" [class.feedback--error]="feedbackState() === 'error'">
@@ -75,7 +84,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
             }
 
             <div class="actions">
-              <button mat-flat-button type="submit" [disabled]="form.invalid || isSubmitting()">
+              <button mat-flat-button type="submit" [disabled]="form.invalid || isCapacityReductionInvalid() || isSubmitting()">
                 @if (isSubmitting()) {
                   <mat-progress-spinner diameter="18" mode="indeterminate" />
                 } @else {
@@ -121,6 +130,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
               <span role="columnheader">Nom</span>
               <span role="columnheader">Adresse</span>
               <span role="columnheader">Capacite</span>
+              <span role="columnheader">Occupation</span>
               @if (canManage()) {
                 <span role="columnheader">Actions</span>
               }
@@ -130,7 +140,19 @@ import { EntrepotService } from '../../core/services/entrepot.service';
               <article class="table__row" role="row">
                 <strong role="cell">{{ entrepot.nom }}</strong>
                 <span role="cell">{{ entrepot.adresse }}</span>
-                <span role="cell">{{ entrepot.capacite }}</span>
+                <span role="cell" class="capacity-stack">
+                  <strong>{{ entrepot.capacite }} total</strong>
+                  <small>{{ entrepot.capaciteUtilisee }} utilisee</small>
+                  <small>{{ entrepot.capaciteDisponible }} disponible</small>
+                </span>
+                <span role="cell" class="occupation-cell">
+                  <span class="capacity-meter" aria-hidden="true">
+                    <span [style.width]="meterWidth(entrepot)"></span>
+                  </span>
+                  <span class="capacity-pill" [class.capacity-pill--warning]="entrepot.tauxOccupation >= 0.9" [class.capacity-pill--full]="entrepot.capaciteDisponible === 0">
+                    {{ formatOccupation(entrepot) }} - {{ capacityStatus(entrepot) }}
+                  </span>
+                </span>
                 @if (canManage()) {
                   <div class="row-actions" role="cell">
                     <button mat-button type="button" (click)="edit(entrepot)">
@@ -227,6 +249,23 @@ import { EntrepotService } from '../../core/services/entrepot.service';
       width: 100%;
     }
 
+    .capacity-note {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: -0.35rem 0 0;
+      padding: 0.8rem 0.9rem;
+      border-radius: 1rem;
+      background: rgba(29, 95, 168, 0.1);
+      color: var(--stockpro-blue);
+      font-weight: 700;
+    }
+
+    .capacity-note--error {
+      background: rgba(209, 77, 65, 0.1);
+      color: var(--stockpro-danger);
+    }
+
     .count {
       display: inline-flex;
       align-items: center;
@@ -268,7 +307,9 @@ import { EntrepotService } from '../../core/services/entrepot.service';
 
     .table__row {
       display: grid;
-      grid-template-columns: minmax(150px, 1fr) minmax(180px, 1.4fr) minmax(90px, 0.5fr) minmax(210px, auto);
+      grid-template-columns:
+        minmax(130px, 0.9fr) minmax(170px, 1.2fr) minmax(130px, 0.7fr)
+        minmax(180px, 0.9fr) minmax(210px, auto);
       gap: 1rem;
       align-items: center;
       padding: 1rem 1.1rem;
@@ -277,7 +318,9 @@ import { EntrepotService } from '../../core/services/entrepot.service';
     }
 
     .page-grid--readonly .table__row {
-      grid-template-columns: minmax(150px, 1fr) minmax(180px, 1.4fr) minmax(90px, 0.5fr);
+      grid-template-columns:
+        minmax(130px, 0.9fr) minmax(170px, 1.2fr) minmax(130px, 0.7fr)
+        minmax(180px, 0.9fr);
     }
 
     .table__row--head {
@@ -285,6 +328,55 @@ import { EntrepotService } from '../../core/services/entrepot.service';
       color: var(--stockpro-muted);
       font-weight: 700;
       padding-block: 0.4rem;
+    }
+
+    .capacity-stack,
+    .occupation-cell {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .capacity-stack small {
+      color: var(--stockpro-muted);
+      font-weight: 700;
+    }
+
+    .capacity-meter {
+      display: block;
+      width: 100%;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(22, 33, 47, 0.1);
+    }
+
+    .capacity-meter span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--stockpro-green);
+    }
+
+    .capacity-pill {
+      display: inline-flex;
+      width: max-content;
+      align-items: center;
+      justify-content: center;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(29, 122, 92, 0.12);
+      color: var(--stockpro-green);
+      font-weight: 800;
+    }
+
+    .capacity-pill--warning {
+      background: rgba(220, 146, 45, 0.14);
+      color: #9a5d12;
+    }
+
+    .capacity-pill--full {
+      background: rgba(209, 77, 65, 0.1);
+      color: var(--stockpro-danger);
     }
 
     .danger {
@@ -335,6 +427,9 @@ export class EntrepotsPageComponent {
   protected readonly feedbackState = signal<'success' | 'error'>('success');
   protected readonly canManage = computed(() => this.authService.hasRole('ADMIN'));
   protected readonly isEditing = computed(() => this.selectedEntrepotId() !== null);
+  protected readonly selectedEntrepot = computed(() =>
+    this.entrepots().find((entrepot) => entrepot.id === this.selectedEntrepotId()) ?? null
+  );
 
   protected readonly form = this.formBuilder.nonNullable.group({
     nom: ['', [Validators.required]],
@@ -347,7 +442,7 @@ export class EntrepotsPageComponent {
   }
 
   protected save(): void {
-    if (!this.canManage() || this.form.invalid || this.isSubmitting()) {
+    if (!this.canManage() || this.form.invalid || this.isCapacityReductionInvalid() || this.isSubmitting()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -432,6 +527,40 @@ export class EntrepotsPageComponent {
       adresse: '',
       capacite: 1,
     });
+  }
+
+  protected availableAfterEdit(): number {
+    const selectedEntrepot = this.selectedEntrepot();
+    if (!selectedEntrepot) {
+      return Number(this.form.controls.capacite.value);
+    }
+
+    return Math.max(Number(this.form.controls.capacite.value) - selectedEntrepot.capaciteUtilisee, 0);
+  }
+
+  protected isCapacityReductionInvalid(): boolean {
+    const selectedEntrepot = this.selectedEntrepot();
+    return !!selectedEntrepot && Number(this.form.controls.capacite.value) < selectedEntrepot.capaciteUtilisee;
+  }
+
+  protected formatOccupation(entrepot: Entrepot): string {
+    return `${Math.round(entrepot.tauxOccupation * 100)}%`;
+  }
+
+  protected meterWidth(entrepot: Entrepot): string {
+    return `${Math.min(Math.max(entrepot.tauxOccupation * 100, 0), 100)}%`;
+  }
+
+  protected capacityStatus(entrepot: Entrepot): string {
+    if (entrepot.capaciteDisponible === 0) {
+      return 'Plein';
+    }
+
+    if (entrepot.tauxOccupation >= 0.9) {
+      return 'Presque plein';
+    }
+
+    return 'Disponible';
   }
 
   private loadEntrepots(): void {

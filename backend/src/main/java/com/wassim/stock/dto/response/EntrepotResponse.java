@@ -4,6 +4,9 @@ public record EntrepotResponse(
         Long id,
         String nom,
         String adresse,
-        Integer capacite
+        Integer capacite,
+        Integer capaciteUtilisee,
+        Integer capaciteDisponible,
+        Double tauxOccupation
 ) {
 }

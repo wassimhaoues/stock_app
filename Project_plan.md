@@ -314,7 +314,7 @@
 
 ---
 
-## Phase 7 — Gestion de la capacité des entrepôts
+## Phase 7 — Gestion de la capacité des entrepôts [DONE]
 
 **Objectif :** Transformer `Entrepot.capacite` en contrainte métier réelle. La capacité disponible d'un entrepôt doit être calculée depuis les quantités de stock réellement présentes dans cet entrepôt, affichée aux endroits utiles, et bloquer toute entrée de stock qui dépasserait la capacité maximale.
 

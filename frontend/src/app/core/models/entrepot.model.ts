@@ -3,4 +3,7 @@ export type Entrepot = {
   nom: string;
   adresse: string;
   capacite: number;
+  capaciteUtilisee: number;
+  capaciteDisponible: number;
+  tauxOccupation: number;
 };

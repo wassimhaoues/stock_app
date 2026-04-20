@@ -1,153 +1,423 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { catchError, map, of, startWith } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 
+import { Alerte } from '../../core/models/alerte.model';
+import { AdminAnalytics, DashboardAnalytics, DashboardKpis, DashboardStats } from '../../core/models/dashboard.model';
+import { AlerteService } from '../../core/services/alerte.service';
 import { AuthService } from '../../core/services/auth.service';
-import { HealthService } from '../../core/services/health.service';
-
-type ViewModel =
-  | { state: 'loading' }
-  | { state: 'success'; application: string; status: string; checkedAt: Date }
-  | { state: 'error'; message: string };
+import { DashboardService } from '../../core/services/dashboard.service';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
   imports: [
+    CommonModule,
     DatePipe,
-    MatButtonModule,
+    DecimalPipe,
     MatCardModule,
-    MatChipsModule,
     MatIconModule,
     MatProgressSpinnerModule,
   ],
   template: `
-    <section class="hero">
-      <div class="hero__copy">
-        <p class="hero__eyebrow">Phase 2 active</p>
-        <h2>Backend Spring, login JWT et routes protegees fonctionnent ensemble.</h2>
-        <p class="hero__text">
-          Cette page confirme la disponibilite de l'API et l'activation de votre session
-          authentifiee pour la Phase 2.
-        </p>
-        <mat-chip-set>
-          <mat-chip class="chip chip--success">Session active</mat-chip>
-          <mat-chip>{{ authService.currentUser()?.role }}</mat-chip>
-        </mat-chip-set>
+    <section class="page-header">
+      <div>
+        <p class="page-header__eyebrow">Pilotage</p>
+        <h2>Dashboard analytique</h2>
+        <p>{{ scopeDescription() }}</p>
       </div>
+      <div class="header-badges">
+        <span class="chip">{{ authService.currentUser()?.role }}</span>
+        <span class="chip chip--danger">Alertes {{ alertes().length }}</span>
+      </div>
+    </section>
 
-      <mat-card class="hero__card">
-        @switch (viewModel().state) {
-          @case ('loading') {
-            <div class="state state--loading">
-              <mat-progress-spinner diameter="48" mode="indeterminate" />
-              <div>
-                <h3>Connexion en cours</h3>
-                <p>On verifie la sante du backend Spring Boot.</p>
-              </div>
-            </div>
-          }
-          @case ('success') {
-            <div class="state state--success">
-              <div class="state__icon">
-                <mat-icon>check_circle</mat-icon>
-              </div>
-              <div>
-                <mat-chip-set>
-                  <mat-chip class="chip chip--success">Backend connecte</mat-chip>
-                </mat-chip-set>
-                <h3>{{ successState()?.application }}</h3>
-                <p>L'API repond avec le statut <strong>{{ successState()?.status }}</strong>.</p>
-                <p class="state__meta">
-                  Derniere verification : {{ successState()?.checkedAt | date: 'HH:mm:ss' }}
+    @if (feedbackMessage()) {
+      <p class="feedback feedback--error">{{ feedbackMessage() }}</p>
+    }
+
+    @if (isLoading()) {
+      <mat-card class="loading-card">
+        <mat-progress-spinner diameter="42" mode="indeterminate" />
+        <p>Chargement des indicateurs...</p>
+      </mat-card>
+    } @else if (stats(); as statsData) {
+      @if (kpis(); as kpisData) {
+        @if (analytics(); as analyticsData) {
+          @if (isAdmin() && adminAnalytics(); as adminData) {
+            <mat-card class="analytics-hero">
+              <div class="analytics-hero__content">
+                <p class="section-eyebrow">Analyse globale ADMIN</p>
+                <h3>Performance multi-entrepots</h3>
+                <p>
+                  Les indicateurs consolident la valeur du stock, la pression capacite,
+                  les alertes et l'activite recente pour prioriser les decisions.
                 </p>
+                <div class="hero-metrics">
+                  <span>
+                    <strong>{{ formatMoney(statsData.valeurTotaleStock) }}</strong>
+                    Valeur stock
+                  </span>
+                  <span>
+                    <strong>{{ formatMoney(adminData.valeurMoyenneParEntrepot) }}</strong>
+                    Moyenne / entrepot
+                  </span>
+                  <span>
+                    <strong>{{ adminData.entrepotsEnRisqueCapacite }}</strong>
+                    Entrepots en risque capacite
+                  </span>
+                </div>
               </div>
-            </div>
+
+              <div class="benchmark-list">
+                @for (item of adminData.performanceEntrepots.slice(0, 4); track item.entrepotId) {
+                  <div class="benchmark-row">
+                    <div>
+                      <strong>{{ item.entrepotNom }}</strong>
+                      <p>
+                        {{ item.mouvementsMois }} mouvements ce mois ·
+                        {{ item.alertes }} alertes
+                      </p>
+                    </div>
+                    <div class="bar-block">
+                      <span>{{ formatMoney(item.valeurStock) }}</span>
+                      <span class="bar" aria-hidden="true">
+                        <span
+                          class="bar__fill"
+                          [style.width]="barWidth(item.valeurStock, adminValueMax())"
+                          [class.bar__fill--warning]="item.tauxSaturation >= 0.75"
+                          [class.bar__fill--danger]="item.tauxSaturation >= 0.9"
+                        ></span>
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </mat-card>
           }
-          @default {
-            <div class="state state--error">
-              <div class="state__icon">
-                <mat-icon>error</mat-icon>
+
+          <section class="kpi-grid">
+            <mat-card class="kpi-card">
+              <span class="kpi-card__icon"><mat-icon>payments</mat-icon></span>
+              <p>Valeur totale du stock</p>
+              <strong>{{ formatMoney(statsData.valeurTotaleStock) }}</strong>
+            </mat-card>
+            <mat-card class="kpi-card">
+              <span class="kpi-card__icon"><mat-icon>category</mat-icon></span>
+              <p>Produits actifs</p>
+              <strong>{{ kpisData.produitsActifs | number: '1.0-0' }}</strong>
+            </mat-card>
+            <mat-card class="kpi-card">
+              <span class="kpi-card__icon kpi-card__icon--danger"><mat-icon>warning</mat-icon></span>
+              <p>Risque de rupture</p>
+              <strong>{{ formatRate(kpisData.tauxRisqueRupture) }}</strong>
+            </mat-card>
+            <mat-card class="kpi-card">
+              <span class="kpi-card__icon"><mat-icon>warehouse</mat-icon></span>
+              <p>Capacite disponible</p>
+              <strong>{{ statsData.capaciteDisponible | number: '1.0-0' }}</strong>
+            </mat-card>
+          </section>
+
+          <section class="dashboard-grid dashboard-grid--main">
+            <mat-card class="panel-card panel-card--wide">
+              <div class="panel-card__header">
+                <div>
+                  <p class="section-eyebrow">Tendance</p>
+                  <h3>Mouvements sur 7 jours</h3>
+                </div>
+                <span class="metric-chip">
+                  Couverture
+                  {{
+                    kpisData.couvertureStockJoursEstimee === null
+                      ? 'N/A'
+                      : (kpisData.couvertureStockJoursEstimee | number: '1.0-0') + ' j'
+                  }}
+                </span>
               </div>
+
+              <div class="movement-chart">
+                @for (point of analyticsData.mouvementsParJour; track point.date) {
+                  <div class="movement-day">
+                    <div class="movement-day__bars">
+                      <span
+                        class="vertical-bar vertical-bar--in"
+                        [style.height]="barHeight(point.entrees, movementMax())"
+                        aria-hidden="true"
+                      ></span>
+                      <span
+                        class="vertical-bar vertical-bar--out"
+                        [style.height]="barHeight(point.sorties, movementMax())"
+                        aria-hidden="true"
+                      ></span>
+                    </div>
+                    <strong>{{ point.date | date: 'dd/MM' }}</strong>
+                    <small>{{ point.entrees }}/{{ point.sorties }}</small>
+                  </div>
+                }
+              </div>
+
+              <div class="legend">
+                <span><i class="legend-dot legend-dot--in"></i> Entrees</span>
+                <span><i class="legend-dot legend-dot--out"></i> Sorties</span>
+              </div>
+            </mat-card>
+
+            <mat-card class="panel-card">
+              <div class="panel-card__header">
+                <div>
+                  <p class="section-eyebrow">Flux</p>
+                  <h3>Mouvements</h3>
+                </div>
+              </div>
+              <div class="stats-row">
+                <span>Jour</span>
+                <strong>+{{ kpisData.entreesJour }}</strong>
+                <em>-{{ kpisData.sortiesJour }}</em>
+              </div>
+              <div class="stats-row">
+                <span>Semaine</span>
+                <strong>+{{ kpisData.entreesSemaine }}</strong>
+                <em>-{{ kpisData.sortiesSemaine }}</em>
+              </div>
+              <div class="stats-row">
+                <span>Mois</span>
+                <strong>+{{ kpisData.entreesMois }}</strong>
+                <em>-{{ kpisData.sortiesMois }}</em>
+              </div>
+            </mat-card>
+          </section>
+
+          <section class="dashboard-grid">
+            <mat-card class="panel-card">
+              <div class="panel-card__header">
+                <div>
+                  <p class="section-eyebrow">Valeur</p>
+                  <h3>Stock par entrepot</h3>
+                </div>
+              </div>
+              @if (kpisData.valeurStockParEntrepot.length === 0) {
+                <p class="empty">Aucune valeur de stock disponible.</p>
+              } @else {
+                @for (item of kpisData.valeurStockParEntrepot; track item.entrepotId) {
+                  <div class="bar-row">
+                    <div>
+                      <strong>{{ item.entrepotNom }}</strong>
+                      <span>{{ formatMoney(item.valeurStock) }}</span>
+                    </div>
+                    <span class="bar" aria-hidden="true">
+                      <span class="bar__fill" [style.width]="barWidth(item.valeurStock, warehouseValueMax())"></span>
+                    </span>
+                  </div>
+                }
+              }
+            </mat-card>
+
+            <mat-card class="panel-card">
+              <div class="panel-card__header">
+                <div>
+                  <p class="section-eyebrow">Capacite</p>
+                  <h3>Saturation entrepots</h3>
+                </div>
+              </div>
+              @if (kpisData.capaciteParEntrepot.length === 0) {
+                <p class="empty">Aucune capacite disponible.</p>
+              } @else {
+                @for (item of kpisData.capaciteParEntrepot; track item.entrepotId) {
+                  <div class="bar-row">
+                    <div>
+                      <strong>{{ item.entrepotNom }}</strong>
+                      <span>
+                        {{ item.capaciteUtilisee }}/{{ item.capacite }} ·
+                        {{ item.capaciteDisponible }} disponible
+                      </span>
+                    </div>
+                    <span class="bar" aria-hidden="true">
+                      <span
+                        class="bar__fill"
+                        [style.width]="barWidth(item.tauxSaturation, 1)"
+                        [class.bar__fill--warning]="item.tauxSaturation >= 0.75"
+                        [class.bar__fill--danger]="item.tauxSaturation >= 0.9"
+                      ></span>
+                    </span>
+                  </div>
+                }
+              }
+            </mat-card>
+
+            <mat-card class="panel-card">
+              <div class="panel-card__header">
+                <div>
+                  <p class="section-eyebrow">Catalogue</p>
+                  <h3>Top produits mouvementes</h3>
+                </div>
+              </div>
+              @if (analyticsData.topProduitsMouvementes.length === 0) {
+                <p class="empty">Aucun mouvement enregistre.</p>
+              } @else {
+                @for (item of analyticsData.topProduitsMouvementes; track item.produitId) {
+                  <div class="bar-row">
+                    <div>
+                      <strong>{{ item.produitNom }}</strong>
+                      <span>{{ item.quantiteMouvementee }} unites · {{ formatMoney(item.valeurStock) }}</span>
+                    </div>
+                    <span class="bar" aria-hidden="true">
+                      <span class="bar__fill" [style.width]="barWidth(item.quantiteMouvementee, productMovementMax())"></span>
+                    </span>
+                  </div>
+                }
+              }
+            </mat-card>
+          </section>
+
+          <section class="dashboard-grid dashboard-grid--secondary">
+            <mat-card class="panel-card">
+              <div class="panel-card__header">
+                <div>
+                  <p class="section-eyebrow">Risque</p>
+                  <h3>Alertes par gravite</h3>
+                </div>
+              </div>
+              @if (analyticsData.alertesParGravite.length === 0) {
+                <p class="empty">Aucune alerte active.</p>
+              } @else {
+                @for (item of analyticsData.alertesParGravite; track item.priorite) {
+                  <div class="list-row">
+                    <span class="priority" [class.priority--critical]="item.priorite === 'CRITIQUE'">
+                      {{ item.priorite }}
+                    </span>
+                    <strong>{{ item.total }}</strong>
+                  </div>
+                }
+              }
+            </mat-card>
+
+            <mat-card class="panel-card">
+              <div class="panel-card__header">
+                <div>
+                  <p class="section-eyebrow">Rotation</p>
+                  <h3>Stocks dormants</h3>
+                </div>
+                <span class="metric-chip">{{ kpisData.stocksDormants }}</span>
+              </div>
+              @if (analyticsData.stocksDormants.length === 0) {
+                <p class="empty">Aucun stock dormant detecte.</p>
+              } @else {
+                @for (item of analyticsData.stocksDormants; track item.stockId) {
+                  <div class="list-row list-row--stack">
+                    <div>
+                      <strong>{{ item.produitNom }}</strong>
+                      <p>{{ item.entrepotNom }} · {{ item.quantite }} unites</p>
+                    </div>
+                    <span>{{ item.joursSansMouvement }} j</span>
+                  </div>
+                }
+              }
+            </mat-card>
+
+            <mat-card class="panel-card">
+              <div class="panel-card__header">
+                <div>
+                  <p class="section-eyebrow">Activite</p>
+                  <h3>Entrepots actifs</h3>
+                </div>
+              </div>
+              @if (analyticsData.entrepotsActifs.length === 0) {
+                <p class="empty">Aucune activite recente.</p>
+              } @else {
+                @for (item of analyticsData.entrepotsActifs; track item.entrepotId) {
+                  <div class="bar-row">
+                    <div>
+                      <strong>{{ item.entrepotNom }}</strong>
+                      <span>{{ item.totalMouvements }} mouvements</span>
+                    </div>
+                    <span class="bar" aria-hidden="true">
+                      <span class="bar__fill" [style.width]="barWidth(item.quantiteMouvementee, warehouseActivityMax())"></span>
+                    </span>
+                  </div>
+                }
+              }
+            </mat-card>
+          </section>
+
+          <mat-card class="table-card">
+            <div class="panel-card__header">
               <div>
-                <mat-chip-set>
-                  <mat-chip class="chip chip--error">Connexion indisponible</mat-chip>
-                </mat-chip-set>
-                <h3>Le backend ne repond pas encore</h3>
-                <p>{{ errorMessage() }}</p>
-                <button mat-flat-button type="button" color="primary" (click)="reload()">
-                  Reessayer
-                </button>
+                <p class="section-eyebrow">Alertes actives</p>
+                <h3>Stocks sous seuil</h3>
               </div>
+              <span class="metric-chip">{{ alertes().length }}</span>
             </div>
-          }
+
+            @if (alertes().length === 0) {
+              <p class="empty">Aucun stock sous seuil.</p>
+            } @else {
+              <div class="table table--alerts" role="table">
+                <div class="table__row table__row--head" role="row">
+                  <span role="columnheader">Priorite</span>
+                  <span role="columnheader">Produit</span>
+                  <span role="columnheader">Entrepot</span>
+                  <span role="columnheader">Quantite</span>
+                  <span role="columnheader">Seuil</span>
+                  <span role="columnheader">Action attendue</span>
+                </div>
+                @for (alerte of alertes(); track alerte.stockId) {
+                  <article class="table__row" role="row">
+                    <span role="cell" class="priority" [class.priority--critical]="alerte.priorite === 'CRITIQUE'">
+                      {{ alerte.priorite }}
+                    </span>
+                    <strong role="cell">{{ alerte.produitNom }}</strong>
+                    <span role="cell">{{ alerte.entrepotNom }}</span>
+                    <span role="cell">{{ alerte.quantite }}</span>
+                    <span role="cell">{{ alerte.seuilAlerte }}</span>
+                    <span role="cell">{{ alerte.actionAttendue }}</span>
+                  </article>
+                }
+              </div>
+            }
+          </mat-card>
         }
-      </mat-card>
-    </section>
-
-    <section class="grid">
-      <mat-card class="info-card">
-        <div class="info-card__icon"><mat-icon>account_tree</mat-icon></div>
-        <h3>Routing lazy-loaded</h3>
-        <p>La page d'accueil est chargee via <code>loadComponent</code> pour poser la base des futurs modules.</p>
-      </mat-card>
-
-      <mat-card class="info-card">
-        <div class="info-card__icon"><mat-icon>view_sidebar</mat-icon></div>
-        <h3>Routes protegees</h3>
-        <p>Le shell principal n'est accessible qu'apres connexion et s'adapte au role courant.</p>
-      </mat-card>
-
-      <mat-card class="info-card">
-        <div class="info-card__icon"><mat-icon>admin_panel_settings</mat-icon></div>
-        <h3>Roles utilisateur</h3>
-        <p>L'ADMIN peut acceder a la gestion des utilisateurs, tandis que les autres roles restent limites.</p>
-      </mat-card>
-    </section>
+      }
+    }
   `,
   styles: `
     :host {
       display: grid;
-      gap: 1.5rem;
+      gap: 1rem;
     }
 
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-      gap: 1.5rem;
-      align-items: stretch;
-    }
-
-    .hero__copy,
-    .hero__card,
-    .info-card {
-      border-radius: 1.75rem;
+    .page-header,
+    .analytics-hero,
+    .kpi-card,
+    .panel-card,
+    .table-card,
+    .loading-card {
+      border-radius: 1.25rem;
       border: 1px solid var(--stockpro-line);
       background: var(--stockpro-panel);
-      backdrop-filter: blur(16px);
-      box-shadow: 0 18px 40px rgba(22, 33, 47, 0.08);
+      box-shadow: 0 16px 36px rgba(22, 33, 47, 0.08);
     }
 
-    .hero__copy {
-      padding: 2rem;
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 247, 234, 0.92)),
-        linear-gradient(145deg, rgba(244, 197, 93, 0.12), transparent);
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.25rem;
     }
 
-    .hero__eyebrow {
-      margin: 0 0 0.75rem;
+    .page-header__eyebrow,
+    .section-eyebrow {
+      margin: 0 0 0.35rem;
       color: var(--stockpro-blue);
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.12em;
+      font-size: 0.72rem;
       font-weight: 700;
-      font-size: 0.78rem;
     }
 
     h2,
@@ -157,167 +427,548 @@ type ViewModel =
       color: var(--stockpro-ink);
     }
 
-    h2 {
-      font-size: clamp(2rem, 3vw, 3.3rem);
-      line-height: 1.05;
-      max-width: 13ch;
-    }
-
-    .hero__text {
-      margin: 1rem 0 0;
-      max-width: 58ch;
-      color: var(--stockpro-muted);
-      font-size: 1.05rem;
-      line-height: 1.65;
-    }
-
-    code {
-      padding: 0.12rem 0.4rem;
-      border-radius: 0.45rem;
-      background: rgba(22, 33, 47, 0.08);
-      font-size: 0.92em;
-    }
-
-    .hero__card {
-      padding: 1.5rem;
-    }
-
-    .state {
-      display: flex;
-      height: 100%;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .state__icon {
-      display: grid;
-      place-items: center;
-      width: 64px;
-      height: 64px;
-      border-radius: 1.25rem;
-      flex: 0 0 auto;
-      font-size: 2rem;
-    }
-
-    .state--success .state__icon {
-      color: var(--stockpro-green);
-      background: rgba(29, 122, 92, 0.12);
-    }
-
-    .state--error .state__icon {
-      color: var(--stockpro-danger);
-      background: rgba(209, 77, 65, 0.12);
-    }
-
-    .state--loading {
-      justify-content: center;
-    }
-
-    .state p {
-      margin: 0.6rem 0 0;
+    .page-header p,
+    .analytics-hero p {
+      margin: 0.55rem 0 0;
       color: var(--stockpro-muted);
       line-height: 1.55;
     }
 
-    .state__meta {
-      font-size: 0.92rem;
+    .header-badges {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.5rem;
     }
 
-    .chip {
+    .chip,
+    .metric-chip {
       border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      background: rgba(29, 95, 168, 0.12);
+      color: var(--stockpro-blue);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .chip--danger {
+      background: rgba(209, 77, 65, 0.1);
+      color: var(--stockpro-danger);
+    }
+
+    .feedback {
+      margin: 0;
+      border-radius: 1rem;
+      padding: 0.85rem 1rem;
+      font-weight: 600;
+    }
+
+    .feedback--error {
+      background: rgba(209, 77, 65, 0.1);
+      color: var(--stockpro-danger);
+    }
+
+    .loading-card {
+      display: grid;
+      place-items: center;
+      gap: 0.75rem;
+      min-height: 180px;
+      padding: 1rem;
+      color: var(--stockpro-muted);
+    }
+
+    .analytics-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 1rem;
+      padding: 1.25rem;
+      background:
+        linear-gradient(135deg, rgba(22, 33, 47, 0.97), rgba(29, 95, 168, 0.88)),
+        var(--stockpro-panel);
+      color: #fffaf2;
+    }
+
+    .analytics-hero h3,
+    .analytics-hero .section-eyebrow {
+      color: #fffaf2;
+    }
+
+    .analytics-hero p {
+      color: rgba(255, 250, 242, 0.78);
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-top: 1rem;
+    }
+
+    .hero-metrics span,
+    .benchmark-row {
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.75rem;
+    }
+
+    .hero-metrics strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: 1.3rem;
+    }
+
+    .benchmark-list {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .benchmark-row {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .benchmark-row p {
+      margin: 0.2rem 0 0;
+    }
+
+    .bar-block {
+      display: grid;
+      gap: 0.35rem;
+      color: #fffaf2;
       font-weight: 700;
     }
 
-    .chip--success {
-      background: rgba(29, 122, 92, 0.12);
-      color: var(--stockpro-green);
+    .kpi-grid,
+    .dashboard-grid {
+      display: grid;
+      gap: 0.75rem;
     }
 
-    .chip--error {
-      background: rgba(209, 77, 65, 0.12);
+    .kpi-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .dashboard-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .dashboard-grid--main {
+      grid-template-columns: minmax(0, 2fr) minmax(280px, 0.9fr);
+    }
+
+    .dashboard-grid--secondary {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .kpi-card,
+    .panel-card,
+    .table-card {
+      padding: 1rem;
+    }
+
+    .kpi-card {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .kpi-card__icon {
+      display: inline-grid;
+      place-items: center;
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 0.8rem;
+      background: rgba(29, 95, 168, 0.12);
+      color: var(--stockpro-blue);
+    }
+
+    .kpi-card__icon--danger {
+      background: rgba(209, 77, 65, 0.1);
       color: var(--stockpro-danger);
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1rem;
-    }
-
-    .info-card {
-      padding: 1.5rem;
-    }
-
-    .info-card p {
-      margin: 0.8rem 0 0;
+    .kpi-card p,
+    .empty,
+    .bar-row span,
+    .list-row p {
+      margin: 0;
       color: var(--stockpro-muted);
-      line-height: 1.55;
     }
 
-    .info-card__icon {
-      display: inline-grid;
-      place-items: center;
-      width: 52px;
-      height: 52px;
-      margin-bottom: 1rem;
-      border-radius: 1rem;
-      color: var(--stockpro-blue);
-      background: rgba(29, 95, 168, 0.12);
+    .kpi-card strong {
+      color: var(--stockpro-ink);
+      font-size: 1.45rem;
     }
 
-    @media (max-width: 1100px) {
-      .hero {
+    .panel-card,
+    .table-card {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .panel-card__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .movement-chart {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 0.55rem;
+      min-height: 210px;
+      align-items: end;
+      padding-top: 0.5rem;
+    }
+
+    .movement-day {
+      display: grid;
+      gap: 0.4rem;
+      justify-items: center;
+      color: var(--stockpro-muted);
+    }
+
+    .movement-day__bars {
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 0.25rem;
+      height: 150px;
+      width: 100%;
+      border-radius: 0.75rem;
+      background: rgba(22, 33, 47, 0.04);
+      padding: 0.45rem;
+    }
+
+    .vertical-bar {
+      display: block;
+      width: min(34%, 1.1rem);
+      min-height: 0.35rem;
+      border-radius: 999px 999px 0 0;
+      background: var(--stockpro-blue);
+    }
+
+    .vertical-bar--out {
+      background: var(--stockpro-danger);
+    }
+
+    .movement-day strong {
+      color: var(--stockpro-ink);
+      font-size: 0.82rem;
+    }
+
+    .legend {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      color: var(--stockpro-muted);
+      font-weight: 700;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 999px;
+      background: var(--stockpro-blue);
+    }
+
+    .legend-dot--out {
+      background: var(--stockpro-danger);
+    }
+
+    .stats-row,
+    .list-row,
+    .bar-row {
+      border-radius: 0.8rem;
+      background: rgba(22, 33, 47, 0.05);
+      padding: 0.65rem 0.75rem;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.55rem;
+      align-items: center;
+    }
+
+    .stats-row strong {
+      color: #1f8a5b;
+    }
+
+    .stats-row em {
+      color: var(--stockpro-danger);
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    .bar-row {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .bar-row > div,
+    .list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .list-row--stack {
+      align-items: flex-start;
+    }
+
+    .bar,
+    .bar__fill {
+      display: block;
+      border-radius: 999px;
+    }
+
+    .bar {
+      height: 0.55rem;
+      overflow: hidden;
+      background: rgba(22, 33, 47, 0.11);
+    }
+
+    .analytics-hero .bar {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .bar__fill {
+      height: 100%;
+      min-width: 0.35rem;
+      background: var(--stockpro-blue);
+    }
+
+    .analytics-hero .bar__fill {
+      background: #f4c55d;
+    }
+
+    .bar__fill--warning {
+      background: #c98a14;
+    }
+
+    .bar__fill--danger {
+      background: var(--stockpro-danger);
+    }
+
+    .priority {
+      width: max-content;
+      border-radius: 999px;
+      padding: 0.25rem 0.65rem;
+      color: #8f5a00;
+      background: rgba(244, 197, 93, 0.18);
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+
+    .priority--critical {
+      color: var(--stockpro-danger);
+      background: rgba(209, 77, 65, 0.12);
+    }
+
+    .table {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .table__row {
+      display: grid;
+      gap: 0.7rem;
+      align-items: center;
+      padding: 0.8rem;
+      border-radius: 0.9rem;
+      background: rgba(22, 33, 47, 0.05);
+    }
+
+    .table__row--head {
+      background: transparent;
+      color: var(--stockpro-muted);
+      font-weight: 700;
+      padding: 0 0.2rem 0.15rem;
+    }
+
+    .table--alerts .table__row {
+      grid-template-columns:
+        minmax(95px, 0.55fr) minmax(150px, 1fr) minmax(130px, 0.8fr)
+        minmax(80px, 0.45fr) minmax(80px, 0.45fr) minmax(180px, 1.1fr);
+    }
+
+    @media (max-width: 1180px) {
+      .analytics-hero,
+      .dashboard-grid,
+      .dashboard-grid--main,
+      .dashboard-grid--secondary {
         grid-template-columns: 1fr;
       }
 
-      .grid {
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .table--alerts .table__row {
         grid-template-columns: 1fr;
+      }
+
+      .table__row--head {
+        display: none;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .page-header,
+      .hero-metrics,
+      .bar-row > div,
+      .list-row {
+        display: grid;
+      }
+
+      .header-badges {
+        justify-content: flex-start;
+      }
+
+      .kpi-grid,
+      .movement-chart {
+        grid-template-columns: 1fr;
+      }
+
+      .movement-day {
+        grid-template-columns: 70px 1fr auto;
+        align-items: center;
+        justify-items: stretch;
+      }
+
+      .movement-day__bars {
+        height: 42px;
+      }
+
+      .vertical-bar {
+        width: 1rem;
       }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePageComponent {
-  private readonly healthService = inject(HealthService);
   protected readonly authService = inject(AuthService);
+  private readonly dashboardService = inject(DashboardService);
+  private readonly alerteService = inject(AlerteService);
 
-  protected readonly viewModel = toSignal(this.createViewModel(), {
-    initialValue: { state: 'loading' } as ViewModel,
+  protected readonly isLoading = signal(true);
+  protected readonly feedbackMessage = signal('');
+
+  protected readonly stats = signal<DashboardStats | null>(null);
+  protected readonly kpis = signal<DashboardKpis | null>(null);
+  protected readonly analytics = signal<DashboardAnalytics | null>(null);
+  protected readonly adminAnalytics = signal<AdminAnalytics | null>(null);
+  protected readonly alertes = signal<Alerte[]>([]);
+
+  protected readonly isAdmin = computed(() => this.authService.hasRole('ADMIN'));
+
+  protected readonly movementMax = computed(() => {
+    const points = this.analytics()?.mouvementsParJour ?? [];
+    return Math.max(0, ...points.flatMap((point) => [point.entrees, point.sorties]));
   });
 
-  protected reload(): void {
-    window.location.reload();
+  protected readonly warehouseValueMax = computed(() => {
+    const items = this.kpis()?.valeurStockParEntrepot ?? [];
+    return Math.max(0, ...items.map((item) => item.valeurStock));
+  });
+
+  protected readonly productMovementMax = computed(() => {
+    const items = this.analytics()?.topProduitsMouvementes ?? [];
+    return Math.max(0, ...items.map((item) => item.quantiteMouvementee));
+  });
+
+  protected readonly warehouseActivityMax = computed(() => {
+    const items = this.analytics()?.entrepotsActifs ?? [];
+    return Math.max(0, ...items.map((item) => item.quantiteMouvementee));
+  });
+
+  protected readonly adminValueMax = computed(() => {
+    const items = this.adminAnalytics()?.performanceEntrepots ?? [];
+    return Math.max(0, ...items.map((item) => item.valeurStock));
+  });
+
+  constructor() {
+    this.loadDashboard();
   }
 
-  protected successState() {
-    const state = this.viewModel();
-    return state.state === 'success' ? state : null;
+  protected formatMoney(value: number | null | undefined): string {
+    return `${new Intl.NumberFormat('fr-TN', {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+    }).format(value ?? 0)} DT`;
   }
 
-  protected errorMessage() {
-    const state = this.viewModel();
-    return state.state === 'error' ? state.message : '';
+  protected formatRate(value: number | null | undefined): string {
+    return `${Math.round((value ?? 0) * 1000) / 10} %`;
   }
 
-  private createViewModel() {
-    return this.healthService.getHealth().pipe(
-      map(
-        (response) =>
-          ({
-            state: 'success',
-            application: response.application,
-            status: response.status,
-            checkedAt: new Date(),
-          }) satisfies ViewModel
-      ),
-      catchError(() =>
-        of({
-          state: 'error',
-          message:
-            "Demarre le backend sur le port 8085, puis recharge la page pour afficher 'Backend connecte'.",
-        } satisfies ViewModel)
-      ),
-      startWith({ state: 'loading' } satisfies ViewModel)
-    );
+  protected barWidth(value: number, max: number): string {
+    if (max <= 0 || value <= 0) {
+      return '0%';
+    }
+
+    return `${Math.min(100, Math.max(4, (value / max) * 100))}%`;
+  }
+
+  protected barHeight(value: number, max: number): string {
+    if (max <= 0 || value <= 0) {
+      return '0.35rem';
+    }
+
+    return `${Math.min(100, Math.max(8, (value / max) * 100))}%`;
+  }
+
+  protected scopeDescription(): string {
+    if (this.isAdmin()) {
+      return 'Vue globale multi-entrepots des performances, risques, capacites et flux.';
+    }
+
+    return 'Vue operationnelle filtree sur votre entrepot affecte, avec les indicateurs disponibles en lecture selon votre role.';
+  }
+
+  private loadDashboard(): void {
+    this.isLoading.set(true);
+    this.feedbackMessage.set('');
+
+    const adminRequest = this.isAdmin() ? this.dashboardService.getAdminAnalytics() : of(null);
+
+    forkJoin({
+      stats: this.dashboardService.getStats(),
+      kpis: this.dashboardService.getKpis(),
+      analytics: this.dashboardService.getAnalytics(),
+      alertes: this.alerteService.findAll(),
+      adminAnalytics: adminRequest,
+    }).subscribe({
+      next: (data) => {
+        this.stats.set(data.stats);
+        this.kpis.set(data.kpis);
+        this.analytics.set(data.analytics);
+        this.alertes.set(data.alertes);
+        this.adminAnalytics.set(data.adminAnalytics);
+        this.isLoading.set(false);
+      },
+      error: (error: unknown) => {
+        this.feedbackMessage.set(this.extractErrorMessage(error));
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  private extractErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      return error.error?.message ?? 'Une erreur est survenue pendant le chargement du dashboard.';
+    }
+
+    return 'Une erreur est survenue pendant le chargement du dashboard.';
   }
 }

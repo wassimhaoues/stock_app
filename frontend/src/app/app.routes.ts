@@ -47,6 +47,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'alertes',
+        loadComponent: () =>
+          import('./features/alertes/alertes-page.component').then(
+            (m) => m.AlertesPageComponent
+          ),
+      },
+      {
         path: 'utilisateurs',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },

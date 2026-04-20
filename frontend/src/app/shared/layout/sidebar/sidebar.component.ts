@@ -1,14 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { AlerteService } from '../../../core/services/alerte.service';
 
 type SidebarEntry = {
   label: string;
   icon: string;
   route?: string;
+  badge?: number;
 };
 
 @Component({
@@ -18,11 +20,10 @@ type SidebarEntry = {
   template: `
     <aside class="sidebar">
       <div class="sidebar__intro">
-        <p class="sidebar__kicker">Phase 2</p>
-        <h1>Connexion JWT, roles et acces protege en place.</h1>
+        <p class="sidebar__kicker">StockPro</p>
+        <h1>Pilotage des stocks multi-entrepots.</h1>
         <p>
-          Votre session determine les routes visibles et l'ADMIN peut maintenant gerer
-          les comptes utilisateurs.
+          Tableau de bord, alertes et modules operationnels adaptes a votre role.
         </p>
       </div>
 
@@ -37,6 +38,9 @@ type SidebarEntry = {
             >
               <mat-icon matListItemIcon>{{ entry.icon }}</mat-icon>
               <span matListItemTitle>{{ entry.label }}</span>
+              @if (entry.badge) {
+                <span class="chip chip--alert">{{ entry.badge }}</span>
+              }
             </a>
           } @else {
             <div mat-list-item class="coming-soon">
@@ -116,11 +120,18 @@ type SidebarEntry = {
       background: #f4c55d;
       font-weight: 700;
     }
+
+    .chip--alert {
+      color: #fffaf2;
+      background: var(--stockpro-danger);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent {
+  private readonly alerteService = inject(AlerteService);
   private readonly authService = inject(AuthService);
+  private readonly alertCount = signal(0);
 
   protected readonly entries = computed<SidebarEntry[]>(() => {
     const commonEntries: SidebarEntry[] = [
@@ -128,6 +139,7 @@ export class SidebarComponent {
       { label: 'Entrepots', icon: 'warehouse', route: '/entrepots' },
       { label: 'Produits', icon: 'category', route: '/produits' },
       { label: 'Stocks', icon: 'inventory', route: '/stocks' },
+      { label: 'Alertes', icon: 'warning', route: '/alertes', badge: this.alertCount() },
     ];
 
     if (this.authService.hasRole('ADMIN')) {
@@ -140,4 +152,11 @@ export class SidebarComponent {
 
     return commonEntries;
   });
+
+  constructor() {
+    this.alerteService.findAll().subscribe({
+      next: (alertes) => this.alertCount.set(alertes.length),
+      error: () => this.alertCount.set(0),
+    });
+  }
 }

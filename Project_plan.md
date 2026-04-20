@@ -68,8 +68,8 @@
 | 4     | Gestion des entrepôts (end-to-end) | ✅ DONE |
 | 5     | Gestion des produits (end-to-end)  | ✅ DONE |
 | 6     | Stocks & mouvements (end-to-end)   | ✅ DONE |
-| 7     | Gestion de la capacité des entrepôts | ⬜ TODO |
-| 8     | Alertes & dashboard analytique     | ⬜ TODO |
+| 7     | Gestion de la capacité des entrepôts | ✅ DONE |
+| 8     | Alertes & dashboard analytique     | ✅ DONE |
 | 9     | Revue UX/UI frontend professionnelle | ⬜ TODO |
 | 10    | Validation métier, sécurité & données réalistes | ⬜ TODO |
 | 11    | Tests, Docker, nettoyage final     | ⬜ TODO |
@@ -399,7 +399,7 @@
 
 ---
 
-## Phase 8 — Alertes & dashboard analytique
+## Phase 8 — Alertes & dashboard analytique [DONE]
 
 **Objectif :** Système d'alertes stock faible + dashboard analytique avec des KPI réels, utiles pour piloter l'activité et améliorer les décisions métier.
 

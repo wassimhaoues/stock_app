@@ -30,7 +30,7 @@ export class AuthService {
         this.userState.set(response.utilisateur);
         localStorage.setItem(TOKEN_KEY, response.token);
         localStorage.setItem(USER_KEY, JSON.stringify(response.utilisateur));
-      })
+      }),
     );
   }
 

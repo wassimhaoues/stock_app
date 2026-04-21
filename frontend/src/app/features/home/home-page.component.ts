@@ -7,7 +7,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin, of } from 'rxjs';
 
 import { Alerte } from '../../core/models/alerte.model';
-import { AdminAnalytics, DashboardAnalytics, DashboardKpis, DashboardStats } from '../../core/models/dashboard.model';
+import {
+  AdminAnalytics,
+  DashboardAnalytics,
+  DashboardKpis,
+  DashboardStats,
+} from '../../core/models/dashboard.model';
 import { AlerteService } from '../../core/services/alerte.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -54,8 +59,8 @@ import { DashboardService } from '../../core/services/dashboard.service';
                 <p class="section-eyebrow">Analyse globale</p>
                 <h3>Performance multi-entrepôts</h3>
                 <p>
-                  Les indicateurs consolident la valeur du stock, la pression capacité,
-                  les alertes et l'activité récente pour prioriser les décisions.
+                  Les indicateurs consolident la valeur du stock, la pression capacité, les alertes
+                  et l'activité récente pour prioriser les décisions.
                 </p>
                 <div class="hero-metrics">
                   <span>
@@ -78,7 +83,9 @@ import { DashboardService } from '../../core/services/dashboard.service';
                   <div class="benchmark-row">
                     <div>
                       <strong>{{ item.entrepotNom }}</strong>
-                  <p>{{ item.mouvementsMois }} mouvements ce mois · {{ item.alertes }} alertes</p>
+                      <p>
+                        {{ item.mouvementsMois }} mouvements ce mois · {{ item.alertes }} alertes
+                      </p>
                     </div>
                     <div class="bar-block">
                       <span>{{ formatMoney(item.valeurStock) }}</span>
@@ -109,7 +116,9 @@ import { DashboardService } from '../../core/services/dashboard.service';
               <strong>{{ kpisData.produitsActifs | number: '1.0-0' }}</strong>
             </mat-card>
             <mat-card class="kpi-card">
-              <span class="kpi-card__icon kpi-card__icon--danger"><mat-icon>warning</mat-icon></span>
+              <span class="kpi-card__icon kpi-card__icon--danger"
+                ><mat-icon>warning</mat-icon></span
+              >
               <p>Risque de rupture</p>
               <strong>{{ formatRate(kpisData.tauxRisqueRupture) }}</strong>
             </mat-card>
@@ -207,7 +216,10 @@ import { DashboardService } from '../../core/services/dashboard.service';
                       <span>{{ formatMoney(item.valeurStock) }}</span>
                     </div>
                     <span class="bar" aria-hidden="true">
-                      <span class="bar__fill" [style.width]="barWidth(item.valeurStock, warehouseValueMax())"></span>
+                      <span
+                        class="bar__fill"
+                        [style.width]="barWidth(item.valeurStock, warehouseValueMax())"
+                      ></span>
                     </span>
                   </div>
                 }
@@ -260,10 +272,16 @@ import { DashboardService } from '../../core/services/dashboard.service';
                   <div class="bar-row">
                     <div>
                       <strong>{{ item.produitNom }}</strong>
-                      <span>{{ item.quantiteMouvementee }} unités · {{ formatMoney(item.valeurStock) }}</span>
+                      <span
+                        >{{ item.quantiteMouvementee }} unités ·
+                        {{ formatMoney(item.valeurStock) }}</span
+                      >
                     </div>
                     <span class="bar" aria-hidden="true">
-                      <span class="bar__fill" [style.width]="barWidth(item.quantiteMouvementee, productMovementMax())"></span>
+                      <span
+                        class="bar__fill"
+                        [style.width]="barWidth(item.quantiteMouvementee, productMovementMax())"
+                      ></span>
                     </span>
                   </div>
                 }
@@ -284,7 +302,10 @@ import { DashboardService } from '../../core/services/dashboard.service';
               } @else {
                 @for (item of analyticsData.alertesParGravite; track item.priorite) {
                   <div class="list-row">
-                    <span class="priority" [class.priority--critical]="item.priorite === 'CRITIQUE'">
+                    <span
+                      class="priority"
+                      [class.priority--critical]="item.priorite === 'CRITIQUE'"
+                    >
                       {{ item.priorite }}
                     </span>
                     <strong>{{ item.total }}</strong>
@@ -333,7 +354,10 @@ import { DashboardService } from '../../core/services/dashboard.service';
                       <span>{{ item.totalMouvements }} mouvements</span>
                     </div>
                     <span class="bar" aria-hidden="true">
-                      <span class="bar__fill" [style.width]="barWidth(item.quantiteMouvementee, warehouseActivityMax())"></span>
+                      <span
+                        class="bar__fill"
+                        [style.width]="barWidth(item.quantiteMouvementee, warehouseActivityMax())"
+                      ></span>
                     </span>
                   </div>
                 }
@@ -344,7 +368,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
           <mat-card class="table-card">
             <div class="panel-card__header">
               <div>
-                  <p class="section-eyebrow">Alertes actives</p>
+                <p class="section-eyebrow">Alertes actives</p>
                 <h3>Stocks sous seuil</h3>
               </div>
               <span class="metric-chip">{{ alertes().length }}</span>
@@ -364,7 +388,11 @@ import { DashboardService } from '../../core/services/dashboard.service';
                 </div>
                 @for (alerte of alertes(); track alerte.stockId) {
                   <article class="table__row" role="row">
-                    <span role="cell" class="priority" [class.priority--critical]="alerte.priorite === 'CRITIQUE'">
+                    <span
+                      role="cell"
+                      class="priority"
+                      [class.priority--critical]="alerte.priorite === 'CRITIQUE'"
+                    >
                       {{ alerte.priorite }}
                     </span>
                     <strong role="cell">{{ alerte.produitNom }}</strong>
@@ -480,9 +508,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
       grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
       gap: 1rem;
       padding: 1.25rem;
-      background:
-        linear-gradient(135deg, #18202a 0%, #24405f 100%),
-        var(--stockpro-panel);
+      background: linear-gradient(135deg, #18202a 0%, #24405f 100%), var(--stockpro-panel);
       color: #fffaf2;
     }
 

@@ -563,7 +563,7 @@
 - vérification des états `loading`, `error` et `empty`
 - maintien d’une base de tests simple, rapide et cohérente avec Angular 21
 
-### 11.3 — Qualité et nettoyage
+### 11.3 — Qualité et nettoyage [DONE]
 
 - exécution du lint backend et frontend
 - correction des derniers avertissements et incohérences

@@ -34,7 +34,11 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
         <p class="page-header__eyebrow">Infrastructure</p>
         <h2>Entrepôts</h2>
         <p>
-          {{ canManage() ? 'Gérez les sites de stockage disponibles.' : 'Consultez votre entrepôt affecté.' }}
+          {{
+            canManage()
+              ? 'Gérez les sites de stockage disponibles.'
+              : 'Consultez votre entrepôt affecté.'
+          }}
         </p>
       </div>
       @if (canManage()) {
@@ -82,13 +86,18 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
               }
             </mat-form-field>
             @if (selectedEntrepot(); as entrepot) {
-              <div class="capacity-note" [class.capacity-note--error]="isCapacityReductionInvalid()">
+              <div
+                class="capacity-note"
+                [class.capacity-note--error]="isCapacityReductionInvalid()"
+              >
                 <span>Utilisée : {{ entrepot.capaciteUtilisee }}</span>
                 <span>Disponible actuelle : {{ entrepot.capaciteDisponible }}</span>
                 <span>Disponible après modification : {{ availableAfterEdit() }}</span>
               </div>
             } @else {
-              <p class="capacity-note">Cette valeur définit la limite maximale de stock de l'entrepôt.</p>
+              <p class="capacity-note">
+                Cette valeur définit la limite maximale de stock de l'entrepôt.
+              </p>
             }
 
             @if (feedbackMessage()) {
@@ -98,7 +107,11 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
             }
 
             <div class="actions">
-              <button mat-flat-button type="submit" [disabled]="form.invalid || isCapacityReductionInvalid() || isSubmitting()">
+              <button
+                mat-flat-button
+                type="submit"
+                [disabled]="form.invalid || isCapacityReductionInvalid() || isSubmitting()"
+              >
                 @if (isSubmitting()) {
                   <mat-progress-spinner diameter="18" mode="indeterminate" />
                 } @else {
@@ -163,7 +176,11 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
                   <span class="capacity-meter" aria-hidden="true">
                     <span [style.width]="meterWidth(entrepot)"></span>
                   </span>
-                  <span class="capacity-pill" [class.capacity-pill--warning]="entrepot.tauxOccupation >= 0.9" [class.capacity-pill--full]="entrepot.capaciteDisponible === 0">
+                  <span
+                    class="capacity-pill"
+                    [class.capacity-pill--warning]="entrepot.tauxOccupation >= 0.9"
+                    [class.capacity-pill--full]="entrepot.capaciteDisponible === 0"
+                  >
                     {{ formatOccupation(entrepot) }} - {{ capacityStatus(entrepot) }}
                   </span>
                 </span>
@@ -443,8 +460,8 @@ export class EntrepotsPageComponent {
   protected readonly feedbackState = signal<'success' | 'error'>('success');
   protected readonly canManage = computed(() => this.authService.hasRole('ADMIN'));
   protected readonly isEditing = computed(() => this.selectedEntrepotId() !== null);
-  protected readonly selectedEntrepot = computed(() =>
-    this.entrepots().find((entrepot) => entrepot.id === this.selectedEntrepotId()) ?? null
+  protected readonly selectedEntrepot = computed(
+    () => this.entrepots().find((entrepot) => entrepot.id === this.selectedEntrepotId()) ?? null,
   );
 
   protected readonly form = this.formBuilder.nonNullable.group({
@@ -458,7 +475,12 @@ export class EntrepotsPageComponent {
   }
 
   protected save(): void {
-    if (!this.canManage() || this.form.invalid || this.isCapacityReductionInvalid() || this.isSubmitting()) {
+    if (
+      !this.canManage() ||
+      this.form.invalid ||
+      this.isCapacityReductionInvalid() ||
+      this.isSubmitting()
+    ) {
       this.form.markAllAsTouched();
       return;
     }
@@ -478,24 +500,22 @@ export class EntrepotsPageComponent {
         ? this.entrepotService.create(request)
         : this.entrepotService.update(selectedEntrepotId, request);
 
-    action$
-      .pipe(finalize(() => this.isSubmitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.feedbackState.set('success');
-          this.feedbackMessage.set(
-            selectedEntrepotId === null
-              ? 'Entrepôt créé avec succès.'
-              : 'Entrepôt mis à jour avec succès.'
-          );
-          this.resetForm();
-          this.loadEntrepots();
-        },
-        error: (error: unknown) => {
-          this.feedbackState.set('error');
-          this.feedbackMessage.set(this.extractErrorMessage(error));
-        },
-      });
+    action$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
+      next: () => {
+        this.feedbackState.set('success');
+        this.feedbackMessage.set(
+          selectedEntrepotId === null
+            ? 'Entrepôt créé avec succès.'
+            : 'Entrepôt mis à jour avec succès.',
+        );
+        this.resetForm();
+        this.loadEntrepots();
+      },
+      error: (error: unknown) => {
+        this.feedbackState.set('error');
+        this.feedbackMessage.set(this.extractErrorMessage(error));
+      },
+    });
   }
 
   protected edit(entrepot: Entrepot): void {
@@ -562,12 +582,18 @@ export class EntrepotsPageComponent {
       return Number(this.form.controls.capacite.value);
     }
 
-    return Math.max(Number(this.form.controls.capacite.value) - selectedEntrepot.capaciteUtilisee, 0);
+    return Math.max(
+      Number(this.form.controls.capacite.value) - selectedEntrepot.capaciteUtilisee,
+      0,
+    );
   }
 
   protected isCapacityReductionInvalid(): boolean {
     const selectedEntrepot = this.selectedEntrepot();
-    return !!selectedEntrepot && Number(this.form.controls.capacite.value) < selectedEntrepot.capaciteUtilisee;
+    return (
+      !!selectedEntrepot &&
+      Number(this.form.controls.capacite.value) < selectedEntrepot.capaciteUtilisee
+    );
   }
 
   protected formatOccupation(entrepot: Entrepot): string {

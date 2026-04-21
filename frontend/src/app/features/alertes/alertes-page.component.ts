@@ -82,7 +82,11 @@ import { AlerteService } from '../../core/services/alerte.service';
 
           @for (alerte of alertes(); track alerte.stockId) {
             <article class="table__row" role="row">
-              <span role="cell" class="status" [class.status--critical]="alerte.priorite === 'CRITIQUE'">
+              <span
+                role="cell"
+                class="status"
+                [class.status--critical]="alerte.priorite === 'CRITIQUE'"
+              >
                 {{ alerte.priorite }}
               </span>
               <strong role="cell">{{ alerte.produitNom }}</strong>
@@ -274,13 +278,13 @@ export class AlertesPageComponent {
   protected readonly feedbackMessage = signal('');
   protected readonly isGlobalView = computed(() => this.authService.hasRole('ADMIN'));
   protected readonly criticalAlerts = computed(
-    () => this.alertes().filter((alerte) => alerte.priorite === 'CRITIQUE').length
+    () => this.alertes().filter((alerte) => alerte.priorite === 'CRITIQUE').length,
   );
   protected readonly highAlerts = computed(
-    () => this.alertes().filter((alerte) => alerte.priorite !== 'CRITIQUE').length
+    () => this.alertes().filter((alerte) => alerte.priorite !== 'CRITIQUE').length,
   );
   protected readonly totalMissing = computed(() =>
-    this.alertes().reduce((total, alerte) => total + alerte.manque, 0)
+    this.alertes().reduce((total, alerte) => total + alerte.manque, 0),
   );
 
   constructor() {

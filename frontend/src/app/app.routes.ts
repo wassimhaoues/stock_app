@@ -16,7 +16,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./shared/layout/main-layout/main-layout.component').then(
-        (m) => m.MainLayoutComponent
+        (m) => m.MainLayoutComponent,
       ),
     children: [
       {
@@ -29,29 +29,25 @@ export const routes: Routes = [
         path: 'entrepots',
         loadComponent: () =>
           import('./features/entrepots/entrepots-page.component').then(
-            (m) => m.EntrepotsPageComponent
+            (m) => m.EntrepotsPageComponent,
           ),
       },
       {
         path: 'produits',
         loadComponent: () =>
           import('./features/produits/produits-page.component').then(
-            (m) => m.ProduitsPageComponent
+            (m) => m.ProduitsPageComponent,
           ),
       },
       {
         path: 'stocks',
         loadComponent: () =>
-          import('./features/stocks/stocks-page.component').then(
-            (m) => m.StocksPageComponent
-          ),
+          import('./features/stocks/stocks-page.component').then((m) => m.StocksPageComponent),
       },
       {
         path: 'alertes',
         loadComponent: () =>
-          import('./features/alertes/alertes-page.component').then(
-            (m) => m.AlertesPageComponent
-          ),
+          import('./features/alertes/alertes-page.component').then((m) => m.AlertesPageComponent),
       },
       {
         path: 'utilisateurs',
@@ -59,7 +55,7 @@ export const routes: Routes = [
         data: { roles: ['ADMIN'] },
         loadComponent: () =>
           import('./features/utilisateurs/utilisateurs-page.component').then(
-            (m) => m.UtilisateursPageComponent
+            (m) => m.UtilisateursPageComponent,
           ),
       },
     ],

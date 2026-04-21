@@ -27,7 +27,14 @@ type SidebarEntry = {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatListModule, MatTooltipModule, RouterLink, RouterLinkActive],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatListModule,
+    MatTooltipModule,
+    RouterLink,
+    RouterLinkActive,
+  ],
   template: `
     <aside class="sidebar" [class.sidebar--collapsed]="collapsed">
       <div class="sidebar__intro">
@@ -48,7 +55,9 @@ type SidebarEntry = {
           matTooltipPosition="right"
           (click)="toggleCollapsed()"
         >
-          <mat-icon>{{ collapsed ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left' }}</mat-icon>
+          <mat-icon>{{
+            collapsed ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left'
+          }}</mat-icon>
         </button>
       }
 

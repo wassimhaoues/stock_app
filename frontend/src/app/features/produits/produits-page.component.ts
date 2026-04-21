@@ -419,24 +419,22 @@ export class ProduitsPageComponent {
         ? this.produitService.create(request)
         : this.produitService.update(selectedProduitId, request);
 
-    action$
-      .pipe(finalize(() => this.isSubmitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.feedbackState.set('success');
-          this.feedbackMessage.set(
-            selectedProduitId === null
-              ? 'Produit créé avec succès.'
-              : 'Produit mis à jour avec succès.'
-          );
-          this.resetForm();
-          this.loadProduits();
-        },
-        error: (error: unknown) => {
-          this.feedbackState.set('error');
-          this.feedbackMessage.set(this.extractErrorMessage(error));
-        },
-      });
+    action$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
+      next: () => {
+        this.feedbackState.set('success');
+        this.feedbackMessage.set(
+          selectedProduitId === null
+            ? 'Produit créé avec succès.'
+            : 'Produit mis à jour avec succès.',
+        );
+        this.resetForm();
+        this.loadProduits();
+      },
+      error: (error: unknown) => {
+        this.feedbackState.set('error');
+        this.feedbackMessage.set(this.extractErrorMessage(error));
+      },
+    });
   }
 
   protected edit(produit: Produit): void {

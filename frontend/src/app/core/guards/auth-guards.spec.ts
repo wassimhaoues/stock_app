@@ -36,10 +36,10 @@ describe('route guards', () => {
 
   function runGuard(
     guard: CanActivateFn,
-    route: Partial<ActivatedRouteSnapshot> = {}
+    route: Partial<ActivatedRouteSnapshot> = {},
   ): boolean | UrlTree {
     return TestBed.runInInjectionContext(() =>
-      guard(route as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
+      guard(route as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
     ) as boolean | UrlTree;
   }
 
@@ -78,7 +78,7 @@ describe('route guards', () => {
     authService.hasRole.mockReturnValue(false);
 
     expect(serialized(runGuard(roleGuard, { data: { roles: ['ADMIN'] satisfies Role[] } }))).toBe(
-      '/'
+      '/',
     );
   });
 });

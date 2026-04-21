@@ -76,8 +76,8 @@ describe('ProduitsPageComponent', () => {
           new HttpErrorResponse({
             status: 500,
             error: { message: 'Catalogue indisponible' },
-          })
-      )
+          }),
+      ),
     );
 
     const fixture = createComponent();

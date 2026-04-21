@@ -58,10 +58,10 @@ describe('LoginPageComponent', () => {
   it('toggles password visibility from the icon button', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const passwordInput = compiled.querySelector<HTMLInputElement>(
-      'input[formcontrolname="motDePasse"]'
+      'input[formcontrolname="motDePasse"]',
     );
     const toggleButton = compiled.querySelector<HTMLButtonElement>(
-      'button[aria-label="Afficher le mot de passe"]'
+      'button[aria-label="Afficher le mot de passe"]',
     );
 
     expect(passwordInput?.type).toBe('password');
@@ -101,8 +101,8 @@ describe('LoginPageComponent', () => {
           new HttpErrorResponse({
             status: 401,
             error: { message: 'Identifiants invalides' },
-          })
-      )
+          }),
+      ),
     );
     const component = fixture.componentInstance as unknown as {
       form: {

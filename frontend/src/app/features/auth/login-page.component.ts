@@ -36,8 +36,8 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
 
         <p>
-          Suivez les stocks, les mouvements, les capacités et les alertes dans une interface
-          unifiée pour chaque rôle opérationnel.
+          Suivez les stocks, les mouvements, les capacités et les alertes dans une interface unifiée
+          pour chaque rôle opérationnel.
         </p>
 
         <div class="login-highlights" aria-label="Points clés StockPro">
@@ -77,7 +77,9 @@ import { AuthService } from '../../core/services/auth.service';
               mat-icon-button
               matSuffix
               type="button"
-              [attr.aria-label]="hidePassword() ? 'Afficher le mot de passe' : 'Masquer le mot de passe'"
+              [attr.aria-label]="
+                hidePassword() ? 'Afficher le mot de passe' : 'Masquer le mot de passe'
+              "
               (click)="hidePassword.set(!hidePassword())"
             >
               <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>

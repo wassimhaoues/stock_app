@@ -1,5 +1,12 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { ChangeDetectionStrategy, Component, ViewChild, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewChild,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { RouterOutlet } from '@angular/router';
@@ -89,10 +96,12 @@ export class MainLayoutComponent {
 
   protected readonly isMobile = toSignal(
     this.breakpointObserver.observe('(max-width: 900px)').pipe(map((state) => state.matches)),
-    { initialValue: false }
+    { initialValue: false },
   );
   protected readonly sidebarCollapsed = signal(false);
-  protected readonly isSidebarCollapsed = computed(() => !this.isMobile() && this.sidebarCollapsed());
+  protected readonly isSidebarCollapsed = computed(
+    () => !this.isMobile() && this.sidebarCollapsed(),
+  );
 
   protected toggleMenu(): void {
     if (this.isMobile()) {

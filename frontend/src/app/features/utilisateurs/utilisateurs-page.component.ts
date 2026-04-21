@@ -78,7 +78,11 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
             <mat-label>Mot de passe</mat-label>
             <input matInput type="password" formControlName="motDePasse" />
             <mat-hint>
-              {{ isEditing() ? 'Laissez vide pour conserver le mot de passe actuel.' : 'Minimum recommandé : 8 caractères.' }}
+              {{
+                isEditing()
+                  ? 'Laissez vide pour conserver le mot de passe actuel.'
+                  : 'Minimum recommandé : 8 caractères.'
+              }}
             </mat-hint>
             @if (form.controls.motDePasse.hasError('required')) {
               <mat-error>Mot de passe requis</mat-error>
@@ -419,24 +423,22 @@ export class UtilisateursPageComponent {
         ? this.utilisateurService.create(request)
         : this.utilisateurService.update(selectedUserId, request);
 
-    action$
-      .pipe(finalize(() => this.isSubmitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.feedbackState.set('success');
-          this.feedbackMessage.set(
-            selectedUserId === null
-              ? 'Utilisateur créé avec succès.'
-              : 'Utilisateur mis à jour avec succès.'
-          );
-          this.resetForm();
-          this.loadUtilisateurs();
-        },
-        error: (error: unknown) => {
-          this.feedbackState.set('error');
-          this.feedbackMessage.set(this.extractErrorMessage(error));
-        },
-      });
+    action$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
+      next: () => {
+        this.feedbackState.set('success');
+        this.feedbackMessage.set(
+          selectedUserId === null
+            ? 'Utilisateur créé avec succès.'
+            : 'Utilisateur mis à jour avec succès.',
+        );
+        this.resetForm();
+        this.loadUtilisateurs();
+      },
+      error: (error: unknown) => {
+        this.feedbackState.set('error');
+        this.feedbackMessage.set(this.extractErrorMessage(error));
+      },
+    });
   }
 
   protected edit(utilisateur: Utilisateur): void {

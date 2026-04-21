@@ -72,7 +72,7 @@
 | 10    | Validation métier, sécurité & données réalistes  | DONE   |
 | 11    | Tests et nettoyage final                         | TODO   |
 | 12    | Socle d’exécution locale et préparation du poste | DONE   |
-| 13    | Conteneurisation complète                        | TODO   |
+| 13    | Conteneurisation complète                        | DONE   |
 | 14    | CI de base sur GitHub Actions                    | TODO   |
 | 15    | Qualité logicielle et sécurité de pipeline       | TODO   |
 | 16    | Déploiement Kubernetes local                     | TODO   |
@@ -634,7 +634,7 @@
 
 ---
 
-## Phase 13 — Conteneurisation complète
+## Phase 13 — Conteneurisation complète [DONE]
 
 **Objectif :** produire une stack Docker proche d’un usage production, reproductible et propre à déployer.
 

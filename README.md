@@ -62,6 +62,40 @@ npm start
 
 Le frontend démarre sur `http://localhost:4200`.
 
+## Stack conteneurisée (Docker)
+
+Pour lancer l'intégralité de la stack (MySQL + backend + frontend) avec Docker Compose :
+
+```bash
+cp .env.example .env          # copier et renseigner les valeurs
+docker-compose up --build -d
+```
+
+Cela construit les images et démarre trois services :
+
+| Service | Rôle | Port hôte |
+|---------|------|-----------|
+| `stock-db` | MySQL 8.0 | *(interne)* |
+| `stock-backend` | Spring Boot | `8085` |
+| `stock-frontend` | nginx + Angular | `4200` |
+
+Le frontend proxie automatiquement les appels `/api/` vers le backend via nginx.
+Le backend et le frontend attendent que les services dont ils dépendent soient sains
+avant de démarrer (healthchecks).
+
+**Commandes utiles :**
+
+```bash
+docker-compose logs -f stock-backend   # suivre les logs du backend
+docker-compose logs -f stock-frontend  # suivre les logs du frontend
+docker-compose down                    # arrêter la stack
+docker-compose down -v                 # arrêter et supprimer les volumes (réinitialise la BDD)
+docker-compose up --build -d           # reconstruire et relancer
+```
+
+> **Note :** la base de données est persistée dans le volume nommé `stock_db_data`.
+> Un `docker-compose down` seul conserve les données ; `docker-compose down -v` les efface.
+
 ## Vérification de bout en bout
 
 Après les trois démarrages, vérifier dans l'ordre :
@@ -201,13 +235,20 @@ npm run format:check
 
 ```
 stock-management/
-├── backend/          # Spring Boot (Java 17)
-├── frontend/         # Angular 21
-├── infra/            # Docker Compose (MySQL + phpMyAdmin)
-│   ├── .env.example  # Variables à copier dans .env (jamais committer .env)
-│   └── mysql-init/   # Schéma SQL initial
-├── docs/             # Documentation
-└── Project_plan.md   # Plan de développement par phases
+├── backend/              # Spring Boot (Java 17)
+│   ├── Dockerfile        # Image backend (multi-stage Maven + JRE)
+│   └── .dockerignore
+├── frontend/             # Angular 21
+│   ├── Dockerfile        # Image frontend (multi-stage Node + nginx)
+│   ├── nginx.conf        # Config nginx : SPA + proxy /api/
+│   └── .dockerignore
+├── infra/                # MySQL + phpMyAdmin seuls (mode local Phase 12)
+│   ├── .env.example      # Variables MySQL locales
+│   └── mysql-init/       # Schéma SQL initial
+├── docker-compose.yml    # Stack complète : MySQL + backend + frontend
+├── .env.example          # Variables pour le docker-compose racine
+├── docs/                 # Documentation
+└── Project_plan.md       # Plan de développement par phases
 ```
 
 ## Variables d'environnement
@@ -225,7 +266,7 @@ Les variables backend acceptent des overrides via les propriétés Spring ou le 
 | `JWT_EXPIRATION` | `86400000` | Durée de validité du token en ms (24 h) |
 | `STOCKPRO_DEMO_DATA` | `true` | `true` charge les données de démo au démarrage |
 
-Les variables MySQL du conteneur Docker sont dans `infra/.env` (à créer depuis `infra/.env.example`) :
+**Stack complète Docker** (`.env` à la racine, depuis `.env.example`) :
 
 | Variable | Description |
 |----------|-------------|
@@ -233,3 +274,7 @@ Les variables MySQL du conteneur Docker sont dans `infra/.env` (à créer depuis
 | `MYSQL_DATABASE` | Nom de la base créée automatiquement |
 | `MYSQL_USER` | Compte applicatif créé dans le conteneur |
 | `MYSQL_PASSWORD` | Mot de passe du compte applicatif |
+| `JWT_SECRET` | Clé de signature JWT (Base64, min. 32 chars) |
+| `STOCKPRO_DEMO_DATA` | `true`/`false` — données de démo au démarrage |
+
+**MySQL seul** (mode local Phase 12) : variables dans `infra/.env` depuis `infra/.env.example`.

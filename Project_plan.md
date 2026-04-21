@@ -67,7 +67,7 @@
 | 7     | Gestion de la capacité des entrepôts             | DONE   |
 | 8     | Alertes & dashboard analytique                   | DONE   |
 | 9     | Revue UX/UI frontend professionnelle             | DONE   |
-| 10    | Validation métier, sécurité & données réalistes  | TODO   |
+| 10    | Validation métier, sécurité & données réalistes  | DONE   |
 | 11    | Tests et nettoyage final                         | TODO   |
 | 12    | Socle d’exécution locale et préparation du poste | TODO   |
 | 13    | Conteneurisation complète                        | TODO   |
@@ -494,7 +494,7 @@
 
 ---
 
-## Phase 10 — Validation métier, sécurité & données réalistes
+## Phase 10 — Validation métier, sécurité & données réalistes [DONE]
 
 **Objectif :** Vérifier le projet de bout en bout avec des scénarios réalistes, renforcer les règles de sécurité métier et préparer une démonstration crédible.
 
@@ -542,19 +542,24 @@
 
 **Objectif :** valider la qualité fonctionnelle du code et terminer le nettoyage du projet avant la conteneurisation.
 
+**Stack backend recommandée :** `Spring Boot Test` + `JUnit 5` + `Mockito` + `MockMvc`
+
 **Backend :**
 
-- tests unitaires des services
-- tests d’intégration des endpoints métier et d’authentification
-- vérification des règles critiques de sécurité et de données
+- tests unitaires des services métier avec mocks des repositories
+- tests d’intégration des contrôleurs et de l’authentification avec le contexte Spring
+- validation des règles critiques de sécurité et de données
 - couverture des cas limites principaux : stock insuffisant, accès refusé, capacité, seuil d’alerte
+
+**Stack frontend recommandée :** `Vitest` + `jsdom` + `Angular TestBed`
 
 **Frontend :**
 
-- tests unitaires des composants et services
-- tests d’intégration des parcours principaux
+- tests unitaires des composants et services Angular
+- tests de rendu et d’interaction dans un environnement `jsdom`
+- vérification des parcours principaux, des guards et de l’accès selon les rôles
 - vérification des états `loading`, `error` et `empty`
-- vérification des parcours selon les rôles visibles
+- maintien d’une base de tests simple, rapide et cohérente avec Angular 21
 
 **Qualité :**
 
@@ -563,11 +568,19 @@
 - suppression des artefacts, doublons et textes temporaires
 - revue finale du `README.md` et de la documentation utile
 - contrôle final des imports, formats et fichiers non utilisés
+- s’assurer que les tests backend et frontend restent exécutables avec les scripts du projet
 
 **Infra :**
 
 - vérifier que toutes les tables ajoutées dans les phases 2 à 10 sont présentes dans `infra/mysql-init/01-schema.sql`
 - vérifier la matrice des rôles sur les routes backend et frontend avant livraison finale
+
+**Définition de done :**
+
+- le backend est couvert par des tests unitaires et d’intégration ciblés
+- le frontend utilise Vitest comme runner principal avec `jsdom`
+- les parcours critiques sont validés par rôle et par comportement attendu
+- le nettoyage final ne casse ni le build ni les tests
 
 **Branch git :** `feature/phase-11-tests-cleanup`
 

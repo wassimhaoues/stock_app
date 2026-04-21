@@ -60,6 +60,8 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 ### Phase 11 — Tests et nettoyage final
 
 - ajouter les tests backend et frontend
+- backend: JUnit 5, Mockito, Spring Boot Test, MockMvc
+- frontend: Vitest, jsdom, Angular TestBed
 - exécuter le lint et corriger les derniers défauts
 - nettoyer les artefacts et textes temporaires
 - vérifier les contraintes et la matrice de rôles

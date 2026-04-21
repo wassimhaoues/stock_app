@@ -13,6 +13,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -22,15 +24,16 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     public AuthResponse login(LoginRequest request) {
+        String email = normalizeEmail(request.email());
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.email(), request.motDePasse())
+                    new UsernamePasswordAuthenticationToken(email, request.motDePasse())
             );
         } catch (BadCredentialsException ex) {
             throw new BadCredentialsException("Email ou mot de passe invalide");
         }
 
-        Utilisateur utilisateur = utilisateurRepository.findByEmail(request.email())
+        Utilisateur utilisateur = utilisateurRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BadCredentialsException("Email ou mot de passe invalide"));
 
         String token = jwtUtil.generateToken(utilisateur.getEmail(), utilisateur.getRole().name());
@@ -52,5 +55,9 @@ public class AuthService {
                 entrepot != null ? entrepot.getId() : null,
                 entrepot != null ? entrepot.getNom() : null
         );
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

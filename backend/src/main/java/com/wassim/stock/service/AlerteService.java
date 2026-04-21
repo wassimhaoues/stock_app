@@ -84,7 +84,7 @@ public class AlerteService {
 
     private Utilisateur getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return utilisateurRepository.findByEmail(email)
+        return utilisateurRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
     }
 

@@ -33,6 +33,7 @@ public class ProduitService {
     }
 
     public ProduitResponse create(ProduitRequest request) {
+        validateUniqueName(request.nom(), null);
         Produit produit = new Produit();
         applyRequest(produit, request);
         return toResponse(produitRepository.save(produit));
@@ -41,6 +42,7 @@ public class ProduitService {
     public ProduitResponse update(Long id, ProduitRequest request) {
         Produit produit = findEntityById(id);
 
+        validateUniqueName(request.nom(), id);
         applyRequest(produit, request);
         return toResponse(produitRepository.save(produit));
     }
@@ -56,6 +58,14 @@ public class ProduitService {
     private Produit findEntityById(Long id) {
         return produitRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit introuvable : " + id));
+    }
+
+    private void validateUniqueName(String nom, Long currentId) {
+        produitRepository.findByNomIgnoreCase(nom.trim())
+                .filter(existing -> currentId == null || !existing.getId().equals(currentId))
+                .ifPresent(existing -> {
+                    throw new BadRequestException("Un produit avec ce nom existe deja");
+                });
     }
 
     private void applyRequest(Produit produit, ProduitRequest request) {

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +37,8 @@ public class UtilisateurService {
     }
 
     public UtilisateurResponse create(UtilisateurRequest request) {
-        if (utilisateurRepository.existsByEmail(request.email())) {
+        String normalizedEmail = normalizeEmail(request.email());
+        if (utilisateurRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new BadRequestException("Un utilisateur avec cet email existe deja");
         }
         validatePasswordForCreate(request.motDePasse());
@@ -51,8 +53,9 @@ public class UtilisateurService {
         Utilisateur utilisateur = findEntityById(id);
         validatePasswordForUpdate(request.motDePasse());
         validateAssignedEntrepot(request);
+        String normalizedEmail = normalizeEmail(request.email());
 
-        utilisateurRepository.findByEmail(request.email())
+        utilisateurRepository.findByEmailIgnoreCase(normalizedEmail)
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(existing -> {
                     throw new BadRequestException("Un utilisateur avec cet email existe deja");
@@ -70,15 +73,16 @@ public class UtilisateurService {
     public void seedUtilisateur(UtilisateurRequest request) {
         validatePasswordForCreate(request.motDePasse());
         validateAssignedEntrepot(request);
+        String normalizedEmail = normalizeEmail(request.email());
 
-        utilisateurRepository.findByEmail(request.email()).ifPresent(existing -> {
+        utilisateurRepository.findByEmailIgnoreCase(normalizedEmail).ifPresent(existing -> {
             if (requiresEntrepot(existing.getRole()) && existing.getEntrepot() == null) {
                 existing.setEntrepot(findEntrepotById(request.entrepotId()));
                 utilisateurRepository.save(existing);
             }
         });
 
-        if (utilisateurRepository.existsByEmail(request.email())) {
+        if (utilisateurRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             return;
         }
 
@@ -93,8 +97,8 @@ public class UtilisateurService {
     }
 
     private void applyRequest(Utilisateur utilisateur, UtilisateurRequest request, boolean requirePassword) {
-        utilisateur.setNom(request.nom());
-        utilisateur.setEmail(request.email());
+        utilisateur.setNom(request.nom().trim());
+        utilisateur.setEmail(normalizeEmail(request.email()));
         utilisateur.setRole(request.role());
         utilisateur.setEntrepot(requiresEntrepot(request.role()) ? findEntrepotById(request.entrepotId()) : null);
 
@@ -125,6 +129,10 @@ public class UtilisateurService {
 
     private boolean requiresEntrepot(Role role) {
         return role == Role.GESTIONNAIRE || role == Role.OBSERVATEUR;
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private Entrepot findEntrepotById(Long id) {

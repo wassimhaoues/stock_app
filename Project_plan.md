@@ -55,28 +55,35 @@
 
 ## Suivi des phases
 
-| Phase | Nom                                              | Statut |
-| ----- | ------------------------------------------------ | ------ |
-| 0     | Planification & décisions                        | DONE   |
-| 1     | Fondations : backend + frontend                  | DONE   |
-| 2     | Authentification & sécurité                      | DONE   |
-| 3     | Administration utilisateurs & permissions        | DONE   |
-| 4     | Gestion des entrepôts (end-to-end)               | DONE   |
-| 5     | Gestion des produits (end-to-end)                | DONE   |
-| 6     | Stocks & mouvements (end-to-end)                 | DONE   |
-| 7     | Gestion de la capacité des entrepôts             | DONE   |
-| 8     | Alertes & dashboard analytique                   | DONE   |
-| 9     | Revue UX/UI frontend professionnelle             | DONE   |
-| 10    | Validation métier, sécurité & données réalistes  | DONE   |
-| 11    | Tests et nettoyage final                         | DONE   |
-| 12    | Socle d’exécution locale et préparation du poste | TODO   |
-| 13    | Conteneurisation complète                        | TODO   |
-| 14    | CI de base sur GitHub Actions                    | TODO   |
-| 15    | Qualité logicielle et sécurité de pipeline       | TODO   |
-| 16    | Déploiement Kubernetes local                     | TODO   |
-| 17    | GitOps et ArgoCD                                 | TODO   |
-| 18    | Observabilité et alerting                        | TODO   |
-| 19    | Amélioration continue et finalisation soutenance | TODO   |
+| Phase | Nom                                       | Statut |
+| ----- | ----------------------------------------- | ------ |
+| 0     | Planification & décisions                 | DONE   |
+| 1     | Fondations : backend + frontend           | DONE   |
+| 2     | Authentification & sécurité               | DONE   |
+| 3     | Administration utilisateurs & permissions | DONE   |
+| 4     | Gestion des entrepôts (end-to-end)        | DONE   |
+| 5     | Gestion des produits (end-to-end)         | DONE   |
+| 6     | Stocks & mouvements (end-to-end)          | DONE   |
+| 7     | Gestion de la capacité des entrepôts      | DONE   |
+| 8     | Alertes & dashboard analytique            | DONE   |
+| 9     | Revue UX/UI frontend professionnelle      | DONE   |
+
+<<<<<<< HEAD
+| 10 | Validation métier, sécurité & données réalistes | TODO |
+| 11 | Tests et nettoyage final | DONE |
+=======
+| 10 | Validation métier, sécurité & données réalistes | DONE |
+| 11 | Tests et nettoyage final | TODO |
+
+> > > > > > > feature/phase-10-business-validation-security
+> > > > > > > | 12 | Socle d’exécution locale et préparation du poste | TODO |
+> > > > > > > | 13 | Conteneurisation complète | TODO |
+> > > > > > > | 14 | CI de base sur GitHub Actions | TODO |
+> > > > > > > | 15 | Qualité logicielle et sécurité de pipeline | TODO |
+> > > > > > > | 16 | Déploiement Kubernetes local | TODO |
+> > > > > > > | 17 | GitOps et ArgoCD | TODO |
+> > > > > > > | 18 | Observabilité et alerting | TODO |
+> > > > > > > | 19 | Amélioration continue et finalisation soutenance | TODO |
 
 ---
 
@@ -554,13 +561,15 @@
 
 **Backend :**
 
->>>>>>> feature/phase-10-business-validation-security
+> > > > > > > feature/phase-10-business-validation-security
+
 - tests unitaires des services métier avec mocks des repositories
 - tests d’intégration des contrôleurs et de l’authentification avec le contexte Spring
 - validation des règles critiques de sécurité et de données
 - couverture des cas limites principaux : stock insuffisant, accès refusé, capacité, seuil d’alerte
 
 <<<<<<< HEAD
+
 ### 11.2 — Frontend tests [DONE]
 
 **Stack recommandée :** `Vitest` + `jsdom` + `Angular TestBed`
@@ -570,7 +579,8 @@
 
 **Frontend :**
 
->>>>>>> feature/phase-10-business-validation-security
+> > > > > > > feature/phase-10-business-validation-security
+
 - tests unitaires des composants et services Angular
 - tests de rendu et d’interaction dans un environnement `jsdom`
 - vérification des parcours principaux, des guards et de l’accès selon les rôles

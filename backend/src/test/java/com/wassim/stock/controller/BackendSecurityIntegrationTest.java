@@ -1,0 +1,175 @@
+package com.wassim.stock.controller;
+
+import com.wassim.stock.dto.request.LoginRequest;
+import com.wassim.stock.dto.request.MouvementStockRequest;
+import com.wassim.stock.dto.request.StockRequest;
+import com.wassim.stock.entity.Entrepot;
+import com.wassim.stock.entity.Produit;
+import com.wassim.stock.entity.Stock;
+import com.wassim.stock.entity.TypeMouvement;
+import com.wassim.stock.repository.EntrepotRepository;
+import com.wassim.stock.repository.ProduitRepository;
+import com.wassim.stock.repository.StockRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
+
+import java.math.BigDecimal;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Transactional
+class BackendSecurityIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private EntrepotRepository entrepotRepository;
+
+    @Autowired
+    private ProduitRepository produitRepository;
+
+    @Autowired
+    private StockRepository stockRepository;
+
+    @Test
+    void loginWithSeededAdminReturnsBearerTokenAndUserRole() throws Exception {
+        LoginRequest request = new LoginRequest("admin@stockpro.local", "Admin123!");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("Bearer"))
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.utilisateur.email").value("admin@stockpro.local"))
+                .andExpect(jsonPath("$.utilisateur.role").value("ADMIN"));
+    }
+
+    @Test
+    void stocksEndpointRequiresAuthentication() throws Exception {
+        mockMvc.perform(get("/api/stocks"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Authentification requise"));
+    }
+
+    @Test
+    void observateurCannotCreateStock() throws Exception {
+        StockRequest request = new StockRequest(1L, 1L, 1, 1);
+
+        mockMvc.perform(post("/api/stocks")
+                        .with(user("observateur@stockpro.local").roles("OBSERVATEUR"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void gestionnaireCannotBypassWarehouseScopeByChangingWarehouseId() throws Exception {
+        Entrepot otherWarehouse = entrepotRepository.save(entrepot("Sfax", "Route de Sfax", 100));
+        Produit product = produitRepository.save(produit("Laptop Pro"));
+        StockRequest request = new StockRequest(product.getId(), otherWarehouse.getId(), 1, 1);
+
+        mockMvc.perform(post("/api/stocks")
+                        .with(user("gestionnaire@stockpro.local").roles("GESTIONNAIRE"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Acces refuse"));
+    }
+
+    @Test
+    void stockCreationAboveWarehouseCapacityReturnsConflict() throws Exception {
+        Entrepot warehouse = entrepotRepository.save(entrepot("Capacite limitee", "Tunis", 5));
+        Produit existingProduct = produitRepository.save(produit("Produit existant"));
+        Produit newProduct = produitRepository.save(produit("Produit nouveau"));
+        stockRepository.save(stock(existingProduct, warehouse, 4, 1));
+        StockRequest request = new StockRequest(newProduct.getId(), warehouse.getId(), 2, 1);
+
+        mockMvc.perform(post("/api/stocks")
+                        .with(user("admin@stockpro.local").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(containsString("Capacite insuffisante")));
+    }
+
+    @Test
+    void sortieAboveAvailableStockReturnsConflict() throws Exception {
+        Entrepot warehouse = entrepotRepository.save(entrepot("Sortie limitee", "Tunis", 20));
+        Produit product = produitRepository.save(produit("Produit sortie"));
+        stockRepository.save(stock(product, warehouse, 3, 1));
+        MouvementStockRequest request = new MouvementStockRequest(
+                product.getId(),
+                warehouse.getId(),
+                TypeMouvement.SORTIE,
+                4
+        );
+
+        mockMvc.perform(post("/api/mouvements-stock")
+                        .with(user("admin@stockpro.local").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(containsString("Stock insuffisant")));
+    }
+
+    @Test
+    void gestionnaireSeesOnlyAssignedWarehouseStocks() throws Exception {
+        Entrepot otherWarehouse = entrepotRepository.save(entrepot("Autre depot", "Sousse", 100));
+        Produit product = produitRepository.save(produit("Produit scoped"));
+        stockRepository.save(stock(product, otherWarehouse, 2, 1));
+
+        mockMvc.perform(get("/api/stocks")
+                        .with(user("gestionnaire@stockpro.local").roles("GESTIONNAIRE")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].entrepotNom", not(hasItem("Autre depot"))));
+    }
+
+    private Entrepot entrepot(String nom, String adresse, int capacite) {
+        Entrepot entrepot = new Entrepot();
+        entrepot.setNom(nom);
+        entrepot.setAdresse(adresse);
+        entrepot.setCapacite(capacite);
+        return entrepot;
+    }
+
+    private Produit produit(String nom) {
+        Produit produit = new Produit();
+        produit.setNom(nom);
+        produit.setCategorie("Informatique");
+        produit.setPrix(BigDecimal.valueOf(1000));
+        produit.setFournisseur("Fournisseur");
+        produit.setSeuilMin(1);
+        return produit;
+    }
+
+    private Stock stock(Produit produit, Entrepot entrepot, int quantite, int seuilAlerte) {
+        Stock stock = new Stock();
+        stock.setProduit(produit);
+        stock.setEntrepot(entrepot);
+        stock.setQuantite(quantite);
+        stock.setSeuilAlerte(seuilAlerte);
+        return stock;
+    }
+}

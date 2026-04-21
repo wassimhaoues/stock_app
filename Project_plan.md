@@ -542,32 +542,47 @@
 
 **Objectif :** valider la qualité fonctionnelle du code et terminer le nettoyage du projet avant la conteneurisation.
 
-**Backend :**
+**Sous-étapes :**
 
-- tests unitaires des services
-- tests d’intégration des endpoints métier et d’authentification
-- vérification des règles critiques de sécurité et de données
+### 11.1 — Backend tests [DONE]
+
+**Stack recommandée :** `Spring Boot Test` + `JUnit 5` + `Mockito` + `MockMvc`
+
+- tests unitaires des services métier avec mocks des repositories
+- tests d’intégration des contrôleurs et de l’authentification avec le contexte Spring
+- validation des règles critiques de sécurité et de données
 - couverture des cas limites principaux : stock insuffisant, accès refusé, capacité, seuil d’alerte
 
-**Frontend :**
+### 11.2 — Frontend tests
 
-- tests unitaires des composants et services
-- tests d’intégration des parcours principaux
+**Stack recommandée :** `Vitest` + `jsdom` + `Angular TestBed`
+
+- tests unitaires des composants et services Angular
+- tests de rendu et d’interaction dans un environnement `jsdom`
+- vérification des parcours principaux, des guards et de l’accès selon les rôles
 - vérification des états `loading`, `error` et `empty`
-- vérification des parcours selon les rôles visibles
+- maintien d’une base de tests simple, rapide et cohérente avec Angular 21
 
-**Qualité :**
+### 11.3 — Qualité et nettoyage
 
 - exécution du lint backend et frontend
 - correction des derniers avertissements et incohérences
 - suppression des artefacts, doublons et textes temporaires
 - revue finale du `README.md` et de la documentation utile
 - contrôle final des imports, formats et fichiers non utilisés
+- s’assurer que les tests backend et frontend restent exécutables avec les scripts du projet
 
-**Infra :**
+### 11.4 — Vérification infra finale
 
 - vérifier que toutes les tables ajoutées dans les phases 2 à 10 sont présentes dans `infra/mysql-init/01-schema.sql`
 - vérifier la matrice des rôles sur les routes backend et frontend avant livraison finale
+
+**Définition de done :**
+
+- le backend est couvert par des tests unitaires et d’intégration ciblés
+- le frontend utilise Vitest comme runner principal avec `jsdom`
+- les parcours critiques sont validés par rôle et par comportement attendu
+- le nettoyage final ne casse ni le build ni les tests
 
 **Branch git :** `feature/phase-11-tests-cleanup`
 

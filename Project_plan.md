@@ -553,7 +553,7 @@
 - validation des règles critiques de sécurité et de données
 - couverture des cas limites principaux : stock insuffisant, accès refusé, capacité, seuil d’alerte
 
-### 11.2 — Frontend tests
+### 11.2 — Frontend tests [DONE]
 
 **Stack recommandée :** `Vitest` + `jsdom` + `Angular TestBed`
 

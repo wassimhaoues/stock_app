@@ -55,35 +55,30 @@
 
 ## Suivi des phases
 
-| Phase | Nom                                       | Statut |
-| ----- | ----------------------------------------- | ------ |
-| 0     | Planification & décisions                 | DONE   |
-| 1     | Fondations : backend + frontend           | DONE   |
-| 2     | Authentification & sécurité               | DONE   |
-| 3     | Administration utilisateurs & permissions | DONE   |
-| 4     | Gestion des entrepôts (end-to-end)        | DONE   |
-| 5     | Gestion des produits (end-to-end)         | DONE   |
-| 6     | Stocks & mouvements (end-to-end)          | DONE   |
-| 7     | Gestion de la capacité des entrepôts      | DONE   |
-| 8     | Alertes & dashboard analytique            | DONE   |
-| 9     | Revue UX/UI frontend professionnelle      | DONE   |
-
-<<<<<<< HEAD
-| 10 | Validation métier, sécurité & données réalistes | TODO |
-| 11 | Tests et nettoyage final | DONE |
-=======
-| 10 | Validation métier, sécurité & données réalistes | DONE |
-| 11 | Tests et nettoyage final | TODO |
-
-> > > > > > > feature/phase-10-business-validation-security
-> > > > > > > | 12 | Socle d’exécution locale et préparation du poste | TODO |
-> > > > > > > | 13 | Conteneurisation complète | TODO |
-> > > > > > > | 14 | CI de base sur GitHub Actions | TODO |
-> > > > > > > | 15 | Qualité logicielle et sécurité de pipeline | TODO |
-> > > > > > > | 16 | Déploiement Kubernetes local | TODO |
-> > > > > > > | 17 | GitOps et ArgoCD | TODO |
-> > > > > > > | 18 | Observabilité et alerting | TODO |
-> > > > > > > | 19 | Amélioration continue et finalisation soutenance | TODO |
+| Phase | Nom                                              | Statut |
+| ----- | ------------------------------------------------ | ------ |
+| 0     | Planification & décisions                        | DONE   |
+| 1     | Fondations : backend + frontend                  | DONE   |
+| 2     | Authentification & sécurité                      | DONE   |
+| 3     | Administration utilisateurs & permissions        | DONE   |
+| 4     | Gestion des entrepôts (end-to-end)               | DONE   |
+| 5     | Gestion des produits (end-to-end)                | DONE   |
+| 6     | Stocks & mouvements (end-to-end)                 | DONE   |
+| 7     | Gestion de la capacité des entrepôts             | DONE   |
+| 8     | Alertes & dashboard analytique                   | DONE   |
+| 9     | Revue UX/UI frontend professionnelle             | DONE   |
+| 10    | Validation métier, sécurité & données réalistes  | TODO   |
+| 11    | Tests et nettoyage final                         | DONE   |
+| 10    | Validation métier, sécurité & données réalistes  | DONE   |
+| 11    | Tests et nettoyage final                         | TODO   |
+| 12    | Socle d’exécution locale et préparation du poste | TODO   |
+| 13    | Conteneurisation complète                        | TODO   |
+| 14    | CI de base sur GitHub Actions                    | TODO   |
+| 15    | Qualité logicielle et sécurité de pipeline       | TODO   |
+| 16    | Déploiement Kubernetes local                     | TODO   |
+| 17    | GitOps et ArgoCD                                 | TODO   |
+| 18    | Observabilité et alerting                        | TODO   |
+| 19    | Amélioration continue et finalisation soutenance | TODO   |
 
 ---
 

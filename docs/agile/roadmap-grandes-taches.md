@@ -63,6 +63,7 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 - 11.2 frontend: Vitest, jsdom, Angular TestBed
 - 11.3 lint, cleanup et documentation
 - 11.4 vérification infra finale
+- vérifier les contraintes et la matrice de rôles
 
 ## 3. Préparation Agile et industrialisation DevOps
 

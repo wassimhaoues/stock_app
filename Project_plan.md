@@ -67,7 +67,7 @@
 | 7     | Gestion de la capacité des entrepôts             | DONE   |
 | 8     | Alertes & dashboard analytique                   | DONE   |
 | 9     | Revue UX/UI frontend professionnelle             | DONE   |
-| 10    | Validation métier, sécurité & données réalistes  | TODO   |
+| 10    | Validation métier, sécurité & données réalistes  | DONE   |
 | 11    | Tests et nettoyage final                         | DONE   |
 | 12    | Socle d’exécution locale et préparation du poste | TODO   |
 | 13    | Conteneurisation complète                        | TODO   |
@@ -542,21 +542,35 @@
 
 **Objectif :** valider la qualité fonctionnelle du code et terminer le nettoyage du projet avant la conteneurisation.
 
+<<<<<<< HEAD
 **Sous-étapes :**
 
 ### 11.1 — Backend tests [DONE]
 
 **Stack recommandée :** `Spring Boot Test` + `JUnit 5` + `Mockito` + `MockMvc`
 
+=======
+**Stack backend recommandée :** `Spring Boot Test` + `JUnit 5` + `Mockito` + `MockMvc`
+
+**Backend :**
+
+>>>>>>> feature/phase-10-business-validation-security
 - tests unitaires des services métier avec mocks des repositories
 - tests d’intégration des contrôleurs et de l’authentification avec le contexte Spring
 - validation des règles critiques de sécurité et de données
 - couverture des cas limites principaux : stock insuffisant, accès refusé, capacité, seuil d’alerte
 
+<<<<<<< HEAD
 ### 11.2 — Frontend tests [DONE]
 
 **Stack recommandée :** `Vitest` + `jsdom` + `Angular TestBed`
 
+=======
+**Stack frontend recommandée :** `Vitest` + `jsdom` + `Angular TestBed`
+
+**Frontend :**
+
+>>>>>>> feature/phase-10-business-validation-security
 - tests unitaires des composants et services Angular
 - tests de rendu et d’interaction dans un environnement `jsdom`
 - vérification des parcours principaux, des guards et de l’accès selon les rôles

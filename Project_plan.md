@@ -544,37 +544,20 @@
 
 **Objectif :** valider la qualité fonctionnelle du code et terminer le nettoyage du projet avant la conteneurisation.
 
-<<<<<<< HEAD
 **Sous-étapes :**
 
 ### 11.1 — Backend tests [DONE]
 
 **Stack recommandée :** `Spring Boot Test` + `JUnit 5` + `Mockito` + `MockMvc`
 
-=======
-**Stack backend recommandée :** `Spring Boot Test` + `JUnit 5` + `Mockito` + `MockMvc`
-
-**Backend :**
-
-> > > > > > > feature/phase-10-business-validation-security
-
 - tests unitaires des services métier avec mocks des repositories
 - tests d’intégration des contrôleurs et de l’authentification avec le contexte Spring
 - validation des règles critiques de sécurité et de données
 - couverture des cas limites principaux : stock insuffisant, accès refusé, capacité, seuil d’alerte
 
-<<<<<<< HEAD
-
 ### 11.2 — Frontend tests [DONE]
 
 **Stack recommandée :** `Vitest` + `jsdom` + `Angular TestBed`
-
-=======
-**Stack frontend recommandée :** `Vitest` + `jsdom` + `Angular TestBed`
-
-**Frontend :**
-
-> > > > > > > feature/phase-10-business-validation-security
 
 - tests unitaires des composants et services Angular
 - tests de rendu et d’interaction dans un environnement `jsdom`
@@ -609,27 +592,30 @@
 
 ## Phase 12 — Socle d’exécution locale et préparation du poste
 
-**Objectif :** rendre le projet exécutable en local sur un poste neuf sans dépendre d’une infrastructure conteneurisée.
+**Objectif :** rendre le projet exécutable en local sur un poste neuf, avec une base MySQL déjà accessible localement, sans dépendre d’une orchestration conteneurisée supplémentaire.
+
+**Note de périmètre :** cette phase ne crée pas l’infrastructure MySQL ; elle prépare seulement le lancement local du backend et du frontend contre une base déjà joignable depuis la machine de développement (Docker exposé localement ou MySQL natif).
 
 **Préparations à faire :**
 
-- vérifier Git, Java 17, Node.js, npm et MySQL local
+- vérifier Git, Java 17, Node.js, npm et une instance MySQL joignable localement
 - documenter les versions minimales requises
 - créer ou compléter `.env.example`
 - nettoyer le repo pour que seul le code source utile soit suivi
-- définir les ports locaux et les variables d’environnement
+- définir les ports locaux, les variables d’environnement et la méthode de chargement des valeurs locales
 
 **Travaux :**
 
 - écrire un README de démarrage local clair
-- rendre le backend lançable en local avec une base MySQL accessible
+- rendre le backend lançable en local contre l’instance MySQL déjà accessible sur la machine
 - rendre le frontend lançable en local sur un port fixe
 - valider les scripts de lancement manuel
 - vérifier que l’application démarre de bout en bout en local
-- documenter la configuration de base de données locale et les comptes de test
+- documenter la configuration de base de données locale, les comptes de test et les valeurs de connexion attendues
 - documenter les dépendances minimales, les ports, les variables d’environnement et les commandes de démarrage local
 - décrire la procédure de vérification locale sans Docker
 - préciser comment activer ou désactiver le chargement des données de démo via les variables d’environnement
+- clarifier dans le README si les variables sont fournies via un `.env` local, des exports shell ou la configuration de l’IDE
 
 **Définition of done :**
 
@@ -637,6 +623,7 @@
 - backend et frontend démarrent sans configuration implicite cachée
 - les variables sensibles restent hors du dépôt
 - les dépendances locales minimales sont clairement listées
+- le backend se connecte à une base MySQL déjà accessible localement avec une configuration explicitement documentée
 
 **Sortie attendue :**
 

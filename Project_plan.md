@@ -68,7 +68,7 @@
 | 8     | Alertes & dashboard analytique                   | DONE   |
 | 9     | Revue UX/UI frontend professionnelle             | DONE   |
 | 10    | Validation métier, sécurité & données réalistes  | TODO   |
-| 11    | Tests et nettoyage final                         | TODO   |
+| 11    | Tests et nettoyage final                         | DONE   |
 | 12    | Socle d’exécution locale et préparation du poste | TODO   |
 | 13    | Conteneurisation complète                        | TODO   |
 | 14    | CI de base sur GitHub Actions                    | TODO   |
@@ -572,7 +572,7 @@
 - contrôle final des imports, formats et fichiers non utilisés
 - s’assurer que les tests backend et frontend restent exécutables avec les scripts du projet
 
-### 11.4 — Vérification infra finale
+### 11.4 — Vérification infra finale [DONE]
 
 - vérifier que toutes les tables ajoutées dans les phases 2 à 10 sont présentes dans `infra/mysql-init/01-schema.sql`
 - vérifier la matrice des rôles sur les routes backend et frontend avant livraison finale

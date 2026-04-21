@@ -494,7 +494,7 @@
 
 ---
 
-## Phase 10 — Validation métier, sécurité & données réalistes
+## Phase 10 — Validation métier, sécurité & données réalistes [DONE]
 
 **Objectif :** Vérifier le projet de bout en bout avec des scénarios réalistes, renforcer les règles de sécurité métier et préparer une démonstration crédible.
 
@@ -538,7 +538,7 @@
 
 ---
 
-## Phase 11 — Tests et nettoyage final
+## Phase 11 — Tests et nettoyage final [DONE]
 
 **Objectif :** valider la qualité fonctionnelle du code et terminer le nettoyage du projet avant la conteneurisation.
 

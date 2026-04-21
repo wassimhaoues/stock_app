@@ -644,6 +644,7 @@
 - créer un `Dockerfile` frontend multi-stage, servi par un runtime web léger
 - ajouter les `.dockerignore` nécessaires pour garder des images propres
 - définir un `docker-compose.yml` racine comme stack applicative principale avec `backend`, `frontend` et `mysql`
+- exposer MySQL en local sur un port de développement réservé afin de permettre les outils d'administration comme phpMyAdmin sans dupliquer la base
 - brancher le service MySQL racine sur `infra/mysql-init/01-schema.sql` comme bootstrap unique du schéma
 - garder `mysql-init` comme source unique de bootstrap SQL, sans dupliquer la logique d'initialisation ailleurs
 - externaliser les variables d’environnement nécessaires à l’exécution en conteneur, sans secrets en dur

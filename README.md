@@ -26,19 +26,22 @@ Application de gestion de stocks multi-entrepôts développée dans le cadre d'u
 
 ## Démarrage rapide
 
-### 1. Base de données (via Docker)
+### 1. Outil d'administration base de données (via Docker)
 
 ```bash
 cd infra
-cp .env.example .env          # copier et adapter les valeurs si nécessaire
 docker-compose up -d
 ```
 
-Cela démarre MySQL sur le port `3307` et phpMyAdmin sur `http://localhost:8084`.
+Cela démarre uniquement phpMyAdmin sur `http://localhost:8084`.
+Le service se connecte à l'instance MySQL exposée localement sur le port `3307`
+par la stack Docker racine. Démarrer d'abord la stack racine si vous voulez
+utiliser phpMyAdmin.
 
 > **Note :** les valeurs par défaut de `application-dev.properties` correspondent aux
-> identifiants de connexion documentés dans `infra/.env.example`. Si vous utilisez
-> des identifiants différents, voir la section [Configuration locale](#configuration-locale).
+> identifiants de connexion documentés dans `.env.example` à la racine. Si vous
+> utilisez des identifiants différents, voir la section
+> [Configuration locale](#configuration-locale).
 
 ### 2. Backend
 
@@ -75,7 +78,7 @@ Cela construit les images et démarre trois services :
 
 | Service | Rôle | Port hôte |
 |---------|------|-----------|
-| `stock-db` | MySQL 8.0 | *(interne)* |
+| `stock-db` | MySQL 8.0 | `3307` |
 | `stock-backend` | Spring Boot | `8085` |
 | `stock-frontend` | nginx + Angular | `4200` |
 
@@ -242,8 +245,8 @@ stock-management/
 │   ├── Dockerfile        # Image frontend (multi-stage Node + nginx)
 │   ├── nginx.conf        # Config nginx : SPA + proxy /api/
 │   └── .dockerignore
-├── infra/                # MySQL + phpMyAdmin seuls (mode local Phase 12)
-│   ├── .env.example      # Variables MySQL locales
+├── infra/                # phpMyAdmin + schéma SQL initial
+│   ├── docker-compose.yml
 │   └── mysql-init/       # Schéma SQL initial
 ├── docker-compose.yml    # Stack complète : MySQL + backend + frontend
 ├── .env.example          # Variables pour le docker-compose racine
@@ -277,4 +280,5 @@ Les variables backend acceptent des overrides via les propriétés Spring ou le 
 | `JWT_SECRET` | Clé de signature JWT (Base64, min. 32 chars) |
 | `STOCKPRO_DEMO_DATA` | `true`/`false` — données de démo au démarrage |
 
-**MySQL seul** (mode local Phase 12) : variables dans `infra/.env` depuis `infra/.env.example`.
+**phpMyAdmin** (mode local Phase 12) : aucun fichier d'environnement dédié dans `infra/`.
+Le service se connecte à la base MySQL déjà exposée par la stack racine.

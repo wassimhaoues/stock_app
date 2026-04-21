@@ -17,16 +17,15 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 | 8     | Alertes et dashboard analytique                  | Done   | Pilotage métier                |
 | 9     | Revue UX/UI frontend                             | To do  | Interface professionnelle      |
 | 10    | Validation métier, sécurité et données réalistes | To do  | Démo crédible et sécurisée     |
-| 11    | Tests, Docker, nettoyage final                   | To do  | Packaging livrable             |
-| 12    | Gestion Agile et backlog                         | To do  | Board et user stories          |
-| 13    | Socle local et préparation du poste              | To do  | Lancement sur machine neuve    |
-| 14    | Conteneurisation complète                        | To do  | Stack Docker reproductible     |
-| 15    | CI GitHub Actions                                | To do  | Pipeline de base               |
-| 16    | Qualité logicielle et sécurité pipeline          | To do  | Scans et quality gate          |
-| 17    | Déploiement Kubernetes local                     | To do  | Manifests et cluster local     |
-| 18    | GitOps et ArgoCD                                 | To do  | Sync automatique depuis Git    |
-| 19    | Observabilité et alerting                        | To do  | Métriques et dashboards        |
-| 20    | Amélioration continue et soutenance              | To do  | Version finale présentable     |
+| 11    | Tests et nettoyage final                         | To do  | Qualité et stabilisation       |
+| 12    | Socle local et préparation du poste              | To do  | Lancement local reproductible  |
+| 13    | Conteneurisation complète                        | To do  | Stack Docker reproductible     |
+| 14    | CI GitHub Actions                                | To do  | Pipeline de base               |
+| 15    | Qualité logicielle et sécurité pipeline          | To do  | Scans et quality gate          |
+| 16    | Déploiement Kubernetes local                     | To do  | Manifests et cluster local     |
+| 17    | GitOps et ArgoCD                                 | To do  | Sync automatique depuis Git    |
+| 18    | Observabilité et alerting                        | To do  | Métriques et dashboards        |
+| 19    | Amélioration continue et soutenance              | To do  | Version finale présentable     |
 
 ## 1. Socle produit déjà en place
 
@@ -48,70 +47,70 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 
 ### Phase 10 — Validation métier, sécurité et données réalistes
 
-- enrichir les données de démo
+- enrichir les données de démo avec un contexte tunisien
+- utiliser des noms tunisiens pour les personnes, les entrepôts et les lieux
+- limiter les produits aux familles informatique, gaming, téléphonie, TV, photo, son et électroménager
+- utiliser des noms de produits réels et crédibles
 - vérifier les parcours par rôle
 - bloquer les contournements d'accès
 - mettre à jour la documentation utile
 
-### Phase 11 — Tests, Docker, nettoyage final
+### Phase 11 — Tests et nettoyage final
 
-- ajouter les tests essentiels
-- préparer les images Docker
-- finaliser `docker-compose.yml`
+- ajouter les tests backend et frontend
+- exécuter le lint et corriger les derniers défauts
+- nettoyer les artefacts et textes temporaires
 - vérifier les contraintes et la matrice de rôles
 
 ## 3. Préparation Agile et industrialisation DevOps
 
-### Phase 12 — Gestion Agile et backlog
-
-- créer le board Agile
-- définir les epics
-- découper les phases en user stories
-- fixer un workflow simple de suivi
-
-### Phase 13 — Socle d'exécution locale
+### Phase 12 — Socle d'exécution locale
 
 - valider les prérequis poste
 - documenter les versions minimales
+- confirmer le fonctionnement local avec MySQL
 - rendre le lancement local clair et reproductible
+- documenter les commandes et la configuration locale sans Docker
 
-### Phase 14 — Conteneurisation complète
+### Phase 13 — Conteneurisation complète
 
 - créer les Dockerfile backend et frontend
 - orchestrer les services avec Docker Compose
 - garantir un démarrage reproductible
 
-### Phase 15 — CI de base
+### Phase 14 — CI de base
 
 - ajouter GitHub Actions
 - exécuter tests et builds à chaque push
+- exécuter aussi le lint
 - bloquer les erreurs de build
 
-### Phase 16 — Qualité et sécurité pipeline
+### Phase 15 — Qualité et sécurité pipeline
 
 - intégrer l'analyse qualité
 - ajouter les scans de dépendances et d'images
 - protéger les secrets et seuils de blocage
 
-### Phase 17 — Kubernetes local
+### Phase 16 — Kubernetes local
 
 - créer les manifests Kubernetes
 - déployer backend, frontend et base
+- ajouter les probes et resources
 - documenter le bootstrap du cluster
 
-### Phase 18 — GitOps et ArgoCD
+### Phase 17 — GitOps et ArgoCD
 
 - faire du dépôt la source de vérité
 - activer la synchronisation automatique
 - supprimer les déploiements manuels
 
-### Phase 19 — Observabilité et alerting
+### Phase 18 — Observabilité et alerting
 
 - exposer les métriques applicatives
 - intégrer Prometheus et Grafana
 - ajouter des alertes exploitables
 
-### Phase 20 — Finalisation soutenance
+### Phase 19 — Finalisation soutenance
 
 - corriger les derniers points faibles
 - compléter la documentation finale
@@ -123,10 +122,9 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 | ---------------- | -------------- |
 | Produit          | Phases 0 à 8   |
 | Finition         | Phases 9 à 11  |
-| Organisation     | Phase 12       |
-| Exécution locale | Phase 13       |
-| Conteneurisation | Phase 14       |
-| CI/CD            | Phases 15 à 16 |
-| Déploiement      | Phases 17 à 18 |
-| Supervision      | Phase 19       |
-| Livraison        | Phase 20       |
+| Exécution locale | Phase 12       |
+| Conteneurisation | Phase 13       |
+| CI/CD            | Phases 14 à 15 |
+| Déploiement      | Phases 16 à 17 |
+| Supervision      | Phase 18       |
+| Livraison        | Phase 19       |

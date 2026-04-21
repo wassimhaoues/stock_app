@@ -52,7 +52,7 @@ class AlerteServiceTest {
         Stock healthy = stock(3L, produit(3L, "Phone"), tunis, 11, 10);
 
         authenticateAs(admin.getEmail());
-        when(utilisateurRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
         when(stockRepository.findAll()).thenReturn(List.of(elevated, healthy, critical));
 
         List<AlerteResponse> alertes = alerteService.findAll();
@@ -69,7 +69,7 @@ class AlerteServiceTest {
         Stock assignedStock = stock(1L, produit(1L, "Camera"), tunis, 2, 4);
 
         authenticateAs(observateur.getEmail());
-        when(utilisateurRepository.findByEmail(observateur.getEmail())).thenReturn(Optional.of(observateur));
+        when(utilisateurRepository.findByEmailIgnoreCase(observateur.getEmail())).thenReturn(Optional.of(observateur));
         when(stockRepository.findByEntrepotId(tunis.getId())).thenReturn(List.of(assignedStock));
 
         List<AlerteResponse> alertes = alerteService.findAll();

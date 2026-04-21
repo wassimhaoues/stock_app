@@ -67,7 +67,7 @@ class StockServiceTest {
         Stock assignedStock = stock(20L, produit(30L, "Laptop"), tunis, 12, 5);
 
         authenticateAs(gestionnaire.getEmail());
-        when(utilisateurRepository.findByEmail(gestionnaire.getEmail())).thenReturn(Optional.of(gestionnaire));
+        when(utilisateurRepository.findByEmailIgnoreCase(gestionnaire.getEmail())).thenReturn(Optional.of(gestionnaire));
         when(stockRepository.findByEntrepotId(tunis.getId())).thenReturn(List.of(assignedStock));
 
         List<StockResponse> responses = stockService.findAll();
@@ -84,7 +84,7 @@ class StockServiceTest {
         Utilisateur admin = utilisateur(3L, "admin@stockpro.local", Role.ADMIN, null);
 
         authenticateAs(admin.getEmail());
-        when(utilisateurRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
         when(produitRepository.findById(laptop.getId())).thenReturn(Optional.of(laptop));
         when(entrepotRepository.findById(tunis.getId())).thenReturn(Optional.of(tunis));
         when(stockRepository.findByProduitIdAndEntrepotId(laptop.getId(), tunis.getId())).thenReturn(Optional.empty());
@@ -105,7 +105,7 @@ class StockServiceTest {
         Utilisateur gestionnaire = utilisateur(3L, "gestionnaire@stockpro.local", Role.GESTIONNAIRE, tunis);
 
         authenticateAs(gestionnaire.getEmail());
-        when(utilisateurRepository.findByEmail(gestionnaire.getEmail())).thenReturn(Optional.of(gestionnaire));
+        when(utilisateurRepository.findByEmailIgnoreCase(gestionnaire.getEmail())).thenReturn(Optional.of(gestionnaire));
         when(produitRepository.findById(laptop.getId())).thenReturn(Optional.of(laptop));
 
         StockRequest request = new StockRequest(laptop.getId(), 99L, 3, 5);
@@ -123,7 +123,7 @@ class StockServiceTest {
         Utilisateur admin = utilisateur(3L, "admin@stockpro.local", Role.ADMIN, null);
 
         authenticateAs(admin.getEmail());
-        when(utilisateurRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
         when(produitRepository.findById(laptop.getId())).thenReturn(Optional.of(laptop));
         when(entrepotRepository.findById(tunis.getId())).thenReturn(Optional.of(tunis));
         when(stockRepository.findByProduitIdAndEntrepotId(laptop.getId(), tunis.getId())).thenReturn(Optional.empty());

@@ -53,15 +53,22 @@ npm start
 
 Le frontend démarre sur `http://localhost:4200`.
 
+## Données de démo
+
+Par défaut (`STOCKPRO_DEMO_DATA=true`), le backend charge au démarrage un jeu de données complet :
+4 entrepôts tunisiens, ~10 produits réels (informatique, gaming, téléphonie, TV, photo, son), des stocks et des mouvements.
+
+Pour démarrer avec une base vide (compte admin seul), passer `STOCKPRO_DEMO_DATA=false` dans l'environnement.
+
 ## Comptes de test
 
 Trois comptes sont créés automatiquement au démarrage :
 
-| Rôle | Email | Mot de passe |
-|------|-------|--------------|
-| ADMIN | admin@stockpro.local | Admin123! |
-| GESTIONNAIRE | gestionnaire@stockpro.local | Gestion123! |
-| OBSERVATEUR | observateur@stockpro.local | Observe123! |
+| Rôle | Nom | Email | Mot de passe |
+|------|-----|-------|--------------|
+| ADMIN | Wassim Haoues | admin@stockpro.local | Admin123! |
+| GESTIONNAIRE | Youssef Trabelsi | gestionnaire@stockpro.local | Gestion123! |
+| OBSERVATEUR | Ines Mansouri | observateur@stockpro.local | Observe123! |
 
 ## Rôles et permissions
 
@@ -125,3 +132,4 @@ Les variables backend acceptent des overrides via les propriétés Spring :
 | `DB_USERNAME` | Wassimhws | Utilisateur MySQL |
 | `DB_PASSWORD` | — | Mot de passe MySQL |
 | `JWT_SECRET` | clé de dev | Clé de signature JWT |
+| `STOCKPRO_DEMO_DATA` | true | `true` charge les données de démo au démarrage, `false` démarre avec une base vide |

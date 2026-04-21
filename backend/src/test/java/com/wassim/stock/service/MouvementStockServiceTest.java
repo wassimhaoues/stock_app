@@ -69,7 +69,7 @@ class MouvementStockServiceTest {
         Utilisateur admin = utilisateur("admin@stockpro.local", Role.ADMIN, null);
 
         authenticateAs(admin.getEmail());
-        when(utilisateurRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
         when(produitRepository.findById(laptop.getId())).thenReturn(Optional.of(laptop));
         when(entrepotRepository.findById(tunis.getId())).thenReturn(Optional.of(tunis));
         when(stockRepository.findByProduitIdAndEntrepotId(laptop.getId(), tunis.getId())).thenReturn(Optional.of(stock));
@@ -96,7 +96,7 @@ class MouvementStockServiceTest {
         Utilisateur admin = utilisateur("admin@stockpro.local", Role.ADMIN, null);
 
         authenticateAs(admin.getEmail());
-        when(utilisateurRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
         when(produitRepository.findById(laptop.getId())).thenReturn(Optional.of(laptop));
         when(entrepotRepository.findById(tunis.getId())).thenReturn(Optional.of(tunis));
         when(stockRepository.findByProduitIdAndEntrepotId(laptop.getId(), tunis.getId())).thenReturn(Optional.of(stock));
@@ -124,7 +124,7 @@ class MouvementStockServiceTest {
         Utilisateur admin = utilisateur("admin@stockpro.local", Role.ADMIN, null);
 
         authenticateAs(admin.getEmail());
-        when(utilisateurRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
         when(produitRepository.findById(laptop.getId())).thenReturn(Optional.of(laptop));
         when(entrepotRepository.findById(tunis.getId())).thenReturn(Optional.of(tunis));
         when(stockRepository.findByProduitIdAndEntrepotId(laptop.getId(), tunis.getId())).thenReturn(Optional.of(stock));

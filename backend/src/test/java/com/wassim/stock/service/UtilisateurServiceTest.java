@@ -47,7 +47,7 @@ class UtilisateurServiceTest {
                 null
         );
 
-        when(utilisateurRepository.existsByEmail(request.email())).thenReturn(true);
+        when(utilisateurRepository.existsByEmailIgnoreCase(request.email())).thenReturn(true);
 
         assertThatThrownBy(() -> utilisateurService.create(request))
                 .isInstanceOf(BadRequestException.class)
@@ -64,8 +64,6 @@ class UtilisateurServiceTest {
                 Role.GESTIONNAIRE,
                 null
         );
-
-        when(utilisateurRepository.existsByEmail(request.email())).thenReturn(false);
 
         assertThatThrownBy(() -> utilisateurService.create(request))
                 .isInstanceOf(BadRequestException.class)
@@ -88,7 +86,6 @@ class UtilisateurServiceTest {
                 entrepot.getId()
         );
 
-        when(utilisateurRepository.existsByEmail(request.email())).thenReturn(false);
         when(entrepotRepository.findById(entrepot.getId())).thenReturn(Optional.of(entrepot));
         when(passwordEncoder.encode(request.motDePasse())).thenReturn("encoded");
         when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));

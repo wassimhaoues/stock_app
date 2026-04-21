@@ -22,28 +22,28 @@
 
 ## Décisions techniques verrouillées
 
-| Décision             | Choix                                |
-| -------------------- | ------------------------------------ |
-| UI Framework         | Angular Material                     |
-| Langue UI            | Français                             |
+| Décision             | Choix                                                         |
+| -------------------- | ------------------------------------------------------------- |
+| UI Framework         | Angular Material                                              |
+| Langue UI            | Français                                                      |
 | Style dashboard      | Section analytique KPI + cards + graphiques + tableau alertes |
-| Authentification     | JWT stateless                        |
-| Rôles utilisateurs   | ADMIN / GESTIONNAIRE / OBSERVATEUR   |
-| Nom de l'application | StockPro                             |
+| Authentification     | JWT stateless                                                 |
+| Rôles utilisateurs   | ADMIN / GESTIONNAIRE / OBSERVATEUR                            |
+| Nom de l'application | StockPro                                                      |
 
 ---
 
 ## Matrice des rôles et permissions
 
-| Module           | ADMIN     | GESTIONNAIRE stock                          | OBSERVATEUR                                  |
-| ---------------- | --------- | ------------------------------------------- | -------------------------------------------- |
-| Utilisateurs     | Gérer     | Aucun accès                                 | Aucun accès                                  |
-| Entrepôts        | Gérer     | Lecture seule                               | Lecture seule sur son entrepôt affecté       |
-| Produits         | Gérer     | Lecture seule                               | Lecture seule                                |
-| Stocks           | Gérer     | Gérer dans son entrepôt affecté             | Lecture seule dans son entrepôt affecté      |
-| Mouvements stock | Gérer     | Gérer dans son entrepôt affecté             | Lecture seule dans son entrepôt affecté      |
-| Alertes          | Consulter | Voir les alertes de son entrepôt affecté    | Voir les alertes de son entrepôt affecté     |
-| Dashboard        | Consulter | Consulter les données de son entrepôt       | Consulter les données de son entrepôt        |
+| Module           | ADMIN     | GESTIONNAIRE stock                       | OBSERVATEUR                              |
+| ---------------- | --------- | ---------------------------------------- | ---------------------------------------- |
+| Utilisateurs     | Gérer     | Aucun accès                              | Aucun accès                              |
+| Entrepôts        | Gérer     | Lecture seule                            | Lecture seule sur son entrepôt affecté   |
+| Produits         | Gérer     | Lecture seule                            | Lecture seule                            |
+| Stocks           | Gérer     | Gérer dans son entrepôt affecté          | Lecture seule dans son entrepôt affecté  |
+| Mouvements stock | Gérer     | Gérer dans son entrepôt affecté          | Lecture seule dans son entrepôt affecté  |
+| Alertes          | Consulter | Voir les alertes de son entrepôt affecté | Voir les alertes de son entrepôt affecté |
+| Dashboard        | Consulter | Consulter les données de son entrepôt    | Consulter les données de son entrepôt    |
 
 **Règles globales :**
 
@@ -59,20 +59,20 @@
 
 ## Suivi des phases
 
-| Phase | Nom                                | Statut  |
-| ----- | ---------------------------------- | ------- |
-| 0     | Planification & décisions          | ✅ DONE |
-| 1     | Fondations : backend + frontend    | ✅ DONE |
-| 2     | Authentification & sécurité        | ✅ DONE |
-| 3     | Administration utilisateurs & permissions | ✅ DONE |
-| 4     | Gestion des entrepôts (end-to-end) | ✅ DONE |
-| 5     | Gestion des produits (end-to-end)  | ✅ DONE |
-| 6     | Stocks & mouvements (end-to-end)   | ✅ DONE |
-| 7     | Gestion de la capacité des entrepôts | ✅ DONE |
-| 8     | Alertes & dashboard analytique     | ✅ DONE |
-| 9     | Revue UX/UI frontend professionnelle | ⬜ TODO |
+| Phase | Nom                                             | Statut  |
+| ----- | ----------------------------------------------- | ------- |
+| 0     | Planification & décisions                       | ✅ DONE |
+| 1     | Fondations : backend + frontend                 | ✅ DONE |
+| 2     | Authentification & sécurité                     | ✅ DONE |
+| 3     | Administration utilisateurs & permissions       | ✅ DONE |
+| 4     | Gestion des entrepôts (end-to-end)              | ✅ DONE |
+| 5     | Gestion des produits (end-to-end)               | ✅ DONE |
+| 6     | Stocks & mouvements (end-to-end)                | ✅ DONE |
+| 7     | Gestion de la capacité des entrepôts            | ✅ DONE |
+| 8     | Alertes & dashboard analytique                  | ✅ DONE |
+| 9     | Revue UX/UI frontend professionnelle            | ⬜ TODO |
 | 10    | Validation métier, sécurité & données réalistes | ⬜ TODO |
-| 11    | Tests, Docker, nettoyage final     | ⬜ TODO |
+| 11    | Tests, Docker, nettoyage final                  | ⬜ TODO |
 
 ---
 
@@ -543,6 +543,274 @@
 - Vérifier la matrice des rôles sur les routes backend et frontend avant livraison finale
 
 **Branch git :** `feature/phase-11-docker-cleanup`
+
+---
+
+## DevOps delivery roadmap
+
+Les phases ci-dessous commencent une fois les phases 0 à 11 terminées.  
+Hypothèse de départ : le repo existe déjà, les branches `dev` et `main` existent, mais **aucune autre infrastructure n'est prête**.
+
+Chaque phase doit se terminer par un état exécutable de bout en bout, avec un résultat observable et partageable.
+
+---
+
+## Phase 12 — Gestion Agile & préparation du backlog
+
+**Objectif :** organiser le travail comme en entreprise avant de commencer l’industrialisation DevOps.
+
+**Recommandation :**
+
+- utiliser **GitHub Projects** si tu veux rester dans l’écosystème déjà disponible
+- sinon **Jira** si tu veux un rendu plus “entreprise”
+- garder un workflow simple : `To Do` → `In Progress` → `Done`
+
+**Travaux :**
+
+- créer le board Agile du projet
+- définir les **epics**
+- découper chaque grande phase DevOps en **user stories**
+- ajouter les tâches techniques et les critères d’acceptation
+- préparer une vue sprint avec priorité et avancement
+- documenter les règles de suivi : qui fait quoi, quand une tâche est “Done”, comment une phase est validée
+
+**Livrables :**
+
+- capture du board Agile
+- backlog produit
+- exemples de user stories
+- sprint ou lot de travail par phase
+
+**Définition of done :**
+
+- chaque phase DevOps future est représentée par au moins une user story
+- le board permet de suivre l’avancement réel du projet
+- les critères d’acceptation sont clairs et réutilisables pendant tout le projet
+
+**Sortie attendue :**
+
+- un plan de travail exploitable avant toute automatisation
+
+**Branch git :** `feature/devops-phase-12-agile`
+
+---
+
+## Phase 13 — Socle d’exécution locale et préparation du poste
+
+**Objectif :** rendre le projet exécutable sur un poste neuf sans rien présumer d’installé.
+
+**Préparations à faire :**
+
+- vérifier Git, Java 17, Node.js, npm, Docker, kubectl
+- documenter les versions minimales requises
+- créer ou compléter `.env.example`
+- nettoyer le repo pour que seul le code source utile soit suivi
+- définir les ports locaux et les variables d’environnement
+
+**Travaux :**
+
+- écrire un README de démarrage local clair
+- rendre le backend lançable en local avec une base MySQL accessible
+- rendre le frontend lançable en local sur un port fixe
+- valider les scripts de lancement manuel
+- vérifier que l’application démarre de bout en bout en local
+
+**Définition of done :**
+
+- un nouveau clone peut suivre le README et lancer l’application en local
+- backend et frontend démarrent sans configuration implicite cachée
+- les variables sensibles restent hors du dépôt
+
+**Sortie attendue :**
+
+- application fonctionnelle en local
+- base de référence pour toutes les phases suivantes
+
+**Branch git :** `feature/devops-phase-13-local-baseline`
+
+---
+
+## Phase 14 — Conteneurisation complète
+
+**Objectif :** exécuter l’application dans Docker de manière reproductible.
+
+**Travaux :**
+
+- créer un `Dockerfile` backend
+- créer un `Dockerfile` frontend
+- créer un `docker-compose.yml` racine
+- ajouter les services nécessaires à l’exécution locale
+- vérifier que les conteneurs démarrent dans le bon ordre
+
+**Définition of done :**
+
+- l’application démarre via Docker sans lancement manuel des applications
+- backend, frontend et base de données fonctionnent ensemble
+- les images peuvent être reconstruites à partir du repo
+
+**Sortie attendue :**
+
+- stack conteneurisée exécutable sur n’importe quelle machine avec Docker
+
+**Branch git :** `feature/devops-phase-14-docker`
+
+---
+
+## Phase 15 — CI de base sur GitHub Actions
+
+**Objectif :** automatiser la vérification du code à chaque push sur `dev` ou sur les branches feature.
+
+**Travaux :**
+
+- créer `.github/workflows/ci.yml`
+- installer les dépendances backend et frontend dans le pipeline
+- lancer les tests backend
+- lancer les tests frontend
+- lancer les builds backend et frontend
+- faire échouer le pipeline en cas d’erreur
+
+**Définition of done :**
+
+- chaque push déclenche une exécution CI
+- un code cassé bloque la fusion
+- le pipeline reste lisible et maintenable
+
+**Sortie attendue :**
+
+- première chaîne CI fiable et visible sur GitHub
+
+**Branch git :** `feature/devops-phase-15-ci-base`
+
+---
+
+## Phase 16 — Qualité logicielle et sécurité de pipeline
+
+**Objectif :** renforcer la CI avec les contrôles qualité et sécurité exigés par le sujet.
+
+**Travaux :**
+
+- intégrer SonarQube ou SonarCloud
+- ajouter un scan des dépendances
+- ajouter un scan d’image Docker avec Trivy
+- utiliser les GitHub Secrets pour les jetons et identifiants
+- définir les seuils de blocage
+
+**Définition of done :**
+
+- les vulnérabilités critiques bloquent le pipeline
+- la qualité du code est visible dans l’outillage
+- les secrets ne sont jamais stockés en dur
+
+**Sortie attendue :**
+
+- pipeline CI sécurisé et exploitable pour la soutenance
+
+**Branch git :** `feature/devops-phase-16-quality-security`
+
+---
+
+## Phase 17 — Déploiement Kubernetes local
+
+**Objectif :** faire tourner la stack dans Kubernetes sans déploiement manuel hors manifests.
+
+**Travaux :**
+
+- choisir un environnement local de test Kubernetes : Minikube ou kind
+- créer les manifests `Deployment`, `Service` et les ressources associées
+- gérer les ConfigMaps et Secrets nécessaires
+- valider le déploiement du backend, du frontend et de la base
+- documenter la commande de bootstrap du cluster
+
+**Définition of done :**
+
+- un cluster neuf peut recevoir l’application via les manifests
+- l’application fonctionne dans Kubernetes en local
+- aucune étape critique ne dépend d’un clic manuel dans l’interface
+
+**Sortie attendue :**
+
+- premier déploiement Kubernetes reproductible
+
+**Branch git :** `feature/devops-phase-17-k8s`
+
+---
+
+## Phase 18 — GitOps et ArgoCD
+
+**Objectif :** transformer le déploiement Kubernetes en flux GitOps.
+
+**Travaux :**
+
+- préparer le dossier `k8s/` comme source de vérité
+- installer ArgoCD sur le cluster choisi
+- définir l’application ArgoCD
+- activer la synchronisation automatique
+- vérifier qu’un commit Git déclenche la mise à jour du cluster
+
+**Définition of done :**
+
+- le déploiement provient du dépôt Git
+- le cluster se synchronise automatiquement
+- aucune commande manuelle de `kubectl apply` n’est nécessaire après le setup
+
+**Sortie attendue :**
+
+- chaîne GitOps fonctionnelle et démontrable
+
+**Branch git :** `feature/devops-phase-18-argocd`
+
+---
+
+## Phase 19 — Observabilité et alerting
+
+**Objectif :** exposer des métriques et superviser réellement l’application.
+
+**Travaux :**
+
+- ajouter un endpoint de métriques côté backend
+- intégrer Prometheus
+- intégrer Grafana avec un dashboard utile
+- ajouter des alerte simple et complexe
+- documenter où récupérer les métriques et comment lire les tableaux de bord
+
+**Définition of done :**
+
+- les métriques sont collectées automatiquement
+- le dashboard montre des données réelles
+- une alerte de base peut être déclenchée
+
+**Sortie attendue :**
+
+- observabilité complète de la stack
+
+**Branch git :** `feature/devops-phase-19-observability`
+
+---
+
+## Phase 20 — Amélioration continue et finalisation soutenance
+
+**Objectif :** stabiliser la solution et préparer la démonstration finale.
+
+**Travaux :**
+
+- identifier les points faibles restants
+- corriger les frictions de build, déploiement ou supervision
+- compléter le README final
+- rédiger le document technique demandé
+- préparer un scénario de démo reproductible
+- ajouter les captures nécessaires
+
+**Définition of done :**
+
+- chaque phase précédente est démontrable en quelques minutes
+- le projet est propre, documenté et présentable
+- la soutenance peut être suivie sans improvisation technique
+
+**Sortie attendue :**
+
+- version finale prête pour dépôt et présentation
+
+**Branch git :** `feature/devops-phase-20-finalization`
 
 ---
 

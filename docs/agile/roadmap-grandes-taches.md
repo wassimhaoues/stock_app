@@ -85,10 +85,10 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 
 ### Phase 14 — CI de base
 
-- ajouter GitHub Actions
-- exécuter tests et builds à chaque push
-- exécuter aussi le lint
-- bloquer les erreurs de build
+- GitHub Actions sur feature/dev/main + PR vers dev/main
+- backend/frontend en jobs séparés
+- cache Maven et npm
+- tests, builds, lint et format
 
 ### Phase 15 — Qualité et sécurité pipeline
 

@@ -676,23 +676,40 @@
 
 ## Phase 14 — CI de base sur GitHub Actions
 
-**Objectif :** automatiser la vérification du code à chaque push sur `dev` ou sur les branches feature.
+**Objectif :** automatiser une CI rapide, lisible et fiable sur les branches de travail et d'intégration.
+
+**Principe de déclenchement recommandé :**
+
+- exécuter la CI sur chaque `push` vers les branches `feature/**`, `dev` et `main`
+- exécuter aussi la CI sur les `pull_request` ciblant `dev` et `main`
+- garder `main` protégé avec une fusion uniquement après CI verte
+
+**Périmètre CI :**
+
+- vérifications rapides et répétables
+- sans déploiement, sans scan avancé, sans publication d’artefacts métier
+- même logique de contrôle sur backend et frontend
 
 **Travaux :**
 
 - créer `.github/workflows/ci.yml`
 - définir des jobs séparés pour le backend et le frontend
+- ajouter un job de préparation commun pour récupérer le code et configurer le cache
+- mettre en cache les dépendances Maven et npm pour accélérer les exécutions successives
 - installer les dépendances backend et frontend dans le pipeline
 - lancer les tests backend et frontend
 - lancer les builds backend et frontend
 - exécuter le lint dans le pipeline
+- vérifier le format et la cohérence de base avant les étapes lourdes
 - faire échouer le pipeline en cas d’erreur
+- documenter les statuts attendus et les branches couvertes par la CI
 
 **Définition of done :**
 
-- chaque push déclenche une exécution CI
+- les branches `feature/**`, `dev` et `main` déclenchent une CI sur push
+- les pull requests vers `dev` et `main` sont validées par la CI
 - un code cassé bloque la fusion
-- le pipeline reste lisible et maintenable
+- le pipeline reste lisible, maintenable et rapide grâce au cache
 - le pipeline reflète les mêmes vérifications que le mode local
 
 **Sortie attendue :**

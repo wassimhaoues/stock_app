@@ -47,6 +47,8 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 
 ### Phase 10 — Validation métier, sécurité et données réalistes
 
+- ajouter un mode démo activable par variable d'environnement
+- garder la base propre en mode normal avec seulement un ADMIN minimal
 - enrichir les données de démo avec un contexte tunisien
 - utiliser des noms tunisiens pour les personnes, les entrepôts et les lieux
 - limiter les produits aux familles informatique, gaming, téléphonie, TV, photo, son et électroménager
@@ -71,6 +73,7 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 - confirmer le fonctionnement local avec MySQL
 - rendre le lancement local clair et reproductible
 - documenter les commandes et la configuration locale sans Docker
+- préciser les variables d'environnement qui contrôlent le mode démo et le mode normal
 
 ### Phase 13 — Conteneurisation complète
 

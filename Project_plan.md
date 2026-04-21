@@ -500,12 +500,15 @@
 
 **Backend :**
 
-- Ajouter ou compléter un jeu de données réaliste avec des noms tunisiens, notamment pour les personnes, les entrepôts et les lieux de démo
-- Utiliser des entrepôts et affectations cohérents avec le contexte tunisien, avec des noms lisibles et crédibles
-- Ajouter ou compléter un jeu de données réaliste : plusieurs entrepôts, produits, stocks, mouvements, alertes et utilisateurs affectés
-- Limiter le catalogue de démonstration aux familles de produits suivantes : informatique, gaming, téléphonie, TV, photo, son, électroménager et catégories proches
-- Utiliser des noms de produits réels et parlants, par exemple `Gamer MSI Thin 15 B13UCX i5 13è Gén 24G RTX 2050`
-- Exclure les produits alimentaires, vêtements et catégories similaires qui ne correspondent pas au positionnement du projet
+- Introduire un mode de données piloté par variable d'environnement, par exemple `STOCKPRO_DEMO_DATA=true|false`
+- En mode normal, garder la base propre et n'initialiser qu'un compte `ADMIN` minimal pour l'administration initiale
+- En mode démo, charger un jeu de données complet et réaliste avec :
+  - des noms tunisiens pour les personnes, les entrepôts et les lieux de démo
+  - des entrepôts et affectations cohérents avec le contexte tunisien
+  - plusieurs entrepôts, produits, stocks, mouvements, alertes et utilisateurs affectés
+  - des familles de produits limitées à l'informatique, gaming, téléphonie, TV, photo, son et électroménager
+  - des noms de produits réels et parlants, par exemple `Gamer MSI Thin 15 B13UCX i5 13è Gén 24G RTX 2050`
+  - aucun produit alimentaire, vêtement ou catégorie hors sujet
 - Vérifier tous les scénarios de rôles :
   - `ADMIN` voit et administre tout
   - `GESTIONNAIRE stock` travaille uniquement dans son entrepôt affecté
@@ -529,6 +532,7 @@
 - Ajouter une section courte expliquant la matrice des rôles et le filtrage par entrepôt
 - Documenter les scénarios de démonstration recommandés pour chaque rôle
 - Documenter les jeux de données de démonstration retenus, leurs rôles et les familles de produits utilisées
+- Documenter la variable `STOCKPRO_DEMO_DATA` et le comportement attendu en mode démo versus mode normal
 
 **Branch git :** `feature/phase-10-business-validation-security`
 
@@ -591,6 +595,7 @@
 - documenter la configuration de base de données locale et les comptes de test
 - documenter les dépendances minimales, les ports, les variables d’environnement et les commandes de démarrage local
 - décrire la procédure de vérification locale sans Docker
+- préciser comment activer ou désactiver le chargement des données de démo via les variables d’environnement
 
 **Définition of done :**
 

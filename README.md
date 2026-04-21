@@ -15,10 +15,14 @@ Application de gestion de stocks multi-entrepôts développée dans le cadre d'u
 
 ## Prérequis
 
-- Java 17+
-- Maven 3.8+
-- Node.js 20+ (recommandé : 24 via nvm)
-- MySQL 8.0 (ou via Docker Compose dans `infra/`)
+| Outil | Version minimale | Vérification |
+|-------|-----------------|--------------|
+| Git | 2.x | `git --version` |
+| Java | 17 | `java -version` |
+| Maven | 3.8 | `mvn -version` |
+| Node.js | 20 (recommandé : 24 via nvm) | `node -v` |
+| npm | 9 | `npm -v` |
+| MySQL | 8.0 | via Docker ou installation native |
 
 ## Démarrage rapide
 
@@ -26,10 +30,15 @@ Application de gestion de stocks multi-entrepôts développée dans le cadre d'u
 
 ```bash
 cd infra
+cp .env.example .env          # copier et adapter les valeurs si nécessaire
 docker-compose up -d
 ```
 
-Cela démarre MySQL sur le port `3307` et phpMyAdmin sur le port `8081`.
+Cela démarre MySQL sur le port `3307` et phpMyAdmin sur `http://localhost:8084`.
+
+> **Note :** les valeurs par défaut de `application-dev.properties` correspondent aux
+> identifiants de connexion documentés dans `infra/.env.example`. Si vous utilisez
+> des identifiants différents, voir la section [Configuration locale](#configuration-locale).
 
 ### 2. Backend
 
@@ -53,12 +62,95 @@ npm start
 
 Le frontend démarre sur `http://localhost:4200`.
 
+## Vérification de bout en bout
+
+Après les trois démarrages, vérifier dans l'ordre :
+
+1. `http://localhost:8085/api/health` → `{"status":"UP"}`
+2. `http://localhost:8085/swagger-ui.html` → Swagger charge
+3. `http://localhost:4200` → Page de login s'affiche
+4. Connexion avec `admin@stockpro.local` / `Admin123!` → Dashboard visible
+
+## Configuration locale
+
+### Valeurs par défaut (aucune configuration requise)
+
+Le profil `dev` est actif par défaut. Les valeurs inscrites dans
+`backend/src/main/resources/application-dev.properties` permettent de se connecter
+directement à MySQL si les identifiants Docker n'ont pas été modifiés.
+
+### Surcharge via variables d'environnement shell
+
+Pour utiliser des identifiants différents, exporter les variables avant le lancement :
+
+```bash
+export DB_HOST=127.0.0.1
+export DB_PORT=3307
+export DB_NAME=stock_app_db
+export DB_USERNAME=mon_utilisateur
+export DB_PASSWORD=mon_mot_de_passe
+export JWT_SECRET=ma_cle_jwt_base64_minimum_32_caracteres
+export STOCKPRO_DEMO_DATA=true
+
+cd backend && mvn spring-boot:run
+```
+
+### Surcharge via fichier de propriétés local (recommandé pour une config persistante)
+
+Créer `backend/src/main/resources/application-local.properties` (exclu du dépôt par `.gitignore`) :
+
+```properties
+spring.datasource.username=mon_utilisateur
+spring.datasource.password=mon_mot_de_passe
+```
+
+Activer le profil local en plus du profil dev :
+
+```bash
+cd backend
+mvn spring-boot:run -Dspring.profiles.active=dev,local
+```
+
+### Surcharge via configuration IDE
+
+Dans IntelliJ IDEA ou VS Code, définir les variables d'environnement dans la
+configuration d'exécution (`Run/Debug Configuration > Environment variables`).
+
+## MySQL sans Docker (installation native)
+
+Si MySQL est installé nativement (port par défaut `3306`) :
+
+```sql
+-- Dans MySQL :
+CREATE DATABASE stock_app_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'stockpro_user'@'localhost' IDENTIFIED BY 'votre_mot_de_passe';
+GRANT ALL PRIVILEGES ON stock_app_db.* TO 'stockpro_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Puis exporter les variables pour pointer sur MySQL natif :
+
+```bash
+export DB_PORT=3306
+export DB_USERNAME=stockpro_user
+export DB_PASSWORD=votre_mot_de_passe
+cd backend && mvn spring-boot:run
+```
+
+Hibernate crée les tables automatiquement au premier démarrage (`ddl-auto=update`).
+Le schéma de référence est disponible dans `infra/mysql-init/01-schema.sql`.
+
 ## Données de démo
 
 Par défaut (`STOCKPRO_DEMO_DATA=true`), le backend charge au démarrage un jeu de données complet :
 4 entrepôts tunisiens, ~10 produits réels (informatique, gaming, téléphonie, TV, photo, son), des stocks et des mouvements.
 
-Pour démarrer avec une base vide (compte admin seul), passer `STOCKPRO_DEMO_DATA=false` dans l'environnement.
+Pour démarrer avec une base vide (compte admin seul) :
+
+```bash
+export STOCKPRO_DEMO_DATA=false
+cd backend && mvn spring-boot:run
+```
 
 ## Comptes de test
 
@@ -112,6 +204,7 @@ stock-management/
 ├── backend/          # Spring Boot (Java 17)
 ├── frontend/         # Angular 21
 ├── infra/            # Docker Compose (MySQL + phpMyAdmin)
+│   ├── .env.example  # Variables à copier dans .env (jamais committer .env)
 │   └── mysql-init/   # Schéma SQL initial
 ├── docs/             # Documentation
 └── Project_plan.md   # Plan de développement par phases
@@ -119,17 +212,24 @@ stock-management/
 
 ## Variables d'environnement
 
-Les variables configurables sont listées dans `infra/.env.example`.
-Ne jamais committer le fichier `.env` contenant les vraies valeurs.
+Les variables backend acceptent des overrides via les propriétés Spring ou le shell :
 
-Les variables backend acceptent des overrides via les propriétés Spring :
+| Variable | Défaut (dev) | Description |
+|----------|-------------|-------------|
+| `DB_HOST` | `127.0.0.1` | Hôte MySQL |
+| `DB_PORT` | `3307` | Port MySQL |
+| `DB_NAME` | `stock_app_db` | Nom de la base |
+| `DB_USERNAME` | `Wassimhws` | Utilisateur MySQL |
+| `DB_PASSWORD` | *(valeur dans application-dev.properties)* | Mot de passe MySQL |
+| `JWT_SECRET` | *(clé de dev Base64)* | Clé de signature JWT — changer en production |
+| `JWT_EXPIRATION` | `86400000` | Durée de validité du token en ms (24 h) |
+| `STOCKPRO_DEMO_DATA` | `true` | `true` charge les données de démo au démarrage |
 
-| Variable | Défaut | Description |
-|----------|--------|-------------|
-| `DB_HOST` | 127.0.0.1 | Hôte MySQL |
-| `DB_PORT` | 3307 | Port MySQL |
-| `DB_NAME` | stock_app_db | Nom de la base |
-| `DB_USERNAME` | Wassimhws | Utilisateur MySQL |
-| `DB_PASSWORD` | — | Mot de passe MySQL |
-| `JWT_SECRET` | clé de dev | Clé de signature JWT |
-| `STOCKPRO_DEMO_DATA` | true | `true` charge les données de démo au démarrage, `false` démarre avec une base vide |
+Les variables MySQL du conteneur Docker sont dans `infra/.env` (à créer depuis `infra/.env.example`) :
+
+| Variable | Description |
+|----------|-------------|
+| `MYSQL_ROOT_PASSWORD` | Mot de passe root du conteneur MySQL |
+| `MYSQL_DATABASE` | Nom de la base créée automatiquement |
+| `MYSQL_USER` | Compte applicatif créé dans le conteneur |
+| `MYSQL_PASSWORD` | Mot de passe du compte applicatif |

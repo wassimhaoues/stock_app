@@ -71,7 +71,7 @@
 | 11    | Tests et nettoyage final                         | DONE   |
 | 10    | Validation métier, sécurité & données réalistes  | DONE   |
 | 11    | Tests et nettoyage final                         | TODO   |
-| 12    | Socle d’exécution locale et préparation du poste | TODO   |
+| 12    | Socle d’exécution locale et préparation du poste | DONE   |
 | 13    | Conteneurisation complète                        | TODO   |
 | 14    | CI de base sur GitHub Actions                    | TODO   |
 | 15    | Qualité logicielle et sécurité de pipeline       | TODO   |
@@ -590,7 +590,7 @@
 
 ---
 
-## Phase 12 — Socle d’exécution locale et préparation du poste
+## Phase 12 — Socle d’exécution locale et préparation du poste [DONE]
 
 **Objectif :** rendre le projet exécutable en local sur un poste neuf, avec une base MySQL déjà accessible localement, sans dépendre d’une orchestration conteneurisée supplémentaire.
 

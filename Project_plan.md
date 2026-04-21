@@ -70,7 +70,7 @@
 | 6     | Stocks & mouvements (end-to-end)   | ✅ DONE |
 | 7     | Gestion de la capacité des entrepôts | ✅ DONE |
 | 8     | Alertes & dashboard analytique     | ✅ DONE |
-| 9     | Revue UX/UI frontend professionnelle | ⬜ TODO |
+| 9     | Revue UX/UI frontend professionnelle | ✅ DONE |
 | 10    | Validation métier, sécurité & données réalistes | ⬜ TODO |
 | 11    | Tests, Docker, nettoyage final     | ⬜ TODO |
 
@@ -449,7 +449,7 @@
 
 ---
 
-## Phase 9 — Revue UX/UI frontend professionnelle
+## Phase 9 — Revue UX/UI frontend professionnelle [DONE]
 
 **Objectif :** Reprendre tout le frontend pour obtenir une interface moderne, organisée, cohérente et crédible, sans traces de préparation, de démo technique ou d'apparence "vibe-coded".
 

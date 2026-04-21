@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -21,6 +22,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
 import { MouvementStockService } from '../../core/services/mouvement-stock.service';
 import { ProduitService } from '../../core/services/produit.service';
 import { StockService } from '../../core/services/stock.service';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-stocks-page',
@@ -29,6 +31,7 @@ import { StockService } from '../../core/services/stock.service';
     DatePipe,
     MatButtonModule,
     MatCardModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -44,15 +47,15 @@ import { StockService } from '../../core/services/stock.service';
         <p>
           {{
             canWrite()
-              ? 'Pilotez les quantites par entrepot et enregistrez les entrees ou sorties.'
-              : 'Consultez les stocks et mouvements de votre entrepot affecte.'
+              ? 'Pilotez les quantités par entrepôt et enregistrez les entrées ou sorties.'
+              : 'Consultez les stocks et mouvements de votre entrepôt affecté.'
           }}
         </p>
       </div>
       @if (canWrite()) {
         <button mat-stroked-button type="button" (click)="resetForms()">
           <mat-icon>refresh</mat-icon>
-          Reinitialiser
+          Réinitialiser
         </button>
       }
     </section>
@@ -62,8 +65,10 @@ import { StockService } from '../../core/services/stock.service';
         <mat-card class="form-card">
           <div class="card-header">
             <div>
-              <p class="card-header__eyebrow">{{ isEditingStock() ? 'Edition' : 'Creation' }}</p>
-              <h3>{{ isEditingStock() ? 'Mettre a jour un stock' : 'Ajouter une ligne de stock' }}</h3>
+              <p class="card-header__eyebrow">{{ isEditingStock() ? 'Édition' : 'Création' }}</p>
+              <h3>
+                {{ isEditingStock() ? 'Mettre à jour un stock' : 'Ajouter une ligne de stock' }}
+              </h3>
             </div>
           </div>
 
@@ -75,34 +80,50 @@ import { StockService } from '../../core/services/stock.service';
                   <mat-option [value]="produit.id">{{ produit.nom }}</mat-option>
                 }
               </mat-select>
+              @if (stockForm.controls.produitId.hasError('required')) {
+                <mat-error>Produit requis</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Entrepot</mat-label>
+              <mat-label>Entrepôt</mat-label>
               <mat-select formControlName="entrepotId">
                 @for (entrepot of entrepots(); track entrepot.id) {
                   <mat-option [value]="entrepot.id">{{ entrepot.nom }}</mat-option>
                 }
               </mat-select>
               @if (!canChooseEntrepot()) {
-                <mat-hint>Verrouille sur votre entrepot affecte.</mat-hint>
+                <mat-hint>Verrouillé sur votre entrepôt affecté.</mat-hint>
+              }
+              @if (stockForm.controls.entrepotId.hasError('required')) {
+                <mat-error>Entrepôt requis</mat-error>
               }
             </mat-form-field>
             @if (selectedStockEntrepot(); as entrepot) {
               <div class="capacity-panel" [class.capacity-panel--error]="isStockCapacityExceeded()">
                 <span>Disponible : {{ stockCapacityLimit() }}</span>
-                <span>Apres enregistrement : {{ stockCapacityAfterSave() }}</span>
+                <span>Après enregistrement : {{ stockCapacityAfterSave() }}</span>
               </div>
             }
 
             <mat-form-field appearance="outline">
-              <mat-label>Quantite</mat-label>
+              <mat-label>Quantité</mat-label>
               <input matInput type="number" min="0" formControlName="quantite" />
+              @if (stockForm.controls.quantite.hasError('required')) {
+                <mat-error>Quantité requise</mat-error>
+              } @else if (stockForm.controls.quantite.hasError('min')) {
+                <mat-error>La quantité ne peut pas être négative</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Seuil alerte</mat-label>
               <input matInput type="number" min="0" formControlName="seuilAlerte" />
+              @if (stockForm.controls.seuilAlerte.hasError('required')) {
+                <mat-error>Seuil requis</mat-error>
+              } @else if (stockForm.controls.seuilAlerte.hasError('min')) {
+                <mat-error>Le seuil ne peut pas être négatif</mat-error>
+              }
             </mat-form-field>
 
             @if (stockFeedbackMessage()) {
@@ -112,11 +133,15 @@ import { StockService } from '../../core/services/stock.service';
             }
 
             <div class="actions">
-              <button mat-flat-button type="submit" [disabled]="stockForm.invalid || isStockCapacityExceeded() || isSubmittingStock()">
+              <button
+                mat-flat-button
+                type="submit"
+                [disabled]="stockForm.invalid || isStockCapacityExceeded() || isSubmittingStock()"
+              >
                 @if (isSubmittingStock()) {
                   <mat-progress-spinner diameter="18" mode="indeterminate" />
                 } @else {
-                  <span>{{ isEditingStock() ? 'Mettre a jour' : 'Creer le stock' }}</span>
+                  <span>{{ isEditingStock() ? 'Mettre à jour' : 'Créer le stock' }}</span>
                 }
               </button>
               @if (isEditingStock()) {
@@ -130,7 +155,7 @@ import { StockService } from '../../core/services/stock.service';
           <div class="card-header">
             <div>
               <p class="card-header__eyebrow">Mouvement</p>
-              <h3>Enregistrer une entree ou sortie</h3>
+              <h3>Enregistrer une entrée ou sortie</h3>
             </div>
           </div>
 
@@ -142,26 +167,35 @@ import { StockService } from '../../core/services/stock.service';
                   <mat-option [value]="produit.id">{{ produit.nom }}</mat-option>
                 }
               </mat-select>
+              @if (mouvementForm.controls.produitId.hasError('required')) {
+                <mat-error>Produit requis</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Entrepot</mat-label>
+              <mat-label>Entrepôt</mat-label>
               <mat-select formControlName="entrepotId">
                 @for (entrepot of entrepots(); track entrepot.id) {
                   <mat-option [value]="entrepot.id">{{ entrepot.nom }}</mat-option>
                 }
               </mat-select>
               @if (!canChooseEntrepot()) {
-                <mat-hint>Verrouille sur votre entrepot affecte.</mat-hint>
+                <mat-hint>Verrouillé sur votre entrepôt affecté.</mat-hint>
+              }
+              @if (mouvementForm.controls.entrepotId.hasError('required')) {
+                <mat-error>Entrepôt requis</mat-error>
               }
             </mat-form-field>
             @if (selectedMouvementEntrepot(); as entrepot) {
-              <div class="capacity-panel" [class.capacity-panel--error]="isMouvementCapacityExceeded()">
+              <div
+                class="capacity-panel"
+                [class.capacity-panel--error]="isMouvementCapacityExceeded()"
+              >
                 <span>Disponible avant : {{ entrepot.capaciteDisponible }}</span>
                 @if (mouvementForm.controls.type.value === 'ENTREE') {
-                  <span>Disponible apres entree : {{ mouvementCapacityAfterSave() }}</span>
+                  <span>Disponible après entrée : {{ mouvementCapacityAfterSave() }}</span>
                 } @else {
-                  <span>La sortie liberera de la capacite.</span>
+                  <span>La sortie libérera de la capacité.</span>
                 }
               </div>
             }
@@ -170,14 +204,19 @@ import { StockService } from '../../core/services/stock.service';
               <mat-label>Type</mat-label>
               <mat-select formControlName="type">
                 @for (type of mouvementTypes; track type) {
-                  <mat-option [value]="type">{{ type }}</mat-option>
+                  <mat-option [value]="type">{{ movementLabel(type) }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Quantite</mat-label>
+              <mat-label>Quantité</mat-label>
               <input matInput type="number" min="1" formControlName="quantite" />
+              @if (mouvementForm.controls.quantite.hasError('required')) {
+                <mat-error>Quantité requise</mat-error>
+              } @else if (mouvementForm.controls.quantite.hasError('min')) {
+                <mat-error>La quantité doit être positive</mat-error>
+              }
             </mat-form-field>
 
             @if (mouvementFeedbackMessage()) {
@@ -187,7 +226,13 @@ import { StockService } from '../../core/services/stock.service';
             }
 
             <div class="actions">
-              <button mat-flat-button type="submit" [disabled]="mouvementForm.invalid || isMouvementCapacityExceeded() || isSubmittingMouvement()">
+              <button
+                mat-flat-button
+                type="submit"
+                [disabled]="
+                  mouvementForm.invalid || isMouvementCapacityExceeded() || isSubmittingMouvement()
+                "
+              >
                 @if (isSubmittingMouvement()) {
                   <mat-progress-spinner diameter="18" mode="indeterminate" />
                 } @else {
@@ -230,11 +275,11 @@ import { StockService } from '../../core/services/stock.service';
           <div class="table" role="table">
             <div class="table__row table__row--head stock-row" role="row">
               <span role="columnheader">Produit</span>
-              <span role="columnheader">Entrepot</span>
-              <span role="columnheader">Capacite</span>
-              <span role="columnheader">Quantite</span>
+              <span role="columnheader">Entrepôt</span>
+              <span role="columnheader">Capacité</span>
+              <span role="columnheader">Quantité</span>
               <span role="columnheader">Seuil</span>
-              <span role="columnheader">Etat</span>
+              <span role="columnheader">État</span>
               @if (canWrite()) {
                 <span role="columnheader">Actions</span>
               }
@@ -299,15 +344,19 @@ import { StockService } from '../../core/services/stock.service';
               <span role="columnheader">Date</span>
               <span role="columnheader">Type</span>
               <span role="columnheader">Produit</span>
-              <span role="columnheader">Entrepot</span>
-              <span role="columnheader">Quantite</span>
+              <span role="columnheader">Entrepôt</span>
+              <span role="columnheader">Quantité</span>
             </div>
 
             @for (mouvement of mouvements(); track mouvement.id) {
               <article class="table__row movement-row" role="row">
                 <span role="cell">{{ mouvement.date | date: 'dd/MM/yyyy HH:mm' }}</span>
-                <span role="cell" class="status" [class.status--alert]="mouvement.type === 'SORTIE'">
-                  {{ mouvement.type }}
+                <span
+                  role="cell"
+                  class="status"
+                  [class.status--alert]="mouvement.type === 'SORTIE'"
+                >
+                  {{ movementLabel(mouvement.type) }}
                 </span>
                 <strong role="cell">{{ mouvement.produitNom }}</strong>
                 <span role="cell">{{ mouvement.entrepotNom }}</span>
@@ -322,16 +371,16 @@ import { StockService } from '../../core/services/stock.service';
   styles: `
     :host {
       display: grid;
-      gap: 1.5rem;
+      gap: 2rem;
     }
 
     .page-header,
     .form-card,
     .list-card {
-      border-radius: 1.5rem;
+      border-radius: 8px;
       border: 1px solid var(--stockpro-line);
       background: var(--stockpro-panel);
-      box-shadow: 0 18px 40px rgba(22, 33, 47, 0.08);
+      box-shadow: var(--stockpro-shadow);
     }
 
     .page-header {
@@ -347,7 +396,7 @@ import { StockService } from '../../core/services/stock.service';
       margin: 0 0 0.45rem;
       color: var(--stockpro-blue);
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0;
       font-size: 0.74rem;
       font-weight: 700;
     }
@@ -355,7 +404,8 @@ import { StockService } from '../../core/services/stock.service';
     h2,
     h3 {
       margin: 0;
-      font-family: 'Playfair Display', serif;
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 900;
       color: var(--stockpro-ink);
     }
 
@@ -368,12 +418,14 @@ import { StockService } from '../../core/services/stock.service';
     .content-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.5rem;
+      gap: 2rem;
     }
 
     .form-card,
     .list-card {
+      min-width: 0;
       padding: 1.5rem;
+      overflow: hidden;
     }
 
     .card-header {
@@ -399,7 +451,7 @@ import { StockService } from '../../core/services/stock.service';
       flex-wrap: wrap;
       margin: -0.35rem 0 0;
       padding: 0.8rem 0.9rem;
-      border-radius: 1rem;
+      border-radius: 8px;
       background: rgba(29, 95, 168, 0.1);
       color: var(--stockpro-blue);
       font-weight: 700;
@@ -418,7 +470,7 @@ import { StockService } from '../../core/services/stock.service';
       width: max-content;
       min-width: 44px;
       padding: 0.35rem 0.8rem;
-      border-radius: 999px;
+      border-radius: 8px;
       font-weight: 700;
       background: rgba(29, 95, 168, 0.12);
       color: var(--stockpro-blue);
@@ -432,7 +484,7 @@ import { StockService } from '../../core/services/stock.service';
     .feedback {
       margin: 0;
       padding: 0.85rem 1rem;
-      border-radius: 1rem;
+      border-radius: 8px;
       background: rgba(29, 122, 92, 0.12);
       color: var(--stockpro-green);
       font-weight: 600;
@@ -454,25 +506,32 @@ import { StockService } from '../../core/services/stock.service';
     .table {
       display: grid;
       gap: 0.65rem;
+      width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      padding-bottom: 0.15rem;
     }
 
     .table__row {
       display: grid;
       gap: 1rem;
       align-items: center;
+      min-width: 0;
       padding: 1rem 1.1rem;
-      border-radius: 1.1rem;
+      border-radius: 8px;
       background: rgba(22, 33, 47, 0.04);
     }
 
     .stock-row {
+      min-width: 860px;
       grid-template-columns:
         minmax(120px, 1fr) minmax(120px, 0.85fr) minmax(110px, 0.65fr)
         minmax(80px, 0.45fr) minmax(80px, 0.45fr) minmax(90px, 0.5fr)
-        minmax(210px, auto);
+        minmax(190px, auto);
     }
 
     .movement-row {
+      min-width: 640px;
       grid-template-columns:
         minmax(130px, 0.9fr) minmax(90px, 0.45fr) minmax(130px, 1fr)
         minmax(130px, 1fr) minmax(80px, 0.45fr);
@@ -503,14 +562,17 @@ import { StockService } from '../../core/services/stock.service';
       color: var(--stockpro-muted);
     }
 
-    @media (max-width: 1180px) {
+    @media (max-width: 1320px) {
       .content-grid,
       .form-grid {
         grid-template-columns: 1fr;
       }
+    }
 
+    @media (max-width: 1180px) {
       .stock-row,
       .movement-row {
+        min-width: 0;
         grid-template-columns: 1fr;
       }
 
@@ -530,6 +592,7 @@ import { StockService } from '../../core/services/stock.service';
 })
 export class StocksPageComponent {
   private readonly authService = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
   private readonly entrepotService = inject(EntrepotService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly mouvementStockService = inject(MouvementStockService);
@@ -550,13 +613,11 @@ export class StocksPageComponent {
   protected readonly stockFeedbackState = signal<'success' | 'error'>('success');
   protected readonly mouvementFeedbackMessage = signal('');
   protected readonly mouvementFeedbackState = signal<'success' | 'error'>('success');
-  protected readonly canWrite = computed(() =>
-    this.authService.hasRole('ADMIN', 'GESTIONNAIRE')
-  );
+  protected readonly canWrite = computed(() => this.authService.hasRole('ADMIN', 'GESTIONNAIRE'));
   protected readonly canChooseEntrepot = computed(() => this.authService.hasRole('ADMIN'));
   protected readonly isEditingStock = computed(() => this.selectedStockId() !== null);
-  protected readonly editingStock = computed(() =>
-    this.stocks().find((stock) => stock.id === this.selectedStockId()) ?? null
+  protected readonly editingStock = computed(
+    () => this.stocks().find((stock) => stock.id === this.selectedStockId()) ?? null,
   );
 
   protected readonly stockForm = this.formBuilder.group({
@@ -580,7 +641,12 @@ export class StocksPageComponent {
   }
 
   protected saveStock(): void {
-    if (!this.canWrite() || this.stockForm.invalid || this.isStockCapacityExceeded() || this.isSubmittingStock()) {
+    if (
+      !this.canWrite() ||
+      this.stockForm.invalid ||
+      this.isStockCapacityExceeded() ||
+      this.isSubmittingStock()
+    ) {
       this.stockForm.markAllAsTouched();
       return;
     }
@@ -601,29 +667,30 @@ export class StocksPageComponent {
         ? this.stockService.create(request)
         : this.stockService.update(selectedStockId, request);
 
-    action$
-      .pipe(finalize(() => this.isSubmittingStock.set(false)))
-      .subscribe({
-        next: () => {
-          this.stockFeedbackState.set('success');
-          this.stockFeedbackMessage.set(
-            selectedStockId === null
-              ? 'Stock cree avec succes.'
-              : 'Stock mis a jour avec succes.'
-          );
-          this.resetStockForm();
-          this.loadStocks();
-          this.loadEntrepots();
-        },
-        error: (error: unknown) => {
-          this.stockFeedbackState.set('error');
-          this.stockFeedbackMessage.set(this.extractErrorMessage(error));
-        },
-      });
+    action$.pipe(finalize(() => this.isSubmittingStock.set(false))).subscribe({
+      next: () => {
+        this.stockFeedbackState.set('success');
+        this.stockFeedbackMessage.set(
+          selectedStockId === null ? 'Stock créé avec succès.' : 'Stock mis à jour avec succès.',
+        );
+        this.resetStockForm();
+        this.loadStocks();
+        this.loadEntrepots();
+      },
+      error: (error: unknown) => {
+        this.stockFeedbackState.set('error');
+        this.stockFeedbackMessage.set(this.extractErrorMessage(error));
+      },
+    });
   }
 
   protected saveMouvement(): void {
-    if (!this.canWrite() || this.mouvementForm.invalid || this.isMouvementCapacityExceeded() || this.isSubmittingMouvement()) {
+    if (
+      !this.canWrite() ||
+      this.mouvementForm.invalid ||
+      this.isMouvementCapacityExceeded() ||
+      this.isSubmittingMouvement()
+    ) {
       this.mouvementForm.markAllAsTouched();
       return;
     }
@@ -645,7 +712,7 @@ export class StocksPageComponent {
       .subscribe({
         next: () => {
           this.mouvementFeedbackState.set('success');
-          this.mouvementFeedbackMessage.set('Mouvement enregistre avec succes.');
+          this.mouvementFeedbackMessage.set('Mouvement enregistré avec succès.');
           this.resetMouvementForm();
           this.loadStocks();
           this.loadMouvements();
@@ -670,31 +737,42 @@ export class StocksPageComponent {
   }
 
   protected removeStock(stock: Stock): void {
-    const confirmed = window.confirm(`Supprimer le stock ${stock.produitNom} - ${stock.entrepotNom} ?`);
-    if (!confirmed) {
-      return;
-    }
-
-    this.stockFeedbackMessage.set('');
-    this.isSubmittingStock.set(true);
-
-    this.stockService
-      .delete(stock.id)
-      .pipe(finalize(() => this.isSubmittingStock.set(false)))
-      .subscribe({
-        next: () => {
-          this.stockFeedbackState.set('success');
-          this.stockFeedbackMessage.set('Stock supprime avec succes.');
-          if (this.selectedStockId() === stock.id) {
-            this.resetStockForm();
-          }
-          this.loadStocks();
-          this.loadEntrepots();
+    this.dialog
+      .open(ConfirmDialogComponent, {
+        data: {
+          title: 'Supprimer cette ligne de stock ?',
+          message: `${stock.produitNom} ne sera plus suivi dans ${stock.entrepotNom}.`,
+          confirmLabel: 'Supprimer',
+          tone: 'danger',
         },
-        error: (error: unknown) => {
-          this.stockFeedbackState.set('error');
-          this.stockFeedbackMessage.set(this.extractErrorMessage(error));
-        },
+      })
+      .afterClosed()
+      .subscribe((confirmed: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.stockFeedbackMessage.set('');
+        this.isSubmittingStock.set(true);
+
+        this.stockService
+          .delete(stock.id)
+          .pipe(finalize(() => this.isSubmittingStock.set(false)))
+          .subscribe({
+            next: () => {
+              this.stockFeedbackState.set('success');
+              this.stockFeedbackMessage.set('Stock supprimé avec succès.');
+              if (this.selectedStockId() === stock.id) {
+                this.resetStockForm();
+              }
+              this.loadStocks();
+              this.loadEntrepots();
+            },
+            error: (error: unknown) => {
+              this.stockFeedbackState.set('error');
+              this.stockFeedbackMessage.set(this.extractErrorMessage(error));
+            },
+          });
       });
   }
 
@@ -741,8 +819,10 @@ export class StocksPageComponent {
   }
 
   protected isStockCapacityExceeded(): boolean {
-    return !!this.selectedStockEntrepot()
-      && Number(this.stockForm.controls.quantite.value) > this.stockCapacityLimit();
+    return (
+      !!this.selectedStockEntrepot() &&
+      Number(this.stockForm.controls.quantite.value) > this.stockCapacityLimit()
+    );
   }
 
   protected mouvementCapacityAfterSave(): number {
@@ -751,19 +831,28 @@ export class StocksPageComponent {
       return 0;
     }
 
-    return Math.max(entrepot.capaciteDisponible - Number(this.mouvementForm.controls.quantite.value), 0);
+    return Math.max(
+      entrepot.capaciteDisponible - Number(this.mouvementForm.controls.quantite.value),
+      0,
+    );
   }
 
   protected isMouvementCapacityExceeded(): boolean {
     const entrepot = this.selectedMouvementEntrepot();
-    return !!entrepot
-      && this.mouvementForm.controls.type.value === 'ENTREE'
-      && Number(this.mouvementForm.controls.quantite.value) > entrepot.capaciteDisponible;
+    return (
+      !!entrepot &&
+      this.mouvementForm.controls.type.value === 'ENTREE' &&
+      Number(this.mouvementForm.controls.quantite.value) > entrepot.capaciteDisponible
+    );
   }
 
   protected stockCapacitySummary(stock: Stock): string {
     const entrepot = this.findEntrepot(stock.entrepotId);
     return entrepot ? `${entrepot.capaciteDisponible} disponible` : '-';
+  }
+
+  protected movementLabel(type: TypeMouvement): string {
+    return type === 'ENTREE' ? 'Entrée' : 'Sortie';
   }
 
   private resetMouvementForm(): void {

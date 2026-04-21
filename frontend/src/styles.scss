@@ -1,17 +1,19 @@
 @use '@angular/material' as mat;
 
 :root {
-  --stockpro-sand: #f4efe6;
-  --stockpro-ink: #16212f;
-  --stockpro-muted: #5e6a77;
-  --stockpro-surface: #fffaf2;
-  --stockpro-panel: rgba(255, 255, 255, 0.76);
-  --stockpro-line: rgba(22, 33, 47, 0.12);
-  --stockpro-gold: #d98a2b;
-  --stockpro-gold-soft: #f4c55d;
-  --stockpro-green: #1d7a5c;
-  --stockpro-blue: #1d5fa8;
-  --stockpro-danger: #d14d41;
+  --stockpro-ink: #18202a;
+  --stockpro-muted: #667085;
+  --stockpro-surface: #f6f7fb;
+  --stockpro-panel: #ffffff;
+  --stockpro-panel-muted: #eef2f7;
+  --stockpro-line: #d9e0ea;
+  --stockpro-green: #14845f;
+  --stockpro-blue: #3056d3;
+  --stockpro-cyan: #0f8b9c;
+  --stockpro-amber: #c47a14;
+  --stockpro-danger: #c73e39;
+  --stockpro-shadow: 0 16px 34px rgba(24, 32, 42, 0.08);
+  --stockpro-radius: 8px;
 }
 
 html {
@@ -32,10 +34,7 @@ body {
   color-scheme: light;
   margin: 0;
   height: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(244, 197, 93, 0.3), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(29, 95, 168, 0.18), transparent 32%),
-    linear-gradient(180deg, #f7f0e2 0%, #eee3d2 100%);
+  background: linear-gradient(180deg, #f9fafc 0%, var(--stockpro-surface) 100%);
   color: var(--stockpro-ink);
   font-family: 'Source Sans 3', sans-serif;
 }
@@ -49,4 +48,17 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(48, 86, 211, 0.36);
+  outline-offset: 2px;
+}
+
+.mat-mdc-card {
+  border-radius: var(--stockpro-radius) !important;
+}
+
+.mat-mdc-dialog-surface {
+  border-radius: var(--stockpro-radius) !important;
 }

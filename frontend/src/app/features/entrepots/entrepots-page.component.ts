@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -12,6 +13,7 @@ import { finalize } from 'rxjs';
 import { Entrepot } from '../../core/models/entrepot.model';
 import { AuthService } from '../../core/services/auth.service';
 import { EntrepotService } from '../../core/services/entrepot.service';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-entrepots-page',
@@ -19,6 +21,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
   imports: [
     MatButtonModule,
     MatCardModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -29,15 +32,15 @@ import { EntrepotService } from '../../core/services/entrepot.service';
     <section class="page-header">
       <div>
         <p class="page-header__eyebrow">Infrastructure</p>
-        <h2>Entrepots</h2>
+        <h2>Entrepôts</h2>
         <p>
-          {{ canManage() ? 'Gerez les sites de stockage disponibles.' : 'Consultez votre entrepot affecte.' }}
+          {{ canManage() ? 'Gérez les sites de stockage disponibles.' : 'Consultez votre entrepôt affecté.' }}
         </p>
       </div>
       @if (canManage()) {
         <button mat-stroked-button type="button" (click)="resetForm()">
           <mat-icon>refresh</mat-icon>
-          Reinitialiser
+          Réinitialiser
         </button>
       }
     </section>
@@ -47,8 +50,8 @@ import { EntrepotService } from '../../core/services/entrepot.service';
         <mat-card class="form-card">
           <div class="card-header">
             <div>
-              <p class="card-header__eyebrow">{{ isEditing() ? 'Edition' : 'Creation' }}</p>
-              <h3>{{ isEditing() ? 'Mettre a jour un entrepot' : 'Ajouter un entrepot' }}</h3>
+              <p class="card-header__eyebrow">{{ isEditing() ? 'Édition' : 'Création' }}</p>
+              <h3>{{ isEditing() ? 'Mettre à jour un entrepôt' : 'Ajouter un entrepôt' }}</h3>
             </div>
           </div>
 
@@ -56,25 +59,36 @@ import { EntrepotService } from '../../core/services/entrepot.service';
             <mat-form-field appearance="outline">
               <mat-label>Nom</mat-label>
               <input matInput formControlName="nom" />
+              @if (form.controls.nom.hasError('required')) {
+                <mat-error>Nom requis</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Adresse</mat-label>
               <input matInput formControlName="adresse" />
+              @if (form.controls.adresse.hasError('required')) {
+                <mat-error>Adresse requise</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Capacite</mat-label>
+              <mat-label>Capacité</mat-label>
               <input matInput type="number" min="1" formControlName="capacite" />
+              @if (form.controls.capacite.hasError('required')) {
+                <mat-error>Capacité requise</mat-error>
+              } @else if (form.controls.capacite.hasError('min')) {
+                <mat-error>La capacité doit être positive</mat-error>
+              }
             </mat-form-field>
             @if (selectedEntrepot(); as entrepot) {
               <div class="capacity-note" [class.capacity-note--error]="isCapacityReductionInvalid()">
-                <span>Utilisee : {{ entrepot.capaciteUtilisee }}</span>
+                <span>Utilisée : {{ entrepot.capaciteUtilisee }}</span>
                 <span>Disponible actuelle : {{ entrepot.capaciteDisponible }}</span>
-                <span>Disponible apres modification : {{ availableAfterEdit() }}</span>
+                <span>Disponible après modification : {{ availableAfterEdit() }}</span>
               </div>
             } @else {
-              <p class="capacity-note">Cette valeur definit la limite maximale de stock de l'entrepot.</p>
+              <p class="capacity-note">Cette valeur définit la limite maximale de stock de l'entrepôt.</p>
             }
 
             @if (feedbackMessage()) {
@@ -88,7 +102,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
                 @if (isSubmitting()) {
                   <mat-progress-spinner diameter="18" mode="indeterminate" />
                 } @else {
-                  <span>{{ isEditing() ? 'Mettre a jour' : "Creer l'entrepot" }}</span>
+                  <span>{{ isEditing() ? 'Mettre à jour' : "Créer l'entrepôt" }}</span>
                 }
               </button>
               @if (isEditing()) {
@@ -103,7 +117,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
         <div class="card-header">
           <div>
             <p class="card-header__eyebrow">Liste</p>
-            <h3>{{ canManage() ? 'Entrepots disponibles' : 'Entrepot affecte' }}</h3>
+            <h3>{{ canManage() ? 'Entrepôts disponibles' : 'Entrepôt affecté' }}</h3>
           </div>
           <span class="count">{{ entrepots().length }}</span>
         </div>
@@ -117,19 +131,19 @@ import { EntrepotService } from '../../core/services/entrepot.service';
         @if (isLoading()) {
           <div class="empty-state">
             <mat-progress-spinner diameter="40" mode="indeterminate" />
-            <p>Chargement des entrepots...</p>
+            <p>Chargement des entrepôts...</p>
           </div>
         } @else if (entrepots().length === 0) {
           <div class="empty-state">
             <mat-icon>warehouse</mat-icon>
-            <p>Aucun entrepot disponible.</p>
+            <p>Aucun entrepôt disponible.</p>
           </div>
         } @else {
           <div class="table" role="table">
             <div class="table__row table__row--head" role="row">
               <span role="columnheader">Nom</span>
               <span role="columnheader">Adresse</span>
-              <span role="columnheader">Capacite</span>
+              <span role="columnheader">Capacité</span>
               <span role="columnheader">Occupation</span>
               @if (canManage()) {
                 <span role="columnheader">Actions</span>
@@ -142,7 +156,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
                 <span role="cell">{{ entrepot.adresse }}</span>
                 <span role="cell" class="capacity-stack">
                   <strong>{{ entrepot.capacite }} total</strong>
-                  <small>{{ entrepot.capaciteUtilisee }} utilisee</small>
+                  <small>{{ entrepot.capaciteUtilisee }} utilisée</small>
                   <small>{{ entrepot.capaciteDisponible }} disponible</small>
                 </span>
                 <span role="cell" class="occupation-cell">
@@ -181,10 +195,10 @@ import { EntrepotService } from '../../core/services/entrepot.service';
     .page-header,
     .form-card,
     .list-card {
-      border-radius: 1.5rem;
+      border-radius: 8px;
       border: 1px solid var(--stockpro-line);
       background: var(--stockpro-panel);
-      box-shadow: 0 18px 40px rgba(22, 33, 47, 0.08);
+      box-shadow: var(--stockpro-shadow);
     }
 
     .page-header {
@@ -200,7 +214,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
       margin: 0 0 0.45rem;
       color: var(--stockpro-blue);
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0;
       font-size: 0.74rem;
       font-weight: 700;
     }
@@ -208,7 +222,8 @@ import { EntrepotService } from '../../core/services/entrepot.service';
     h2,
     h3 {
       margin: 0;
-      font-family: 'Playfair Display', serif;
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 900;
       color: var(--stockpro-ink);
     }
 
@@ -255,7 +270,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
       flex-wrap: wrap;
       margin: -0.35rem 0 0;
       padding: 0.8rem 0.9rem;
-      border-radius: 1rem;
+      border-radius: 8px;
       background: rgba(29, 95, 168, 0.1);
       color: var(--stockpro-blue);
       font-weight: 700;
@@ -272,7 +287,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
       justify-content: center;
       min-width: 44px;
       padding: 0.35rem 0.8rem;
-      border-radius: 999px;
+      border-radius: 8px;
       font-weight: 700;
       background: rgba(29, 95, 168, 0.12);
       color: var(--stockpro-blue);
@@ -281,7 +296,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
     .feedback {
       margin: 0;
       padding: 0.85rem 1rem;
-      border-radius: 1rem;
+      border-radius: 8px;
       background: rgba(29, 122, 92, 0.12);
       color: var(--stockpro-green);
       font-weight: 600;
@@ -313,7 +328,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
       gap: 1rem;
       align-items: center;
       padding: 1rem 1.1rem;
-      border-radius: 1.1rem;
+      border-radius: 8px;
       background: rgba(22, 33, 47, 0.04);
     }
 
@@ -346,7 +361,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
       width: 100%;
       height: 8px;
       overflow: hidden;
-      border-radius: 999px;
+      border-radius: 8px;
       background: rgba(22, 33, 47, 0.1);
     }
 
@@ -363,7 +378,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
       align-items: center;
       justify-content: center;
       padding: 0.35rem 0.75rem;
-      border-radius: 999px;
+      border-radius: 8px;
       background: rgba(29, 122, 92, 0.12);
       color: var(--stockpro-green);
       font-weight: 800;
@@ -416,6 +431,7 @@ import { EntrepotService } from '../../core/services/entrepot.service';
 })
 export class EntrepotsPageComponent {
   private readonly authService = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
   private readonly entrepotService = inject(EntrepotService);
   private readonly formBuilder = inject(FormBuilder);
 
@@ -469,8 +485,8 @@ export class EntrepotsPageComponent {
           this.feedbackState.set('success');
           this.feedbackMessage.set(
             selectedEntrepotId === null
-              ? 'Entrepot cree avec succes.'
-              : 'Entrepot mis a jour avec succes.'
+              ? 'Entrepôt créé avec succès.'
+              : 'Entrepôt mis à jour avec succès.'
           );
           this.resetForm();
           this.loadEntrepots();
@@ -493,30 +509,41 @@ export class EntrepotsPageComponent {
   }
 
   protected remove(entrepot: Entrepot): void {
-    const confirmed = window.confirm(`Supprimer l'entrepot ${entrepot.nom} ?`);
-    if (!confirmed) {
-      return;
-    }
-
-    this.feedbackMessage.set('');
-    this.isSubmitting.set(true);
-
-    this.entrepotService
-      .delete(entrepot.id)
-      .pipe(finalize(() => this.isSubmitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.feedbackState.set('success');
-          this.feedbackMessage.set('Entrepot supprime avec succes.');
-          if (this.selectedEntrepotId() === entrepot.id) {
-            this.resetForm();
-          }
-          this.loadEntrepots();
+    this.dialog
+      .open(ConfirmDialogComponent, {
+        data: {
+          title: 'Supprimer cet entrepôt ?',
+          message: `L'entrepôt ${entrepot.nom} sera retiré de StockPro.`,
+          confirmLabel: 'Supprimer',
+          tone: 'danger',
         },
-        error: (error: unknown) => {
-          this.feedbackState.set('error');
-          this.feedbackMessage.set(this.extractErrorMessage(error));
-        },
+      })
+      .afterClosed()
+      .subscribe((confirmed: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.feedbackMessage.set('');
+        this.isSubmitting.set(true);
+
+        this.entrepotService
+          .delete(entrepot.id)
+          .pipe(finalize(() => this.isSubmitting.set(false)))
+          .subscribe({
+            next: () => {
+              this.feedbackState.set('success');
+              this.feedbackMessage.set('Entrepôt supprimé avec succès.');
+              if (this.selectedEntrepotId() === entrepot.id) {
+                this.resetForm();
+              }
+              this.loadEntrepots();
+            },
+            error: (error: unknown) => {
+              this.feedbackState.set('error');
+              this.feedbackMessage.set(this.extractErrorMessage(error));
+            },
+          });
       });
   }
 

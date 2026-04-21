@@ -27,11 +27,11 @@ import { DashboardService } from '../../core/services/dashboard.service';
     <section class="page-header">
       <div>
         <p class="page-header__eyebrow">Pilotage</p>
-        <h2>Dashboard analytique</h2>
+        <h2>Tableau de bord analytique</h2>
         <p>{{ scopeDescription() }}</p>
       </div>
       <div class="header-badges">
-        <span class="chip">{{ authService.currentUser()?.role }}</span>
+        <span class="chip">{{ roleLabel() }}</span>
         <span class="chip chip--danger">Alertes {{ alertes().length }}</span>
       </div>
     </section>
@@ -51,11 +51,11 @@ import { DashboardService } from '../../core/services/dashboard.service';
           @if (isAdmin() && adminAnalytics(); as adminData) {
             <mat-card class="analytics-hero">
               <div class="analytics-hero__content">
-                <p class="section-eyebrow">Analyse globale ADMIN</p>
-                <h3>Performance multi-entrepots</h3>
+                <p class="section-eyebrow">Analyse globale</p>
+                <h3>Performance multi-entrepôts</h3>
                 <p>
-                  Les indicateurs consolident la valeur du stock, la pression capacite,
-                  les alertes et l'activite recente pour prioriser les decisions.
+                  Les indicateurs consolident la valeur du stock, la pression capacité,
+                  les alertes et l'activité récente pour prioriser les décisions.
                 </p>
                 <div class="hero-metrics">
                   <span>
@@ -64,11 +64,11 @@ import { DashboardService } from '../../core/services/dashboard.service';
                   </span>
                   <span>
                     <strong>{{ formatMoney(adminData.valeurMoyenneParEntrepot) }}</strong>
-                    Moyenne / entrepot
+                    Moyenne / entrepôt
                   </span>
                   <span>
                     <strong>{{ adminData.entrepotsEnRisqueCapacite }}</strong>
-                    Entrepots en risque capacite
+                    Entrepôts en risque capacité
                   </span>
                 </div>
               </div>
@@ -78,10 +78,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
                   <div class="benchmark-row">
                     <div>
                       <strong>{{ item.entrepotNom }}</strong>
-                      <p>
-                        {{ item.mouvementsMois }} mouvements ce mois ·
-                        {{ item.alertes }} alertes
-                      </p>
+                  <p>{{ item.mouvementsMois }} mouvements ce mois · {{ item.alertes }} alertes</p>
                     </div>
                     <div class="bar-block">
                       <span>{{ formatMoney(item.valeurStock) }}</span>
@@ -118,7 +115,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
             </mat-card>
             <mat-card class="kpi-card">
               <span class="kpi-card__icon"><mat-icon>warehouse</mat-icon></span>
-              <p>Capacite disponible</p>
+              <p>Capacité disponible</p>
               <strong>{{ statsData.capaciteDisponible | number: '1.0-0' }}</strong>
             </mat-card>
           </section>
@@ -134,7 +131,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
                   Couverture
                   {{
                     kpisData.couvertureStockJoursEstimee === null
-                      ? 'N/A'
+                      ? 'Indisponible'
                       : (kpisData.couvertureStockJoursEstimee | number: '1.0-0') + ' j'
                   }}
                 </span>
@@ -162,7 +159,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
               </div>
 
               <div class="legend">
-                <span><i class="legend-dot legend-dot--in"></i> Entrees</span>
+                <span><i class="legend-dot legend-dot--in"></i> Entrées</span>
                 <span><i class="legend-dot legend-dot--out"></i> Sorties</span>
               </div>
             </mat-card>
@@ -197,7 +194,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
               <div class="panel-card__header">
                 <div>
                   <p class="section-eyebrow">Valeur</p>
-                  <h3>Stock par entrepot</h3>
+                  <h3>Stock par entrepôt</h3>
                 </div>
               </div>
               @if (kpisData.valeurStockParEntrepot.length === 0) {
@@ -220,12 +217,12 @@ import { DashboardService } from '../../core/services/dashboard.service';
             <mat-card class="panel-card">
               <div class="panel-card__header">
                 <div>
-                  <p class="section-eyebrow">Capacite</p>
-                  <h3>Saturation entrepots</h3>
+                  <p class="section-eyebrow">Capacité</p>
+                  <h3>Saturation entrepôts</h3>
                 </div>
               </div>
               @if (kpisData.capaciteParEntrepot.length === 0) {
-                <p class="empty">Aucune capacite disponible.</p>
+                <p class="empty">Aucune capacité disponible.</p>
               } @else {
                 @for (item of kpisData.capaciteParEntrepot; track item.entrepotId) {
                   <div class="bar-row">
@@ -253,7 +250,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
               <div class="panel-card__header">
                 <div>
                   <p class="section-eyebrow">Catalogue</p>
-                  <h3>Top produits mouvementes</h3>
+                  <h3>Top produits mouvementés</h3>
                 </div>
               </div>
               @if (analyticsData.topProduitsMouvementes.length === 0) {
@@ -263,7 +260,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
                   <div class="bar-row">
                     <div>
                       <strong>{{ item.produitNom }}</strong>
-                      <span>{{ item.quantiteMouvementee }} unites · {{ formatMoney(item.valeurStock) }}</span>
+                      <span>{{ item.quantiteMouvementee }} unités · {{ formatMoney(item.valeurStock) }}</span>
                     </div>
                     <span class="bar" aria-hidden="true">
                       <span class="bar__fill" [style.width]="barWidth(item.quantiteMouvementee, productMovementMax())"></span>
@@ -279,7 +276,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
               <div class="panel-card__header">
                 <div>
                   <p class="section-eyebrow">Risque</p>
-                  <h3>Alertes par gravite</h3>
+                  <h3>Alertes par gravité</h3>
                 </div>
               </div>
               @if (analyticsData.alertesParGravite.length === 0) {
@@ -305,13 +302,13 @@ import { DashboardService } from '../../core/services/dashboard.service';
                 <span class="metric-chip">{{ kpisData.stocksDormants }}</span>
               </div>
               @if (analyticsData.stocksDormants.length === 0) {
-                <p class="empty">Aucun stock dormant detecte.</p>
+                <p class="empty">Aucun stock dormant détecté.</p>
               } @else {
                 @for (item of analyticsData.stocksDormants; track item.stockId) {
                   <div class="list-row list-row--stack">
                     <div>
                       <strong>{{ item.produitNom }}</strong>
-                      <p>{{ item.entrepotNom }} · {{ item.quantite }} unites</p>
+                      <p>{{ item.entrepotNom }} · {{ item.quantite }} unités</p>
                     </div>
                     <span>{{ item.joursSansMouvement }} j</span>
                   </div>
@@ -323,7 +320,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
               <div class="panel-card__header">
                 <div>
                   <p class="section-eyebrow">Activite</p>
-                  <h3>Entrepots actifs</h3>
+                  <h3>Entrepôts actifs</h3>
                 </div>
               </div>
               @if (analyticsData.entrepotsActifs.length === 0) {
@@ -347,7 +344,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
           <mat-card class="table-card">
             <div class="panel-card__header">
               <div>
-                <p class="section-eyebrow">Alertes actives</p>
+                  <p class="section-eyebrow">Alertes actives</p>
                 <h3>Stocks sous seuil</h3>
               </div>
               <span class="metric-chip">{{ alertes().length }}</span>
@@ -358,10 +355,10 @@ import { DashboardService } from '../../core/services/dashboard.service';
             } @else {
               <div class="table table--alerts" role="table">
                 <div class="table__row table__row--head" role="row">
-                  <span role="columnheader">Priorite</span>
+                  <span role="columnheader">Priorité</span>
                   <span role="columnheader">Produit</span>
-                  <span role="columnheader">Entrepot</span>
-                  <span role="columnheader">Quantite</span>
+                  <span role="columnheader">Entrepôt</span>
+                  <span role="columnheader">Quantité</span>
                   <span role="columnheader">Seuil</span>
                   <span role="columnheader">Action attendue</span>
                 </div>
@@ -396,10 +393,10 @@ import { DashboardService } from '../../core/services/dashboard.service';
     .panel-card,
     .table-card,
     .loading-card {
-      border-radius: 1.25rem;
+      border-radius: 8px;
       border: 1px solid var(--stockpro-line);
       background: var(--stockpro-panel);
-      box-shadow: 0 16px 36px rgba(22, 33, 47, 0.08);
+      box-shadow: var(--stockpro-shadow);
     }
 
     .page-header {
@@ -415,7 +412,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
       margin: 0 0 0.35rem;
       color: var(--stockpro-blue);
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0;
       font-size: 0.72rem;
       font-weight: 700;
     }
@@ -423,7 +420,8 @@ import { DashboardService } from '../../core/services/dashboard.service';
     h2,
     h3 {
       margin: 0;
-      font-family: 'Playfair Display', serif;
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 900;
       color: var(--stockpro-ink);
     }
 
@@ -443,7 +441,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 
     .chip,
     .metric-chip {
-      border-radius: 999px;
+      border-radius: 8px;
       padding: 0.25rem 0.7rem;
       background: rgba(29, 95, 168, 0.12);
       color: var(--stockpro-blue);
@@ -458,7 +456,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 
     .feedback {
       margin: 0;
-      border-radius: 1rem;
+      border-radius: 8px;
       padding: 0.85rem 1rem;
       font-weight: 600;
     }
@@ -483,7 +481,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
       gap: 1rem;
       padding: 1.25rem;
       background:
-        linear-gradient(135deg, rgba(22, 33, 47, 0.97), rgba(29, 95, 168, 0.88)),
+        linear-gradient(135deg, #18202a 0%, #24405f 100%),
         var(--stockpro-panel);
       color: #fffaf2;
     }
@@ -506,7 +504,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 
     .hero-metrics span,
     .benchmark-row {
-      border-radius: 1rem;
+      border-radius: 8px;
       background: rgba(255, 255, 255, 0.1);
       padding: 0.75rem;
     }
@@ -576,7 +574,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
       place-items: center;
       width: 2.2rem;
       height: 2.2rem;
-      border-radius: 0.8rem;
+      border-radius: 8px;
       background: rgba(29, 95, 168, 0.12);
       color: var(--stockpro-blue);
     }
@@ -635,7 +633,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
       gap: 0.25rem;
       height: 150px;
       width: 100%;
-      border-radius: 0.75rem;
+      border-radius: 8px;
       background: rgba(22, 33, 47, 0.04);
       padding: 0.45rem;
     }
@@ -644,7 +642,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
       display: block;
       width: min(34%, 1.1rem);
       min-height: 0.35rem;
-      border-radius: 999px 999px 0 0;
+      border-radius: 8px 8px 0 0;
       background: var(--stockpro-blue);
     }
 
@@ -675,7 +673,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
       display: inline-block;
       width: 0.7rem;
       height: 0.7rem;
-      border-radius: 999px;
+      border-radius: 8px;
       background: var(--stockpro-blue);
     }
 
@@ -686,7 +684,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
     .stats-row,
     .list-row,
     .bar-row {
-      border-radius: 0.8rem;
+      border-radius: 8px;
       background: rgba(22, 33, 47, 0.05);
       padding: 0.65rem 0.75rem;
     }
@@ -728,7 +726,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
     .bar,
     .bar__fill {
       display: block;
-      border-radius: 999px;
+      border-radius: 8px;
     }
 
     .bar {
@@ -761,7 +759,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 
     .priority {
       width: max-content;
-      border-radius: 999px;
+      border-radius: 8px;
       padding: 0.25rem 0.65rem;
       color: #8f5a00;
       background: rgba(244, 197, 93, 0.18);
@@ -784,7 +782,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
       gap: 0.7rem;
       align-items: center;
       padding: 0.8rem;
-      border-radius: 0.9rem;
+      border-radius: 8px;
       background: rgba(22, 33, 47, 0.05);
     }
 
@@ -930,10 +928,24 @@ export class HomePageComponent {
 
   protected scopeDescription(): string {
     if (this.isAdmin()) {
-      return 'Vue globale multi-entrepots des performances, risques, capacites et flux.';
+      return 'Vue globale multi-entrepôts des performances, risques, capacités et flux.';
     }
 
-    return 'Vue operationnelle filtree sur votre entrepot affecte, avec les indicateurs disponibles en lecture selon votre role.';
+    return 'Vue opérationnelle filtrée sur votre entrepôt affecté, avec les indicateurs disponibles selon votre rôle.';
+  }
+
+  protected roleLabel(): string {
+    const role = this.authService.currentUser()?.role;
+
+    if (role === 'ADMIN') {
+      return 'Administrateur';
+    }
+
+    if (role === 'GESTIONNAIRE') {
+      return 'Gestionnaire';
+    }
+
+    return 'Observateur';
   }
 
   private loadDashboard(): void {

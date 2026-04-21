@@ -21,8 +21,8 @@ import { AlerteService } from '../../core/services/alerte.service';
         <p>
           {{
             isGlobalView()
-              ? 'Stocks sous seuil critique sur tous les entrepots.'
-              : 'Stocks sous seuil critique dans votre entrepot affecte.'
+              ? 'Stocks sous seuil critique sur tous les entrepôts.'
+              : 'Stocks sous seuil critique dans votre entrepôt affecté.'
           }}
         </p>
       </div>
@@ -38,19 +38,19 @@ import { AlerteService } from '../../core/services/alerte.service';
       <mat-card class="summary-card">
         <mat-icon>notification_important</mat-icon>
         <span>{{ highAlerts() }}</span>
-        <p>Elevees</p>
+        <p>Élevées</p>
       </mat-card>
       <mat-card class="summary-card">
         <mat-icon>inventory_2</mat-icon>
         <span>{{ totalMissing() }}</span>
-        <p>Unites a reconstituer</p>
+        <p>Unités à reconstituer</p>
       </mat-card>
     </section>
 
     <mat-card class="list-card">
       <div class="card-header">
         <div>
-          <p class="card-header__eyebrow">Priorites</p>
+          <p class="card-header__eyebrow">Priorités</p>
           <h3>Alertes actives</h3>
         </div>
       </div>
@@ -72,10 +72,10 @@ import { AlerteService } from '../../core/services/alerte.service';
       } @else {
         <div class="table" role="table">
           <div class="table__row table__row--head" role="row">
-            <span role="columnheader">Priorite</span>
+            <span role="columnheader">Priorité</span>
             <span role="columnheader">Produit</span>
-            <span role="columnheader">Entrepot</span>
-            <span role="columnheader">Quantite</span>
+            <span role="columnheader">Entrepôt</span>
+            <span role="columnheader">Quantité</span>
             <span role="columnheader">Seuil</span>
             <span role="columnheader">Action attendue</span>
           </div>
@@ -105,10 +105,10 @@ import { AlerteService } from '../../core/services/alerte.service';
     .page-header,
     .summary-card,
     .list-card {
-      border-radius: 1.5rem;
+      border-radius: 8px;
       border: 1px solid var(--stockpro-line);
       background: var(--stockpro-panel);
-      box-shadow: 0 18px 40px rgba(22, 33, 47, 0.08);
+      box-shadow: var(--stockpro-shadow);
     }
 
     .page-header {
@@ -124,7 +124,7 @@ import { AlerteService } from '../../core/services/alerte.service';
       margin: 0 0 0.45rem;
       color: var(--stockpro-blue);
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0;
       font-size: 0.74rem;
       font-weight: 700;
     }
@@ -132,7 +132,8 @@ import { AlerteService } from '../../core/services/alerte.service';
     h2,
     h3 {
       margin: 0;
-      font-family: 'Playfair Display', serif;
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 900;
       color: var(--stockpro-ink);
     }
 
@@ -189,7 +190,7 @@ import { AlerteService } from '../../core/services/alerte.service';
       width: max-content;
       min-width: 44px;
       padding: 0.35rem 0.8rem;
-      border-radius: 999px;
+      border-radius: 8px;
       font-weight: 700;
       background: rgba(29, 95, 168, 0.12);
       color: var(--stockpro-blue);
@@ -204,7 +205,7 @@ import { AlerteService } from '../../core/services/alerte.service';
     .feedback {
       margin: 0 0 1rem;
       padding: 0.85rem 1rem;
-      border-radius: 1rem;
+      border-radius: 8px;
       font-weight: 600;
     }
 
@@ -226,7 +227,7 @@ import { AlerteService } from '../../core/services/alerte.service';
       gap: 1rem;
       align-items: center;
       padding: 1rem 1.1rem;
-      border-radius: 1.1rem;
+      border-radius: 8px;
       background: rgba(22, 33, 47, 0.04);
     }
 

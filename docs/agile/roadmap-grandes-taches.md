@@ -78,9 +78,10 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 
 ### Phase 13 — Conteneurisation complète
 
-- créer les Dockerfile backend et frontend
-- orchestrer les services avec Docker Compose
-- garantir un démarrage reproductible
+- multi-stage Dockerfiles backend et frontend
+- docker-compose racine comme stack applicative principale
+- bootstrap MySQL via `infra/mysql-init/01-schema.sql`
+- volumes persistants, healthchecks et redémarrage propre
 
 ### Phase 14 — CI de base
 

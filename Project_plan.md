@@ -636,29 +636,34 @@
 
 ## Phase 13 — Conteneurisation complète
 
-**Objectif :** exécuter l’application dans Docker de manière reproductible.
+**Objectif :** produire une stack Docker proche d’un usage production, reproductible et propre à déployer.
 
 **Travaux :**
 
-- créer un `Dockerfile` backend adapté au build applicatif et au lancement en production
-- créer un `Dockerfile` frontend servi par un runtime web léger
+- créer un `Dockerfile` backend multi-stage, compact, basé sur un runtime Java de production
+- créer un `Dockerfile` frontend multi-stage, servi par un runtime web léger
 - ajouter les `.dockerignore` nécessaires pour garder des images propres
-- définir un `docker-compose.yml` racine avec MySQL, backend et frontend
-- externaliser les variables d’environnement nécessaires à l’exécution en conteneur
-- ajouter les volumes, ports et dépendances de démarrage utiles
-- prévoir les healthchecks et dépendances de démarrage entre services
-- vérifier que les conteneurs démarrent dans le bon ordre et communiquent correctement
+- définir un `docker-compose.yml` racine comme stack applicative principale avec `backend`, `frontend` et `mysql`
+- brancher le service MySQL racine sur `infra/mysql-init/01-schema.sql` comme bootstrap unique du schéma
+- garder `mysql-init` comme source unique de bootstrap SQL, sans dupliquer la logique d'initialisation ailleurs
+- externaliser les variables d’environnement nécessaires à l’exécution en conteneur, sans secrets en dur
+- ajouter des volumes persistants, ports explicites, `restart: unless-stopped` et dépendances de démarrage utiles
+- prévoir les healthchecks et vérifier l’ordre de démarrage réel entre services
+- s’assurer que les conteneurs tournent avec des privilèges minimaux et des images non bavardes
 - documenter les commandes de build et de lancement Docker dans le guide local
 - valider que la base MySQL conserve ses données via un volume dédié
 - vérifier que la stack peut être relancée de zéro sans étape manuelle cachée
+- laisser les outils purement infra ou d’administration locale dans `infra/` ou dans un profil séparé, pas dans la stack applicative de base
 
 **Définition of done :**
 
 - l’application démarre via Docker sans lancement manuel des applications
 - backend, frontend et base de données fonctionnent ensemble
+- la base MySQL est initialisée automatiquement via les scripts SQL du projet au premier démarrage du volume
 - les images peuvent être reconstruites à partir du repo
 - un clone neuf peut lancer la stack conteneurisée avec une seule procédure documentée
 - les ports et variables d’environnement restent cohérents avec le mode local
+- la stack est lisible, maintenable et suffisamment proche d’un usage prod pour la soutenance
 
 **Sortie attendue :**
 

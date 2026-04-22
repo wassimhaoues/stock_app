@@ -1,0 +1,12 @@
+target/
+.git/
+.gitignore
+*.md
+.mvn/
+mvnw
+mvnw.cmd
+.classpath
+.project
+.settings/
+.factorypath
+src/test/

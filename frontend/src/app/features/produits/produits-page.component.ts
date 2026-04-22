@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -12,6 +13,7 @@ import { finalize } from 'rxjs';
 import { Produit } from '../../core/models/produit.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ProduitService } from '../../core/services/produit.service';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-produits-page',
@@ -19,6 +21,7 @@ import { ProduitService } from '../../core/services/produit.service';
   imports: [
     MatButtonModule,
     MatCardModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -33,7 +36,7 @@ import { ProduitService } from '../../core/services/produit.service';
         <p>
           {{
             canManage()
-              ? 'Gerez le catalogue global des references.'
+              ? 'Gérez le catalogue global des références.'
               : 'Consultez le catalogue global des produits.'
           }}
         </p>
@@ -41,7 +44,7 @@ import { ProduitService } from '../../core/services/produit.service';
       @if (canManage()) {
         <button mat-stroked-button type="button" (click)="resetForm()">
           <mat-icon>refresh</mat-icon>
-          Reinitialiser
+          Réinitialiser
         </button>
       }
     </section>
@@ -51,8 +54,8 @@ import { ProduitService } from '../../core/services/produit.service';
         <mat-card class="form-card">
           <div class="card-header">
             <div>
-              <p class="card-header__eyebrow">{{ isEditing() ? 'Edition' : 'Creation' }}</p>
-              <h3>{{ isEditing() ? 'Mettre a jour un produit' : 'Ajouter un produit' }}</h3>
+              <p class="card-header__eyebrow">{{ isEditing() ? 'Édition' : 'Création' }}</p>
+              <h3>{{ isEditing() ? 'Mettre à jour un produit' : 'Ajouter un produit' }}</h3>
             </div>
           </div>
 
@@ -60,26 +63,45 @@ import { ProduitService } from '../../core/services/produit.service';
             <mat-form-field appearance="outline">
               <mat-label>Nom</mat-label>
               <input matInput formControlName="nom" />
+              @if (form.controls.nom.hasError('required')) {
+                <mat-error>Nom requis</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Categorie</mat-label>
+              <mat-label>Catégorie</mat-label>
               <input matInput formControlName="categorie" />
+              @if (form.controls.categorie.hasError('required')) {
+                <mat-error>Catégorie requise</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Prix</mat-label>
               <input matInput type="number" min="0.01" step="0.01" formControlName="prix" />
+              @if (form.controls.prix.hasError('required')) {
+                <mat-error>Prix requis</mat-error>
+              } @else if (form.controls.prix.hasError('min')) {
+                <mat-error>Le prix doit être positif</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Fournisseur</mat-label>
               <input matInput formControlName="fournisseur" />
+              @if (form.controls.fournisseur.hasError('required')) {
+                <mat-error>Fournisseur requis</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Seuil minimum</mat-label>
               <input matInput type="number" min="0" formControlName="seuilMin" />
+              @if (form.controls.seuilMin.hasError('required')) {
+                <mat-error>Seuil requis</mat-error>
+              } @else if (form.controls.seuilMin.hasError('min')) {
+                <mat-error>Le seuil ne peut pas être négatif</mat-error>
+              }
             </mat-form-field>
 
             @if (feedbackMessage()) {
@@ -93,7 +115,7 @@ import { ProduitService } from '../../core/services/produit.service';
                 @if (isSubmitting()) {
                   <mat-progress-spinner diameter="18" mode="indeterminate" />
                 } @else {
-                  <span>{{ isEditing() ? 'Mettre a jour' : 'Creer le produit' }}</span>
+                  <span>{{ isEditing() ? 'Mettre à jour' : 'Créer le produit' }}</span>
                 }
               </button>
               @if (isEditing()) {
@@ -133,7 +155,7 @@ import { ProduitService } from '../../core/services/produit.service';
           <div class="table" role="table">
             <div class="table__row table__row--head" role="row">
               <span role="columnheader">Produit</span>
-              <span role="columnheader">Categorie</span>
+              <span role="columnheader">Catégorie</span>
               <span role="columnheader">Fournisseur</span>
               <span role="columnheader">Prix</span>
               <span role="columnheader">Seuil</span>
@@ -147,7 +169,7 @@ import { ProduitService } from '../../core/services/produit.service';
                 <strong role="cell">{{ produit.nom }}</strong>
                 <span role="cell">{{ produit.categorie }}</span>
                 <span role="cell">{{ produit.fournisseur }}</span>
-                <span role="cell">{{ produit.prix }} TND</span>
+                <span role="cell">{{ produit.prix }} DT</span>
                 <span role="cell">{{ produit.seuilMin }}</span>
                 @if (canManage()) {
                   <div class="row-actions" role="cell">
@@ -177,10 +199,10 @@ import { ProduitService } from '../../core/services/produit.service';
     .page-header,
     .form-card,
     .list-card {
-      border-radius: 1.5rem;
+      border-radius: 8px;
       border: 1px solid var(--stockpro-line);
       background: var(--stockpro-panel);
-      box-shadow: 0 18px 40px rgba(22, 33, 47, 0.08);
+      box-shadow: var(--stockpro-shadow);
     }
 
     .page-header {
@@ -196,7 +218,7 @@ import { ProduitService } from '../../core/services/produit.service';
       margin: 0 0 0.45rem;
       color: var(--stockpro-blue);
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0;
       font-size: 0.74rem;
       font-weight: 700;
     }
@@ -204,7 +226,8 @@ import { ProduitService } from '../../core/services/produit.service';
     h2,
     h3 {
       margin: 0;
-      font-family: 'Playfair Display', serif;
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 900;
       color: var(--stockpro-ink);
     }
 
@@ -251,7 +274,7 @@ import { ProduitService } from '../../core/services/produit.service';
       justify-content: center;
       min-width: 44px;
       padding: 0.35rem 0.8rem;
-      border-radius: 999px;
+      border-radius: 8px;
       font-weight: 700;
       background: rgba(29, 95, 168, 0.12);
       color: var(--stockpro-blue);
@@ -260,7 +283,7 @@ import { ProduitService } from '../../core/services/produit.service';
     .feedback {
       margin: 0;
       padding: 0.85rem 1rem;
-      border-radius: 1rem;
+      border-radius: 8px;
       background: rgba(29, 122, 92, 0.12);
       color: var(--stockpro-green);
       font-weight: 600;
@@ -292,7 +315,7 @@ import { ProduitService } from '../../core/services/produit.service';
       gap: 1rem;
       align-items: center;
       padding: 1rem 1.1rem;
-      border-radius: 1.1rem;
+      border-radius: 8px;
       background: rgba(22, 33, 47, 0.04);
     }
 
@@ -348,6 +371,7 @@ import { ProduitService } from '../../core/services/produit.service';
 })
 export class ProduitsPageComponent {
   private readonly authService = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
   private readonly formBuilder = inject(FormBuilder);
   private readonly produitService = inject(ProduitService);
 
@@ -395,24 +419,22 @@ export class ProduitsPageComponent {
         ? this.produitService.create(request)
         : this.produitService.update(selectedProduitId, request);
 
-    action$
-      .pipe(finalize(() => this.isSubmitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.feedbackState.set('success');
-          this.feedbackMessage.set(
-            selectedProduitId === null
-              ? 'Produit cree avec succes.'
-              : 'Produit mis a jour avec succes.'
-          );
-          this.resetForm();
-          this.loadProduits();
-        },
-        error: (error: unknown) => {
-          this.feedbackState.set('error');
-          this.feedbackMessage.set(this.extractErrorMessage(error));
-        },
-      });
+    action$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
+      next: () => {
+        this.feedbackState.set('success');
+        this.feedbackMessage.set(
+          selectedProduitId === null
+            ? 'Produit créé avec succès.'
+            : 'Produit mis à jour avec succès.',
+        );
+        this.resetForm();
+        this.loadProduits();
+      },
+      error: (error: unknown) => {
+        this.feedbackState.set('error');
+        this.feedbackMessage.set(this.extractErrorMessage(error));
+      },
+    });
   }
 
   protected edit(produit: Produit): void {
@@ -428,30 +450,41 @@ export class ProduitsPageComponent {
   }
 
   protected remove(produit: Produit): void {
-    const confirmed = window.confirm(`Supprimer le produit ${produit.nom} ?`);
-    if (!confirmed) {
-      return;
-    }
-
-    this.feedbackMessage.set('');
-    this.isSubmitting.set(true);
-
-    this.produitService
-      .delete(produit.id)
-      .pipe(finalize(() => this.isSubmitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.feedbackState.set('success');
-          this.feedbackMessage.set('Produit supprime avec succes.');
-          if (this.selectedProduitId() === produit.id) {
-            this.resetForm();
-          }
-          this.loadProduits();
+    this.dialog
+      .open(ConfirmDialogComponent, {
+        data: {
+          title: 'Supprimer ce produit ?',
+          message: `Le produit ${produit.nom} sera retiré du catalogue.`,
+          confirmLabel: 'Supprimer',
+          tone: 'danger',
         },
-        error: (error: unknown) => {
-          this.feedbackState.set('error');
-          this.feedbackMessage.set(this.extractErrorMessage(error));
-        },
+      })
+      .afterClosed()
+      .subscribe((confirmed: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.feedbackMessage.set('');
+        this.isSubmitting.set(true);
+
+        this.produitService
+          .delete(produit.id)
+          .pipe(finalize(() => this.isSubmitting.set(false)))
+          .subscribe({
+            next: () => {
+              this.feedbackState.set('success');
+              this.feedbackMessage.set('Produit supprimé avec succès.');
+              if (this.selectedProduitId() === produit.id) {
+                this.resetForm();
+              }
+              this.loadProduits();
+            },
+            error: (error: unknown) => {
+              this.feedbackState.set('error');
+              this.feedbackMessage.set(this.extractErrorMessage(error));
+            },
+          });
       });
   }
 

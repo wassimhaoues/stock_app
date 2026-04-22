@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -16,6 +17,7 @@ import { Role } from '../../core/models/role.model';
 import { Utilisateur } from '../../core/models/utilisateur.model';
 import { EntrepotService } from '../../core/services/entrepot.service';
 import { UtilisateurService } from '../../core/services/utilisateur.service';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-utilisateurs-page',
@@ -23,6 +25,7 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
   imports: [
     MatButtonModule,
     MatCardModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -34,12 +37,12 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
     <section class="page-header">
       <div>
         <p class="page-header__eyebrow">Administration</p>
-        <h2>Utilisateurs et roles</h2>
-        <p>Cette page est reservee a l'ADMIN pour gerer les comptes de la plateforme.</p>
+        <h2>Utilisateurs et rôles</h2>
+        <p>Gérez les accès, les rôles et les affectations aux entrepôts.</p>
       </div>
       <button mat-stroked-button type="button" (click)="resetForm()">
         <mat-icon>refresh</mat-icon>
-        Reinitialiser
+        Réinitialiser
       </button>
     </section>
 
@@ -47,8 +50,8 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
       <mat-card class="form-card">
         <div class="card-header">
           <div>
-            <p class="card-header__eyebrow">{{ isEditing() ? 'Edition' : 'Creation' }}</p>
-            <h3>{{ isEditing() ? 'Mettre a jour un utilisateur' : 'Ajouter un utilisateur' }}</h3>
+            <p class="card-header__eyebrow">{{ isEditing() ? 'Édition' : 'Création' }}</p>
+            <h3>{{ isEditing() ? 'Mettre à jour un utilisateur' : 'Ajouter un utilisateur' }}</h3>
           </div>
         </div>
 
@@ -56,39 +59,59 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
           <mat-form-field appearance="outline">
             <mat-label>Nom complet</mat-label>
             <input matInput formControlName="nom" />
+            @if (form.controls.nom.hasError('required')) {
+              <mat-error>Nom requis</mat-error>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Email</mat-label>
             <input matInput type="email" formControlName="email" />
+            @if (form.controls.email.hasError('required')) {
+              <mat-error>Email requis</mat-error>
+            } @else if (form.controls.email.hasError('email')) {
+              <mat-error>Email invalide</mat-error>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Mot de passe</mat-label>
             <input matInput type="password" formControlName="motDePasse" />
             <mat-hint>
-              {{ isEditing() ? 'Laissez vide pour conserver le mot de passe actuel.' : 'Minimum recommande: 8 caracteres.' }}
+              {{
+                isEditing()
+                  ? 'Laissez vide pour conserver le mot de passe actuel.'
+                  : 'Minimum recommandé : 8 caractères.'
+              }}
             </mat-hint>
+            @if (form.controls.motDePasse.hasError('required')) {
+              <mat-error>Mot de passe requis</mat-error>
+            } @else if (form.controls.motDePasse.hasError('minlength')) {
+              <mat-error>8 caractères minimum</mat-error>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Role</mat-label>
+            <mat-label>Rôle</mat-label>
             <mat-select formControlName="role">
               @for (role of roles; track role) {
-                <mat-option [value]="role">{{ role }}</mat-option>
+                <mat-option [value]="role">{{ roleLabel(role) }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
 
           @if (requiresEntrepotRole()) {
             <mat-form-field appearance="outline">
-              <mat-label>Entrepot affecte</mat-label>
+              <mat-label>Entrepôt affecté</mat-label>
               <mat-select formControlName="entrepotId">
                 @for (entrepot of entrepots(); track entrepot.id) {
                   <mat-option [value]="entrepot.id">{{ entrepot.nom }}</mat-option>
                 }
               </mat-select>
-              <mat-hint>Ce compte travaille uniquement dans cet entrepot.</mat-hint>
+              <mat-hint>Ce compte travaille uniquement dans cet entrepôt.</mat-hint>
+              @if (form.controls.entrepotId.hasError('required')) {
+                <mat-error>Entrepôt requis</mat-error>
+              }
             </mat-form-field>
           }
 
@@ -103,7 +126,7 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
               @if (isSubmitting()) {
                 <mat-progress-spinner diameter="18" mode="indeterminate" />
               } @else {
-                <span>{{ isEditing() ? 'Mettre a jour' : 'Creer le compte' }}</span>
+                <span>{{ isEditing() ? 'Mettre à jour' : 'Créer le compte' }}</span>
               }
             </button>
             @if (isEditing()) {
@@ -116,7 +139,7 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
       <mat-card class="list-card">
         <div class="card-header">
           <div>
-            <p class="card-header__eyebrow">Equipe</p>
+            <p class="card-header__eyebrow">Équipe</p>
             <h3>Comptes disponibles</h3>
           </div>
           <span class="count">{{ utilisateurs().length }}</span>
@@ -139,7 +162,7 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
                 <div>
                   <div class="user-card__top">
                     <h4>{{ utilisateur.nom }}</h4>
-                    <span class="role">{{ utilisateur.role }}</span>
+                    <span class="role">{{ roleLabel(utilisateur.role) }}</span>
                   </div>
                   <p>{{ utilisateur.email }}</p>
                   @if (utilisateur.role !== 'ADMIN' && utilisateur.entrepotNom) {
@@ -176,10 +199,10 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
     .page-header,
     .form-card,
     .list-card {
-      border-radius: 1.5rem;
+      border-radius: 8px;
       border: 1px solid var(--stockpro-line);
       background: var(--stockpro-panel);
-      box-shadow: 0 18px 40px rgba(22, 33, 47, 0.08);
+      box-shadow: var(--stockpro-shadow);
     }
 
     .page-header {
@@ -195,7 +218,7 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
       margin: 0 0 0.45rem;
       color: var(--stockpro-blue);
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0;
       font-size: 0.74rem;
       font-weight: 700;
     }
@@ -204,7 +227,8 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
     .card-header h3,
     .user-card h4 {
       margin: 0;
-      font-family: 'Playfair Display', serif;
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 900;
       color: var(--stockpro-ink);
     }
 
@@ -250,7 +274,7 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
       justify-content: center;
       min-width: 44px;
       padding: 0.35rem 0.8rem;
-      border-radius: 999px;
+      border-radius: 8px;
       font-weight: 700;
       background: rgba(29, 95, 168, 0.12);
       color: var(--stockpro-blue);
@@ -259,7 +283,7 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
     .feedback {
       margin: 0;
       padding: 0.85rem 1rem;
-      border-radius: 1rem;
+      border-radius: 8px;
       background: rgba(29, 122, 92, 0.12);
       color: var(--stockpro-green);
       font-weight: 600;
@@ -283,7 +307,7 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
       justify-content: space-between;
       gap: 1rem;
       padding: 1rem 1.1rem;
-      border-radius: 1.2rem;
+      border-radius: 8px;
       background: rgba(22, 33, 47, 0.04);
     }
 
@@ -336,6 +360,7 @@ import { UtilisateurService } from '../../core/services/utilisateur.service';
 })
 export class UtilisateursPageComponent {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
   private readonly entrepotService = inject(EntrepotService);
   private readonly utilisateurService = inject(UtilisateurService);
 
@@ -398,24 +423,22 @@ export class UtilisateursPageComponent {
         ? this.utilisateurService.create(request)
         : this.utilisateurService.update(selectedUserId, request);
 
-    action$
-      .pipe(finalize(() => this.isSubmitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.feedbackState.set('success');
-          this.feedbackMessage.set(
-            selectedUserId === null
-              ? 'Utilisateur cree avec succes.'
-              : 'Utilisateur mis a jour avec succes.'
-          );
-          this.resetForm();
-          this.loadUtilisateurs();
-        },
-        error: (error: unknown) => {
-          this.feedbackState.set('error');
-          this.feedbackMessage.set(this.extractErrorMessage(error));
-        },
-      });
+    action$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
+      next: () => {
+        this.feedbackState.set('success');
+        this.feedbackMessage.set(
+          selectedUserId === null
+            ? 'Utilisateur créé avec succès.'
+            : 'Utilisateur mis à jour avec succès.',
+        );
+        this.resetForm();
+        this.loadUtilisateurs();
+      },
+      error: (error: unknown) => {
+        this.feedbackState.set('error');
+        this.feedbackMessage.set(this.extractErrorMessage(error));
+      },
+    });
   }
 
   protected edit(utilisateur: Utilisateur): void {
@@ -433,30 +456,41 @@ export class UtilisateursPageComponent {
   }
 
   protected remove(utilisateur: Utilisateur): void {
-    const confirmed = window.confirm(`Supprimer le compte ${utilisateur.email} ?`);
-    if (!confirmed) {
-      return;
-    }
-
-    this.feedbackMessage.set('');
-    this.isSubmitting.set(true);
-
-    this.utilisateurService
-      .delete(utilisateur.id)
-      .pipe(finalize(() => this.isSubmitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.feedbackState.set('success');
-          this.feedbackMessage.set('Utilisateur supprime avec succes.');
-          if (this.selectedUserId() === utilisateur.id) {
-            this.resetForm();
-          }
-          this.loadUtilisateurs();
+    this.dialog
+      .open(ConfirmDialogComponent, {
+        data: {
+          title: 'Supprimer ce compte ?',
+          message: `Le compte ${utilisateur.email} ne pourra plus accéder à StockPro.`,
+          confirmLabel: 'Supprimer',
+          tone: 'danger',
         },
-        error: (error: unknown) => {
-          this.feedbackState.set('error');
-          this.feedbackMessage.set(this.extractErrorMessage(error));
-        },
+      })
+      .afterClosed()
+      .subscribe((confirmed: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.feedbackMessage.set('');
+        this.isSubmitting.set(true);
+
+        this.utilisateurService
+          .delete(utilisateur.id)
+          .pipe(finalize(() => this.isSubmitting.set(false)))
+          .subscribe({
+            next: () => {
+              this.feedbackState.set('success');
+              this.feedbackMessage.set('Utilisateur supprimé avec succès.');
+              if (this.selectedUserId() === utilisateur.id) {
+                this.resetForm();
+              }
+              this.loadUtilisateurs();
+            },
+            error: (error: unknown) => {
+              this.feedbackState.set('error');
+              this.feedbackMessage.set(this.extractErrorMessage(error));
+            },
+          });
       });
   }
 
@@ -531,5 +565,17 @@ export class UtilisateursPageComponent {
 
   private roleRequiresEntrepot(role: Role): boolean {
     return role === 'GESTIONNAIRE' || role === 'OBSERVATEUR';
+  }
+
+  protected roleLabel(role: Role): string {
+    if (role === 'ADMIN') {
+      return 'Administrateur';
+    }
+
+    if (role === 'GESTIONNAIRE') {
+      return 'Gestionnaire';
+    }
+
+    return 'Observateur';
   }
 }

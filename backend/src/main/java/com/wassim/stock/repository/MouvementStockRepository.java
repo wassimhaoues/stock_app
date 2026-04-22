@@ -10,6 +10,8 @@ public interface MouvementStockRepository extends JpaRepository<MouvementStock, 
 
     List<MouvementStock> findByEntrepotIdOrderByDateDesc(Long entrepotId);
 
+    boolean existsByProduitIdAndEntrepotId(Long produitId, Long entrepotId);
+
     boolean existsByProduitId(Long produitId);
 
     boolean existsByEntrepotId(Long entrepotId);

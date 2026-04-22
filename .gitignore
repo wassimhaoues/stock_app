@@ -24,6 +24,8 @@ backend/.classpath
 backend/.project
 backend/.settings/
 backend/.factorypath
+# Local property overrides — never commit actual credentials
+backend/src/main/resources/application-local.properties
 
 ############################
 # MAVEN

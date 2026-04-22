@@ -27,26 +27,23 @@ import { AuthService } from '../../core/services/auth.service';
   template: `
     <section class="login-shell">
       <div class="login-copy">
-        <p class="login-copy__eyebrow">Phase 2</p>
-        <h1>Authentification JWT et gestion des roles.</h1>
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true">SP</span>
+          <div>
+            <p class="login-copy__eyebrow">StockPro</p>
+            <h1>Gestion des stocks multi-entrepôts</h1>
+          </div>
+        </div>
+
         <p>
-          Connectez-vous avec un compte seedé pour acceder aux routes protegees et a
-          l'administration des utilisateurs.
+          Suivez les stocks, les mouvements, les capacités et les alertes dans une interface unifiée
+          pour chaque rôle opérationnel.
         </p>
 
-        <div class="credentials">
-          <div>
-            <strong>ADMIN</strong>
-            <span>admin@stockpro.local / Admin123!</span>
-          </div>
-          <div>
-            <strong>GESTIONNAIRE</strong>
-            <span>gestionnaire@stockpro.local / Gestion123!</span>
-          </div>
-          <div>
-            <strong>OBSERVATEUR</strong>
-            <span>observateur@stockpro.local / Observe123!</span>
-          </div>
+        <div class="login-highlights" aria-label="Points clés StockPro">
+          <span><mat-icon>warehouse</mat-icon> Entrepôts</span>
+          <span><mat-icon>inventory_2</mat-icon> Stocks</span>
+          <span><mat-icon>monitoring</mat-icon> Indicateurs</span>
         </div>
       </div>
 
@@ -61,6 +58,11 @@ import { AuthService } from '../../core/services/auth.service';
             <mat-label>Email</mat-label>
             <input matInput type="email" formControlName="email" autocomplete="username" />
             <mat-icon matSuffix>mail</mat-icon>
+            @if (form.controls.email.hasError('required')) {
+              <mat-error>Email requis</mat-error>
+            } @else if (form.controls.email.hasError('email')) {
+              <mat-error>Email invalide</mat-error>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -75,11 +77,16 @@ import { AuthService } from '../../core/services/auth.service';
               mat-icon-button
               matSuffix
               type="button"
-              [attr.aria-label]="hidePassword() ? 'Afficher le mot de passe' : 'Masquer le mot de passe'"
+              [attr.aria-label]="
+                hidePassword() ? 'Afficher le mot de passe' : 'Masquer le mot de passe'
+              "
               (click)="hidePassword.set(!hidePassword())"
             >
               <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
             </button>
+            @if (form.controls.motDePasse.hasError('required')) {
+              <mat-error>Mot de passe requis</mat-error>
+            }
           </mat-form-field>
 
           @if (errorMessage()) {
@@ -106,7 +113,7 @@ import { AuthService } from '../../core/services/auth.service';
 
     .login-shell {
       display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 420px);
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 420px);
       gap: 1.5rem;
       min-height: calc(100dvh - 3rem);
       align-items: stretch;
@@ -114,64 +121,87 @@ import { AuthService } from '../../core/services/auth.service';
 
     .login-copy,
     .login-card {
-      border-radius: 1.75rem;
+      border-radius: 8px;
       border: 1px solid var(--stockpro-line);
       background: var(--stockpro-panel);
-      box-shadow: 0 18px 40px rgba(22, 33, 47, 0.08);
+      box-shadow: var(--stockpro-shadow);
     }
 
     .login-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       padding: 2rem;
-      color: var(--stockpro-ink);
-      background:
-        radial-gradient(circle at top left, rgba(29, 95, 168, 0.16), transparent 35%),
-        linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 247, 234, 0.9));
+      color: #f8fafc;
+      background: linear-gradient(135deg, #18202a 0%, #24405f 100%);
+    }
+
+    .brand-lockup {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .brand-mark {
+      display: inline-grid;
+      place-items: center;
+      width: 3rem;
+      height: 3rem;
+      flex: 0 0 auto;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #18202a;
+      font-weight: 900;
     }
 
     .login-copy__eyebrow,
     .login-card__eyebrow {
       margin: 0 0 0.75rem;
-      color: var(--stockpro-blue);
+      color: #7dd3fc;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0;
       font-size: 0.76rem;
       font-weight: 700;
+    }
+
+    .login-card__eyebrow {
+      color: var(--stockpro-blue);
     }
 
     .login-copy h1,
     .login-card h2 {
       margin: 0;
-      font-family: 'Playfair Display', serif;
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 900;
     }
 
     .login-copy h1 {
-      font-size: clamp(2.2rem, 4vw, 4rem);
-      line-height: 1.02;
-      max-width: 10ch;
+      font-size: 3rem;
+      line-height: 1.05;
+      max-width: 12ch;
     }
 
     .login-copy p {
       max-width: 52ch;
-      color: var(--stockpro-muted);
+      color: rgba(248, 250, 252, 0.78);
       line-height: 1.65;
     }
 
-    .credentials {
-      display: grid;
-      gap: 0.75rem;
+    .login-highlights {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
       margin-top: 2rem;
     }
 
-    .credentials div {
-      display: grid;
-      gap: 0.2rem;
-      padding: 1rem 1.1rem;
-      border-radius: 1rem;
-      background: rgba(22, 33, 47, 0.05);
-    }
-
-    .credentials strong {
-      color: var(--stockpro-ink);
+    .login-highlights span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      font-weight: 800;
     }
 
     .login-card {
@@ -195,13 +225,13 @@ import { AuthService } from '../../core/services/auth.service';
 
     button[mat-flat-button] {
       min-height: 52px;
-      border-radius: 999px;
+      border-radius: 8px;
     }
 
     .error {
       margin: 0;
       padding: 0.85rem 1rem;
-      border-radius: 1rem;
+      border-radius: 8px;
       background: rgba(209, 77, 65, 0.1);
       color: var(--stockpro-danger);
       font-weight: 600;
@@ -215,6 +245,10 @@ import { AuthService } from '../../core/services/auth.service';
       .login-shell {
         grid-template-columns: 1fr;
         min-height: auto;
+      }
+
+      .login-copy h1 {
+        font-size: 2.25rem;
       }
     }
   `,

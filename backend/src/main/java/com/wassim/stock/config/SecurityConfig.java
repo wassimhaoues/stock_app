@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -44,7 +45,10 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint()))
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint(authenticationEntryPoint())
+                .accessDeniedHandler(accessDeniedHandler())
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 .requestMatchers("/api/utilisateurs/**").hasRole("ADMIN")
@@ -58,6 +62,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/stocks", "/api/stocks/**").hasAnyRole("ADMIN", "GESTIONNAIRE")
                 .requestMatchers(HttpMethod.DELETE, "/api/stocks", "/api/stocks/**").hasAnyRole("ADMIN", "GESTIONNAIRE")
                 .requestMatchers(HttpMethod.POST, "/api/mouvements-stock", "/api/mouvements-stock/**").hasAnyRole("ADMIN", "GESTIONNAIRE")
+                .requestMatchers(HttpMethod.GET, "/api/dashboard/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("ADMIN", "GESTIONNAIRE", "OBSERVATEUR")
                 .anyRequest().hasAnyRole("ADMIN", "GESTIONNAIRE")
             )
@@ -92,6 +97,18 @@ public class SecurityConfig {
             response.setContentType("application/json");
             response.getWriter().write("""
                     {"status":401,"message":"Authentification requise"}
+                    """);
+        };
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            response.setStatus(403);
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.setContentType("application/json");
+            response.getWriter().write("""
+                    {"status":403,"message":"Acces refuse"}
                     """);
         };
     }

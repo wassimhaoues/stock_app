@@ -1,9 +1,5 @@
 # StockPro — Project Plan
 
-### Système de gestion des stocks multi-entrepôts
-
-**Projet universitaire JEE — Subject 1**
-
 ---
 
 ## Stack technique
@@ -22,28 +18,28 @@
 
 ## Décisions techniques verrouillées
 
-| Décision             | Choix                                |
-| -------------------- | ------------------------------------ |
-| UI Framework         | Angular Material                     |
-| Langue UI            | Français                             |
+| Décision             | Choix                                                         |
+| -------------------- | ------------------------------------------------------------- |
+| UI Framework         | Angular Material                                              |
+| Langue UI            | Français                                                      |
 | Style dashboard      | Section analytique KPI + cards + graphiques + tableau alertes |
-| Authentification     | JWT stateless                        |
-| Rôles utilisateurs   | ADMIN / GESTIONNAIRE / OBSERVATEUR   |
-| Nom de l'application | StockPro                             |
+| Authentification     | JWT stateless                                                 |
+| Rôles utilisateurs   | ADMIN / GESTIONNAIRE / OBSERVATEUR                            |
+| Nom de l'application | StockPro                                                      |
 
 ---
 
 ## Matrice des rôles et permissions
 
-| Module           | ADMIN     | GESTIONNAIRE stock                          | OBSERVATEUR                                  |
-| ---------------- | --------- | ------------------------------------------- | -------------------------------------------- |
-| Utilisateurs     | Gérer     | Aucun accès                                 | Aucun accès                                  |
-| Entrepôts        | Gérer     | Lecture seule                               | Lecture seule sur son entrepôt affecté       |
-| Produits         | Gérer     | Lecture seule                               | Lecture seule                                |
-| Stocks           | Gérer     | Gérer dans son entrepôt affecté             | Lecture seule dans son entrepôt affecté      |
-| Mouvements stock | Gérer     | Gérer dans son entrepôt affecté             | Lecture seule dans son entrepôt affecté      |
-| Alertes          | Consulter | Voir les alertes de son entrepôt affecté    | Voir les alertes de son entrepôt affecté     |
-| Dashboard        | Consulter | Consulter les données de son entrepôt       | Consulter les données de son entrepôt        |
+| Module           | ADMIN     | GESTIONNAIRE stock                       | OBSERVATEUR                              |
+| ---------------- | --------- | ---------------------------------------- | ---------------------------------------- |
+| Utilisateurs     | Gérer     | Aucun accès                              | Aucun accès                              |
+| Entrepôts        | Gérer     | Lecture seule                            | Lecture seule sur son entrepôt affecté   |
+| Produits         | Gérer     | Lecture seule                            | Lecture seule                            |
+| Stocks           | Gérer     | Gérer dans son entrepôt affecté          | Lecture seule dans son entrepôt affecté  |
+| Mouvements stock | Gérer     | Gérer dans son entrepôt affecté          | Lecture seule dans son entrepôt affecté  |
+| Alertes          | Consulter | Voir les alertes de son entrepôt affecté | Voir les alertes de son entrepôt affecté |
+| Dashboard        | Consulter | Consulter les données de son entrepôt    | Consulter les données de son entrepôt    |
 
 **Règles globales :**
 
@@ -59,20 +55,30 @@
 
 ## Suivi des phases
 
-| Phase | Nom                                | Statut  |
-| ----- | ---------------------------------- | ------- |
-| 0     | Planification & décisions          | ✅ DONE |
-| 1     | Fondations : backend + frontend    | ✅ DONE |
-| 2     | Authentification & sécurité        | ✅ DONE |
-| 3     | Administration utilisateurs & permissions | ✅ DONE |
-| 4     | Gestion des entrepôts (end-to-end) | ✅ DONE |
-| 5     | Gestion des produits (end-to-end)  | ✅ DONE |
-| 6     | Stocks & mouvements (end-to-end)   | ✅ DONE |
-| 7     | Gestion de la capacité des entrepôts | ⬜ TODO |
-| 8     | Alertes & dashboard analytique     | ⬜ TODO |
-| 9     | Revue UX/UI frontend professionnelle | ⬜ TODO |
-| 10    | Validation métier, sécurité & données réalistes | ⬜ TODO |
-| 11    | Tests, Docker, nettoyage final     | ⬜ TODO |
+| Phase | Nom                                              | Statut |
+| ----- | ------------------------------------------------ | ------ |
+| 0     | Planification & décisions                        | DONE   |
+| 1     | Fondations : backend + frontend                  | DONE   |
+| 2     | Authentification & sécurité                      | DONE   |
+| 3     | Administration utilisateurs & permissions        | DONE   |
+| 4     | Gestion des entrepôts (end-to-end)               | DONE   |
+| 5     | Gestion des produits (end-to-end)                | DONE   |
+| 6     | Stocks & mouvements (end-to-end)                 | DONE   |
+| 7     | Gestion de la capacité des entrepôts             | DONE   |
+| 8     | Alertes & dashboard analytique                   | DONE   |
+| 9     | Revue UX/UI frontend professionnelle             | DONE   |
+| 10    | Validation métier, sécurité & données réalistes  | TODO   |
+| 11    | Tests et nettoyage final                         | DONE   |
+| 10    | Validation métier, sécurité & données réalistes  | DONE   |
+| 11    | Tests et nettoyage final                         | TODO   |
+| 12    | Socle d’exécution locale et préparation du poste | DONE   |
+| 13    | Conteneurisation complète                        | DONE   |
+| 14    | CI de base sur GitHub Actions                    | DONE   |
+| 15    | Qualité logicielle et sécurité de pipeline       | DONE   |
+| 16    | Déploiement Kubernetes local                     | TODO   |
+| 17    | GitOps et ArgoCD                                 | TODO   |
+| 18    | Observabilité et alerting                        | TODO   |
+| 19    | Amélioration continue et finalisation soutenance | TODO   |
 
 ---
 
@@ -82,11 +88,11 @@
 
 **Livrables :**
 
-- `PROJECT_PLAN.md` ✅
-- `README.md` ✅
-- `docs/API.md` ✅
-- `.env.example` ✅
-- `.env` exclu du git ✅
+- `PROJECT_PLAN.md`
+- `README.md`
+- `docs/API.md`
+- `.env.example`
+- `.env` exclu du git
 
 ---
 
@@ -113,11 +119,11 @@
 
 **Définition of done :**
 
-- `mvn spring-boot:run` démarre sans erreur ✅
-- `GET http://localhost:8085/api/health` → 200 ✅
-- `http://localhost:8085/swagger-ui.html` → charge ✅
-- `ng serve` → Angular sur port 4200 ✅
-- La page Angular affiche "Backend connecté" ✅
+- `mvn spring-boot:run` démarre sans erreur
+- `GET http://localhost:8085/api/health` → 200
+- `http://localhost:8085/swagger-ui.html` → charge
+- `ng serve` → Angular sur port 4200
+- La page Angular affiche "Backend connecté"
 
 **Branch git :** `feature/phase-1-foundation`
 
@@ -129,21 +135,21 @@
 
 **Backend :**
 
-- Entité `Utilisateur` (id, nom, email, motDePasse, role) ✅
-- Enum `Role` : ADMIN, GESTIONNAIRE, OBSERVATEUR ✅
-- `AuthController` : `POST /api/auth/login` → JWT ✅
-- `JwtUtil`, `JwtAuthFilter`, `UserDetailsServiceImpl` ✅
-- `SecurityConfig` complet avec règles par rôle ✅
-- `DataInitializer` : seède 3 utilisateurs configurables dans la base MySQL active (1 par rôle) ✅
-- Si une nouvelle table est créée pour la phase, mettre à jour `infra/mysql-init/01-schema.sql` ✅
+- Entité `Utilisateur` (id, nom, email, motDePasse, role)
+- Enum `Role` : ADMIN, GESTIONNAIRE, OBSERVATEUR
+- `AuthController` : `POST /api/auth/login` → JWT
+- `JwtUtil`, `JwtAuthFilter`, `UserDetailsServiceImpl`
+- `SecurityConfig` complet avec règles par rôle
+- `DataInitializer` : seède 3 utilisateurs configurables dans la base MySQL active (1 par rôle)
+- Si une nouvelle table est créée pour la phase, mettre à jour `infra/mysql-init/01-schema.sql`
 
 **Frontend :**
 
-- `AuthService` (login, logout, stockage token, vérification rôle) ✅
-- `JwtInterceptor` (attache le token à chaque requête) ✅
-- `AuthGuard` (protège les routes) ✅
-- Page de login (formulaire Angular Material) ✅
-- Bouton déconnexion dans le header ✅
+- `AuthService` (login, logout, stockage token, vérification rôle)
+- `JwtInterceptor` (attache le token à chaque requête)
+- `AuthGuard` (protège les routes)
+- Page de login (formulaire Angular Material)
+- Bouton déconnexion dans le header
 
 **Branch git :** `feature/phase-2-auth`
 
@@ -155,22 +161,22 @@
 
 **Backend :**
 
-- `UtilisateurController` : CRUD utilisateurs réservé à `ADMIN` ✅
-- `UtilisateurService` : création, modification, suppression, unicité email, hash mot de passe ✅
-- Edition utilisateur : le mot de passe est optionnel, il reste inchangé si le champ est vide ✅
-- Champ provisoire `entrepotNom` sur `Utilisateur` pour affecter un `GESTIONNAIRE` ou `OBSERVATEUR` à un entrepôt avant la création de l'entité `Entrepot` ✅
-- Règle métier : `entrepotNom` est obligatoire pour `GESTIONNAIRE` / `OBSERVATEUR` et ignoré pour `ADMIN` ✅
-- Endpoints `/api/utilisateurs/**` protégés par `hasRole("ADMIN")` ✅
-- Règle sécurité globale : les `GET /api/**` métier restent accessibles aux rôles authentifiés, les écritures restent limitées par rôle ✅
+- `UtilisateurController` : CRUD utilisateurs réservé à `ADMIN`
+- `UtilisateurService` : création, modification, suppression, unicité email, hash mot de passe
+- Edition utilisateur : le mot de passe est optionnel, il reste inchangé si le champ est vide
+- Champ provisoire `entrepotNom` sur `Utilisateur` pour affecter un `GESTIONNAIRE` ou `OBSERVATEUR` à un entrepôt avant la création de l'entité `Entrepot`
+- Règle métier : `entrepotNom` est obligatoire pour `GESTIONNAIRE` / `OBSERVATEUR` et ignoré pour `ADMIN`
+- Endpoints `/api/utilisateurs/**` protégés par `hasRole("ADMIN")`
+- Règle sécurité globale : les `GET /api/**` métier restent accessibles aux rôles authentifiés, les écritures restent limitées par rôle
 
 **Frontend :**
 
-- Route `/utilisateurs` visible et accessible uniquement pour `ADMIN` ✅
-- Page administration utilisateurs : liste, création, édition, suppression ✅
-- Sélecteur de rôle : `ADMIN`, `GESTIONNAIRE`, `OBSERVATEUR` ✅
-- Champ `Entrepot affecte` affiché et requis pour `GESTIONNAIRE` / `OBSERVATEUR` ✅
-- En édition, laisser le mot de passe vide conserve le mot de passe actuel ✅
-- `RoleGuard` appliqué sur les routes réservées ✅
+- Route `/utilisateurs` visible et accessible uniquement pour `ADMIN`
+- Page administration utilisateurs : liste, création, édition, suppression
+- Sélecteur de rôle : `ADMIN`, `GESTIONNAIRE`, `OBSERVATEUR`
+- Champ `Entrepot affecte` affiché et requis pour `GESTIONNAIRE` / `OBSERVATEUR`
+- En édition, laisser le mot de passe vide conserve le mot de passe actuel
+- `RoleGuard` appliqué sur les routes réservées
 
 **Modifications à appliquer aux phases suivantes :**
 
@@ -199,26 +205,26 @@
 
 **Infra :**
 
-- Ajouter la table `entrepots` dans `infra/mysql-init/01-schema.sql` ✅
-- Remplacer l'affectation provisoire `Utilisateur.entrepotNom` par une relation propre `Utilisateur.entrepot` / `entrepot_id` pour les comptes `GESTIONNAIRE` et `OBSERVATEUR` ✅
+- Ajouter la table `entrepots` dans `infra/mysql-init/01-schema.sql`
+- Remplacer l'affectation provisoire `Utilisateur.entrepotNom` par une relation propre `Utilisateur.entrepot` / `entrepot_id` pour les comptes `GESTIONNAIRE` et `OBSERVATEUR`
 
 **Endpoints :**
 
-- `GET /api/entrepots` ✅
-- `POST /api/entrepots` ✅
-- `GET /api/entrepots/{id}` ✅
-- `PUT /api/entrepots/{id}` ✅
-- `DELETE /api/entrepots/{id}` ✅
+- `GET /api/entrepots`
+- `POST /api/entrepots`
+- `GET /api/entrepots/{id}`
+- `PUT /api/entrepots/{id}`
+- `DELETE /api/entrepots/{id}`
 
 **Frontend :**
 
-- Route `/entrepots` ✅
-- Tableau avec actions (éditer, supprimer) ✅
-- Formulaire create/edit (dialog ou page) ✅
-- Dialogue de confirmation avant suppression ✅
-- États : chargement, vide, erreur ✅
-- Masquer les actions create/edit/delete si le rôle courant n'est pas `ADMIN` ✅
-- Adapter le formulaire utilisateurs pour sélectionner un entrepôt existant au lieu de saisir un nom libre pour les `GESTIONNAIRE` et `OBSERVATEUR` ✅
+- Route `/entrepots`
+- Tableau avec actions (éditer, supprimer)
+- Formulaire create/edit (dialog ou page)
+- Dialogue de confirmation avant suppression
+- États : chargement, vide, erreur
+- Masquer les actions create/edit/delete si le rôle courant n'est pas `ADMIN`
+- Adapter le formulaire utilisateurs pour sélectionner un entrepôt existant au lieu de saisir un nom libre pour les `GESTIONNAIRE` et `OBSERVATEUR`
 
 **Branch git :** `feature/phase-4-entrepots`
 
@@ -228,35 +234,35 @@
 
 **Objectif :** CRUD complet pour les produits.
 
-**Entité :** `Produit` (id, nom, categorie, prix, fournisseur, seuilMin) ✅
+**Entité :** `Produit` (id, nom, categorie, prix, fournisseur, seuilMin)
 
 **Accès :**
 
-- `ADMIN` : CRUD complet ✅
-- `GESTIONNAIRE stock` : lecture seule sur le catalogue global ✅
-- `OBSERVATEUR` : lecture seule sur le catalogue global ✅
+- `ADMIN` : CRUD complet
+- `GESTIONNAIRE stock` : lecture seule sur le catalogue global
+- `OBSERVATEUR` : lecture seule sur le catalogue global
 
 **Infra :**
 
-- Ajouter la table `produits` dans `infra/mysql-init/01-schema.sql` ✅
+- Ajouter la table `produits` dans `infra/mysql-init/01-schema.sql`
 
 **Endpoints :**
 
-- `GET /api/produits` ✅
-- `POST /api/produits` réservé à `ADMIN` ✅
-- `GET /api/produits/{id}` ✅
-- `PUT /api/produits/{id}` réservé à `ADMIN` ✅
-- `DELETE /api/produits/{id}` réservé à `ADMIN` ✅
+- `GET /api/produits`
+- `POST /api/produits` réservé à `ADMIN`
+- `GET /api/produits/{id}`
+- `PUT /api/produits/{id}` réservé à `ADMIN`
+- `DELETE /api/produits/{id}` réservé à `ADMIN`
 
 **Frontend :**
 
-- Route `/produits` ✅
-- Tableau avec actions (éditer, supprimer) ✅
-- Formulaire create/edit ✅
-- Dialogue de confirmation avant suppression ✅
-- États : chargement, vide, erreur ✅
-- Masquer les actions create/edit/delete pour `GESTIONNAIRE stock` et `OBSERVATEUR` ✅
-- Afficher le catalogue global des produits aux trois rôles authentifiés ✅
+- Route `/produits`
+- Tableau avec actions (éditer, supprimer)
+- Formulaire create/edit
+- Dialogue de confirmation avant suppression
+- États : chargement, vide, erreur
+- Masquer les actions create/edit/delete pour `GESTIONNAIRE stock` et `OBSERVATEUR`
+- Afficher le catalogue global des produits aux trois rôles authentifiés
 
 **Branch git :** `feature/phase-5-produits`
 
@@ -268,47 +274,47 @@
 
 **Entités :**
 
-- `Stock` (id, produit FK, entrepot FK, quantite, seuilAlerte) ✅
-- `MouvementStock` (id, produit FK, entrepot FK, type [ENTREE/SORTIE], quantite, date) ✅
+- `Stock` (id, produit FK, entrepot FK, quantite, seuilAlerte)
+- `MouvementStock` (id, produit FK, entrepot FK, type [ENTREE/SORTIE], quantite, date)
 
 **Accès :**
 
-- `ADMIN` : CRUD stocks + création/consultation mouvements ✅
-- `GESTIONNAIRE stock` : CRUD stocks + création/consultation mouvements uniquement dans son entrepôt affecté ✅
-- `OBSERVATEUR` : lecture seule sur stocks et mouvements uniquement dans son entrepôt affecté ✅
+- `ADMIN` : CRUD stocks + création/consultation mouvements
+- `GESTIONNAIRE stock` : CRUD stocks + création/consultation mouvements uniquement dans son entrepôt affecté
+- `OBSERVATEUR` : lecture seule sur stocks et mouvements uniquement dans son entrepôt affecté
 
 **Infra :**
 
-- Ajouter les tables `stocks` et `mouvement_stock` dans `infra/mysql-init/01-schema.sql` ✅
+- Ajouter les tables `stocks` et `mouvement_stock` dans `infra/mysql-init/01-schema.sql`
 
 **Endpoints :**
 
-- `GET /api/stocks` ✅
-- `POST /api/stocks` réservé à `ADMIN` et `GESTIONNAIRE` ✅
-- `GET /api/stocks/{id}` ✅
-- `PUT /api/stocks/{id}` réservé à `ADMIN` et `GESTIONNAIRE` ✅
-- `DELETE /api/stocks/{id}` réservé à `ADMIN` et `GESTIONNAIRE` ✅
-- `GET /api/mouvements-stock` ✅
-- `GET /api/mouvements-stock/{id}` ✅
-- `POST /api/mouvements-stock` réservé à `ADMIN` et `GESTIONNAIRE` ✅
+- `GET /api/stocks`
+- `POST /api/stocks` réservé à `ADMIN` et `GESTIONNAIRE`
+- `GET /api/stocks/{id}`
+- `PUT /api/stocks/{id}` réservé à `ADMIN` et `GESTIONNAIRE`
+- `DELETE /api/stocks/{id}` réservé à `ADMIN` et `GESTIONNAIRE`
+- `GET /api/mouvements-stock`
+- `GET /api/mouvements-stock/{id}`
+- `POST /api/mouvements-stock` réservé à `ADMIN` et `GESTIONNAIRE`
 
 **Règles métier :**
 
-- Une SORTIE est rejetée si stock insuffisant (409 Conflict) ✅
-- Les mouvements ENTREE/SORTIE mettent à jour la quantité du stock existant produit + entrepôt ✅
-- Un stock est unique par couple produit + entrepôt ✅
-- Badge d'alerte inline quand `quantite <= seuilAlerte` ✅
-- `OBSERVATEUR` ne peut déclencher aucun mouvement de stock ✅
-- `GESTIONNAIRE stock` ne peut pas lire, créer, modifier ou supprimer un stock/mouvement lié à un autre entrepôt que celui affecté à son compte ✅
-- `OBSERVATEUR` ne peut pas lire un stock/mouvement lié à un autre entrepôt que celui affecté à son compte ✅
+- Une SORTIE est rejetée si stock insuffisant (409 Conflict)
+- Les mouvements ENTREE/SORTIE mettent à jour la quantité du stock existant produit + entrepôt
+- Un stock est unique par couple produit + entrepôt
+- Badge d'alerte inline quand `quantite <= seuilAlerte`
+- `OBSERVATEUR` ne peut déclencher aucun mouvement de stock
+- `GESTIONNAIRE stock` ne peut pas lire, créer, modifier ou supprimer un stock/mouvement lié à un autre entrepôt que celui affecté à son compte
+- `OBSERVATEUR` ne peut pas lire un stock/mouvement lié à un autre entrepôt que celui affecté à son compte
 
 **Frontend :**
 
-- Route `/stocks` ✅
-- Page stocks + mouvements avec formulaires, listes, états chargement/vide/erreur ✅
-- Masquer les formulaires et actions de mouvement pour `OBSERVATEUR` ✅
-- Masquer les actions create/edit/delete stock pour `OBSERVATEUR` ✅
-- Pour `GESTIONNAIRE stock` et `OBSERVATEUR`, filtrer le choix d'entrepôt sur l'entrepôt affecté ✅
+- Route `/stocks`
+- Page stocks + mouvements avec formulaires, listes, états chargement/vide/erreur
+- Masquer les formulaires et actions de mouvement pour `OBSERVATEUR`
+- Masquer les actions create/edit/delete stock pour `OBSERVATEUR`
+- Pour `GESTIONNAIRE stock` et `OBSERVATEUR`, filtrer le choix d'entrepôt sur l'entrepôt affecté
 
 **Branch git :** `feature/phase-6-stocks`
 
@@ -399,7 +405,7 @@
 
 ---
 
-## Phase 8 — Alertes & dashboard analytique
+## Phase 8 — Alertes & dashboard analytique [DONE]
 
 **Objectif :** Système d'alertes stock faible + dashboard analytique avec des KPI réels, utiles pour piloter l'activité et améliorer les décisions métier.
 
@@ -449,9 +455,9 @@
 
 ---
 
-## Phase 9 — Revue UX/UI frontend professionnelle
+## Phase 9 — Revue UX/UI frontend professionnelle [DONE]
 
-**Objectif :** Reprendre tout le frontend pour obtenir une interface moderne, organisée, cohérente et crédible, sans traces de préparation, de démo technique ou d'apparence "vibe-coded".
+**Objectif :** Reprendre tout le frontend pour obtenir une interface moderne, organisée, cohérente et crédible.
 
 **Périmètre :**
 
@@ -473,6 +479,8 @@
 - S'assurer qu'aucun bouton interdit n'apparaît pour `GESTIONNAIRE stock` ou `OBSERVATEUR`
 - S'assurer que `OBSERVATEUR` voit uniquement des interfaces read-only
 - Vérifier les contrastes, focus clavier, aria-labels utiles et cohérence Angular Material
+- Harmoniser les libellés, icônes et actions primaires/secondaires sur toutes les pages
+- Supprimer les composants redondants, sections décoratives et messages techniques visibles
 
 **Définition of done :**
 
@@ -482,18 +490,27 @@
 - Les données vides, erreurs API et chargements sont traités proprement
 - Le dashboard `ADMIN` met réellement en avant les KPI analytiques de la Phase 8
 - Le projet donne l'impression d'un produit fini, organisé et unique
+- L’interface garde une cohérence visuelle complète entre les modules principaux
 
 **Branch git :** `feature/phase-9-frontend-polish`
 
 ---
 
-## Phase 10 — Validation métier, sécurité & données réalistes
+## Phase 10 — Validation métier, sécurité & données réalistes [DONE]
 
 **Objectif :** Vérifier le projet de bout en bout avec des scénarios réalistes, renforcer les règles de sécurité métier et préparer une démonstration crédible.
 
 **Backend :**
 
-- Ajouter ou compléter un jeu de données réaliste : plusieurs entrepôts, produits, stocks, mouvements, alertes et utilisateurs affectés
+- Introduire un mode de données piloté par variable d'environnement, par exemple `STOCKPRO_DEMO_DATA=true|false`
+- En mode normal, garder la base propre et n'initialiser qu'un compte `ADMIN` minimal pour l'administration initiale
+- En mode démo, charger un jeu de données complet et réaliste avec :
+  - des noms tunisiens pour les personnes, les entrepôts et les lieux de démo
+  - des entrepôts et affectations cohérents avec le contexte tunisien
+  - plusieurs entrepôts, produits, stocks, mouvements, alertes et utilisateurs affectés
+  - des familles de produits limitées à l'informatique, gaming, téléphonie, TV, photo, son et électroménager
+  - des noms de produits réels et parlants, par exemple `Gamer MSI Thin 15 B13UCX i5 13è Gén 24G RTX 2050`
+  - aucun produit alimentaire, vêtement ou catégorie hors sujet
 - Vérifier tous les scénarios de rôles :
   - `ADMIN` voit et administre tout
   - `GESTIONNAIRE stock` travaille uniquement dans son entrepôt affecté
@@ -501,6 +518,7 @@
 - Tester les accès directs API pour empêcher le contournement par modification d'id d'entrepôt
 - Vérifier les règles métier critiques : stock insuffisant, seuils d'alerte, unicité email, affectation obligatoire d'entrepôt
 - Revoir les erreurs API pour qu'elles soient compréhensibles et cohérentes
+- Valider les cas de démo les plus importants avec des données stables, lisibles et cohérentes avec le contexte tunisien
 
 **Frontend :**
 
@@ -508,104 +526,373 @@
 - Vérifier les redirections, menus et pages interdites selon le rôle
 - Vérifier que les filtres d'entrepôt affichés correspondent réellement aux données autorisées
 - Préparer une expérience de démo fluide avec des données assez riches pour montrer les KPI
+- Vérifier les transitions de navigation, redirections et accès refusés
 
 **Documentation :**
 
-- Mettre à jour `README.md` avec lancement local, comptes de test, ports et commandes utiles
 - Mettre à jour `docs/API.md` ou Swagger avec les endpoints finaux
 - Ajouter une section courte expliquant la matrice des rôles et le filtrage par entrepôt
+- Documenter les scénarios de démonstration recommandés pour chaque rôle
+- Documenter les jeux de données de démonstration retenus, leurs rôles et les familles de produits utilisées
+- Documenter la variable `STOCKPRO_DEMO_DATA` et le comportement attendu en mode démo versus mode normal
 
 **Branch git :** `feature/phase-10-business-validation-security`
 
 ---
 
-## Phase 11 — Tests, Docker, nettoyage final
+## Phase 11 — Tests et nettoyage final [DONE]
 
-**Objectif :** Packaging production-ready, Docker full-stack, README complet.
+**Objectif :** valider la qualité fonctionnelle du code et terminer le nettoyage du projet avant la conteneurisation.
 
-**Backend :**
+**Sous-étapes :**
 
-- Tests unitaires services (JUnit 5 + Mockito)
-- Test d'intégration auth
-- Profiles `dev` et `prod`
-- Dockerfile backend
+### 11.1 — Backend tests [DONE]
 
-**Frontend :**
+**Stack recommandée :** `Spring Boot Test` + `JUnit 5` + `Mockito` + `MockMvc`
 
-- Dockerfile frontend (nginx)
-- Audit états loading/error/empty
+- tests unitaires des services métier avec mocks des repositories
+- tests d’intégration des contrôleurs et de l’authentification avec le contexte Spring
+- validation des règles critiques de sécurité et de données
+- couverture des cas limites principaux : stock insuffisant, accès refusé, capacité, seuil d’alerte
 
-**Infra :**
+### 11.2 — Frontend tests [DONE]
 
-- `docker-compose.yml` racine : MySQL + backend + frontend
-- Review `01-schema.sql` (index, FK, contraintes)
-- Vérifier que toutes les tables ajoutées dans les phases 2 à 10 sont présentes dans `infra/mysql-init/01-schema.sql`
-- Vérifier la matrice des rôles sur les routes backend et frontend avant livraison finale
+**Stack recommandée :** `Vitest` + `jsdom` + `Angular TestBed`
 
-**Branch git :** `feature/phase-11-docker-cleanup`
+- tests unitaires des composants et services Angular
+- tests de rendu et d’interaction dans un environnement `jsdom`
+- vérification des parcours principaux, des guards et de l’accès selon les rôles
+- vérification des états `loading`, `error` et `empty`
+- maintien d’une base de tests simple, rapide et cohérente avec Angular 21
 
----
+### 11.3 — Qualité et nettoyage [DONE]
 
-## Structure des dossiers
+- exécution du lint backend et frontend
+- correction des derniers avertissements et incohérences
+- suppression des artefacts, doublons et textes temporaires
+- revue finale du `README.md` et de la documentation utile
+- contrôle final des imports, formats et fichiers non utilisés
+- s’assurer que les tests backend et frontend restent exécutables avec les scripts du projet
 
-### Backend — `com.wassim.stock`
+### 11.4 — Vérification infra finale [DONE]
 
-```
-config/          SecurityConfig, SwaggerConfig, CorsConfig
-controller/      AuthController, EntrepotController, ProduitController,
-                 StockController, MouvementStockController, UtilisateurController
-dto/
-  request/       LoginRequest, EntrepotRequest, ProduitRequest, StockRequest,
-                 MouvementStockRequest, UtilisateurRequest
-  response/      AuthResponse, EntrepotResponse, ProduitResponse, StockResponse,
-                 MouvementStockResponse, AlerteStockResponse, UtilisateurResponse
-entity/          Entrepot, Produit, Stock, MouvementStock, Utilisateur
-exception/       GlobalExceptionHandler, ResourceNotFoundException,
-                 StockInsuffisantException
-repository/      (un par entité)
-security/        JwtUtil, JwtAuthFilter, UserDetailsServiceImpl
-service/         EntrepotService, ProduitService, StockService,
-                 MouvementStockService, AlerteService, DashboardService,
-                 UtilisateurService
-```
+- vérifier que toutes les tables ajoutées dans les phases 2 à 10 sont présentes dans `infra/mysql-init/01-schema.sql`
+- vérifier la matrice des rôles sur les routes backend et frontend avant livraison finale
 
-### Frontend — `src/app`
+**Définition de done :**
 
-```
-core/
-  guards/        auth.guard.ts
-  interceptors/  jwt.interceptor.ts
-  models/        entrepot, produit, stock, mouvement-stock, utilisateur
-  services/      (un par entité + auth)
-shared/
-  layout/        sidebar, header, main-layout
-  components/    confirm-dialog, alert-badge
-features/
-  auth/login/
-  dashboard/
-  entrepots/     entrepot-list, entrepot-form
-  produits/      produit-list, produit-form
-  stocks/        stock-list, stock-form
-  mouvements/    mouvement-list, mouvement-form
-  utilisateurs/  utilisateur-list, utilisateur-form
-```
+- le backend est couvert par des tests unitaires et d’intégration ciblés
+- le frontend utilise Vitest comme runner principal avec `jsdom`
+- les parcours critiques sont validés par rôle et par comportement attendu
+- le nettoyage final ne casse ni le build ni les tests
+
+**Branch git :** `feature/phase-11-tests-cleanup`
 
 ---
 
-## Workflow Git
+## Phase 12 — Socle d’exécution locale et préparation du poste [DONE]
 
-```
-main  ← branche stable, merge après chaque phase validée
-  └── feature/phase-X-nom
-```
+**Objectif :** rendre le projet exécutable en local sur un poste neuf, avec une base MySQL déjà accessible localement, sans dépendre d’une orchestration conteneurisée supplémentaire.
 
-**Conventions commits :**
+**Note de périmètre :** cette phase ne crée pas l’infrastructure MySQL ; elle prépare seulement le lancement local du backend et du frontend contre une base déjà joignable depuis la machine de développement (Docker exposé localement ou MySQL natif).
 
-```
-feat(entrepot): add CRUD endpoints and service layer
-feat(frontend): add entrepot list and form components
-fix(stock): correct low-stock alert threshold logic
-chore: add Swagger config and OpenAPI dependency
-test: add service unit tests for StockService
-docs: update README with dev instructions
-```
+**Préparations à faire :**
+
+- vérifier Git, Java 17, Node.js, npm et une instance MySQL joignable localement
+- documenter les versions minimales requises
+- créer ou compléter `.env.example`
+- nettoyer le repo pour que seul le code source utile soit suivi
+- définir les ports locaux, les variables d’environnement et la méthode de chargement des valeurs locales
+
+**Travaux :**
+
+- écrire un README de démarrage local clair
+- rendre le backend lançable en local contre l’instance MySQL déjà accessible sur la machine
+- rendre le frontend lançable en local sur un port fixe
+- valider les scripts de lancement manuel
+- vérifier que l’application démarre de bout en bout en local
+- documenter la configuration de base de données locale, les comptes de test et les valeurs de connexion attendues
+- documenter les dépendances minimales, les ports, les variables d’environnement et les commandes de démarrage local
+- décrire la procédure de vérification locale sans Docker
+- préciser comment activer ou désactiver le chargement des données de démo via les variables d’environnement
+- clarifier dans le README si les variables sont fournies via un `.env` local, des exports shell ou la configuration de l’IDE
+
+**Définition of done :**
+
+- un nouveau clone peut suivre le README et lancer l’application en local
+- backend et frontend démarrent sans configuration implicite cachée
+- les variables sensibles restent hors du dépôt
+- les dépendances locales minimales sont clairement listées
+- le backend se connecte à une base MySQL déjà accessible localement avec une configuration explicitement documentée
+
+**Sortie attendue :**
+
+- application fonctionnelle en local
+- base de référence pour toutes les phases suivantes
+
+**Branch git :** `feature/devops-phase-12-local-baseline`
+
+---
+
+## Phase 13 — Conteneurisation complète [DONE]
+
+**Objectif :** produire une stack Docker proche d’un usage production, reproductible et propre à déployer.
+
+**Travaux :**
+
+- créer un `Dockerfile` backend multi-stage, compact, basé sur un runtime Java de production
+- créer un `Dockerfile` frontend multi-stage, servi par un runtime web léger
+- ajouter les `.dockerignore` nécessaires pour garder des images propres
+- définir un `docker-compose.yml` racine comme stack applicative principale avec `backend`, `frontend` et `mysql`
+- exposer MySQL en local sur un port de développement réservé afin de permettre les outils d'administration comme phpMyAdmin sans dupliquer la base
+- brancher le service MySQL racine sur `infra/mysql-init/01-schema.sql` comme bootstrap unique du schéma
+- garder `mysql-init` comme source unique de bootstrap SQL, sans dupliquer la logique d'initialisation ailleurs
+- externaliser les variables d’environnement nécessaires à l’exécution en conteneur, sans secrets en dur
+- ajouter des volumes persistants, ports explicites, `restart: unless-stopped` et dépendances de démarrage utiles
+- prévoir les healthchecks et vérifier l’ordre de démarrage réel entre services
+- s’assurer que les conteneurs tournent avec des privilèges minimaux et des images non bavardes
+- documenter les commandes de build et de lancement Docker dans le guide local
+- valider que la base MySQL conserve ses données via un volume dédié
+- vérifier que la stack peut être relancée de zéro sans étape manuelle cachée
+- laisser les outils purement infra ou d’administration locale dans `infra/` ou dans un profil séparé, pas dans la stack applicative de base
+
+**Définition of done :**
+
+- l’application démarre via Docker sans lancement manuel des applications
+- backend, frontend et base de données fonctionnent ensemble
+- la base MySQL est initialisée automatiquement via les scripts SQL du projet au premier démarrage du volume
+- les images peuvent être reconstruites à partir du repo
+- un clone neuf peut lancer la stack conteneurisée avec une seule procédure documentée
+- les ports et variables d’environnement restent cohérents avec le mode local
+- la stack est lisible, maintenable et suffisamment proche d’un usage prod pour la soutenance
+
+**Sortie attendue :**
+
+- stack conteneurisée exécutable sur n’importe quelle machine avec Docker
+
+**Branch git :** `feature/devops-phase-13-docker`
+
+---
+
+## Phase 14 — CI de base sur GitHub Actions [DONE]
+
+**Objectif :** automatiser une CI rapide, lisible et fiable sur les branches de travail et d'intégration.
+
+**Principe de déclenchement recommandé :**
+
+- exécuter la CI sur chaque `push` vers les branches `feature/**`, `dev` et `main`
+- exécuter aussi la CI sur les `pull_request` ciblant `dev` et `main`
+- garder `main` protégé avec une fusion uniquement après CI verte
+
+**Périmètre CI :**
+
+- vérifications rapides et répétables
+- sans déploiement, sans scan avancé, sans publication d’artefacts métier
+- même logique de contrôle sur backend et frontend
+
+**Travaux :**
+
+- créer `.github/workflows/ci.yml`
+- définir des jobs séparés pour le backend et le frontend
+- ajouter un job de préparation commun pour récupérer le code et configurer le cache
+- mettre en cache les dépendances Maven et npm pour accélérer les exécutions successives
+- installer les dépendances backend et frontend dans le pipeline
+- lancer les tests backend et frontend
+- lancer les builds backend et frontend
+- exécuter le lint dans le pipeline
+- vérifier le format et la cohérence de base avant les étapes lourdes
+- faire échouer le pipeline en cas d’erreur
+- documenter les statuts attendus et les branches couvertes par la CI
+
+**Définition of done :**
+
+- les branches `feature/**`, `dev` et `main` déclenchent une CI sur push
+- les pull requests vers `dev` et `main` sont validées par la CI
+- un code cassé bloque la fusion
+- le pipeline reste lisible, maintenable et rapide grâce au cache
+- le pipeline reflète les mêmes vérifications que le mode local
+
+**Sortie attendue :**
+
+- première chaîne CI fiable et visible sur GitHub
+
+**Branch git :** `feature/devops-phase-14-ci-base`
+
+---
+
+## Phase 15 — Qualité logicielle et sécurité de pipeline [DONE]
+
+**Objectif :** transformer la CI en vrai quality gate de production pour le backend Spring Boot, le frontend Angular et la stack Docker.
+
+**Stack recommandée :**
+
+- **Analyse qualité principale :** SonarCloud
+- **SAST complémentaire :** GitHub CodeQL sur Java et TypeScript
+- **Vulnérabilités dépendances backend :** OWASP Dependency-Check ou équivalent Maven compatible
+- **Vulnérabilités dépendances frontend :** audit npm au niveau de sévérité `high` et `critical`
+- **Scan images Docker :** Trivy
+- **Protection de branches :** GitHub branch protection rules sur `dev` et `main`
+
+**Principes de la phase :**
+
+- bloquer les régressions de qualité avant qu’elles n’atteignent `dev` ou `main`
+- garder le pipeline lisible, rapide et exploitable par un jury
+- faire reposer la décision finale sur des seuils objectifs et documentés
+- ne pas dupliquer les règles de la phase 14 ; cette phase ajoute les contrôles de sécurité et de qualité avancés
+
+**Préparation administrateur déjà effectuée :**
+
+- GitHub Actions activé
+- secrets GitHub configurés : `SONAR_TOKEN`, `JWT_SECRET`, variables MySQL et variables de base de données
+- variables d’environnement GitHub configurées pour `DB_NAME` et `DB_USERNAME`
+- règles de protection de branche configurées sur `dev` et `main`
+- pull request requise avant fusion
+- status checks obligatoires avant fusion
+- branche à jour requise avant fusion
+
+**Travaux :**
+
+- intégrer SonarCloud comme gate principal avec Quality Gate bloquant
+- ajouter CodeQL sur les langages du projet pour détecter les failles courantes côté code
+- ajouter un scan des dépendances backend côté Maven et frontend côté npm
+- ajouter un scan d’image Docker avec Trivy sur les images construites par la CI
+- définir des seuils de blocage clairs pour les bugs, vulnérabilités et dettes techniques
+- faire tourner les scans uniquement sur les branches et événements pertinents pour éviter le bruit
+- archiver les rapports de qualité de manière exploitable dans GitHub Actions
+- documenter les règles de passage en vert du pipeline et l’interprétation des rapports
+- garder cette phase compatible avec la stack actuelle : Spring Boot, Maven, Angular, npm et Docker
+
+**Définition of done :**
+
+- toute vulnérabilité critique détectée par les scans bloque la fusion
+- le Quality Gate SonarCloud est obligatoire sur `dev` et `main`
+- les branches protégées refusent la fusion si les contrôles qualité échouent
+- les secrets restent uniquement dans GitHub Secrets et jamais dans le dépôt
+- les rapports de qualité et de sécurité sont lisibles et exploitables
+- la CI reste cohérente avec les contraintes du projet et ne ralentit pas inutilement le flux de travail
+
+**Sortie attendue :**
+
+- pipeline CI sécurisé et exploitable pour la soutenance
+
+**Branch git :** `feature/devops-phase-15-quality-security`
+
+---
+
+## Phase 16 — Déploiement Kubernetes local
+
+**Objectif :** faire tourner la stack dans Kubernetes sans déploiement manuel hors manifests.
+
+**Travaux :**
+
+- choisir un environnement local de test Kubernetes : Minikube ou kind
+- créer les manifests `Deployment`, `Service` et les ressources associées
+- gérer les ConfigMaps et Secrets nécessaires
+- valider le déploiement du backend, du frontend et de la base
+- documenter la commande de bootstrap du cluster
+- ajouter les probes de readiness/liveness et les ressources CPU/mémoire
+- prévoir un namespace dédié à l’application
+
+**Définition of done :**
+
+- un cluster neuf peut recevoir l’application via les manifests
+- l’application fonctionne dans Kubernetes en local
+- aucune étape critique ne dépend d’un clic manuel dans l’interface
+- le déploiement est reproductible à partir des manifests seuls
+
+**Sortie attendue :**
+
+- premier déploiement Kubernetes reproductible
+
+**Branch git :** `feature/devops-phase-16-k8s`
+
+---
+
+## Phase 17 — GitOps et ArgoCD
+
+**Objectif :** transformer le déploiement Kubernetes en flux GitOps.
+
+**Travaux :**
+
+- préparer le dossier `k8s/` comme source de vérité
+- installer ArgoCD sur le cluster choisi
+- définir l’application ArgoCD
+- activer la synchronisation automatique
+- vérifier qu’un commit Git déclenche la mise à jour du cluster
+- organiser la structure GitOps pour distinguer base commune et overlays si nécessaire
+- documenter le bootstrap initial d’ArgoCD et la première synchronisation
+
+**Définition of done :**
+
+- le déploiement provient du dépôt Git
+- le cluster se synchronise automatiquement
+- aucune commande manuelle de `kubectl apply` n’est nécessaire après le setup
+- l’état réel du cluster reste aligné avec le dépôt
+
+**Sortie attendue :**
+
+- chaîne GitOps fonctionnelle et démontrable
+
+**Branch git :** `feature/devops-phase-17-argocd`
+
+---
+
+## Phase 18 — Observabilité et alerting
+
+**Objectif :** exposer des métriques et superviser réellement l’application.
+
+**Travaux :**
+
+- ajouter un endpoint de métriques côté backend
+- intégrer Prometheus
+- intégrer Grafana avec un dashboard utile
+- ajouter des alerte simple et complexe
+- documenter où récupérer les métriques et comment lire les tableaux de bord
+- exposer quelques métriques métier utiles en plus des métriques techniques
+- prévoir au moins une alerte d’application et une alerte d’infrastructure
+
+**Définition of done :**
+
+- les métriques sont collectées automatiquement
+- le dashboard montre des données réelles
+- une alerte de base peut être déclenchée
+- les métriques et alertes sont compréhensibles pour une soutenance
+
+**Sortie attendue :**
+
+- observabilité complète de la stack
+
+**Branch git :** `feature/devops-phase-18-observability`
+
+---
+
+## Phase 19 — Amélioration continue et finalisation soutenance
+
+**Objectif :** stabiliser la solution et préparer la démonstration finale.
+
+**Travaux :**
+
+- identifier les points faibles restants
+- corriger les frictions de build, déploiement ou supervision
+- compléter le README final
+- rédiger le document technique demandé
+- préparer un scénario de démo reproductible
+- ajouter les captures nécessaires
+- geler le périmètre fonctionnel final
+- vérifier la cohérence entre le plan, le code et la documentation
+- préparer les derniers correctifs de stabilité et de présentation
+
+**Définition of done :**
+
+- chaque phase précédente est démontrable en quelques minutes
+- le projet est propre, documenté et présentable
+- la soutenance peut être suivie sans improvisation technique
+- aucun écart majeur ne subsiste entre la documentation et l’implémentation
+
+**Sortie attendue :**
+
+- version finale prête pour dépôt et présentation
+
+**Branch git :** `feature/devops-phase-19-finalization`
+
+---

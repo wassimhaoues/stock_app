@@ -22,7 +22,7 @@ import { AuthService } from '../../../core/services/auth.service';
       </button>
 
       <div class="brand">
-        <span class="brand__eyebrow">Systeme multi-entrepots</span>
+        <span class="brand__eyebrow">Système multi-entrepôts</span>
         <span class="brand__title">StockPro</span>
       </div>
 
@@ -30,7 +30,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
       <div class="status">
         <mat-icon>verified_user</mat-icon>
-        <span>{{ authService.currentUser()?.role }}</span>
+        <span>{{ roleLabel() }}</span>
       </div>
 
       <div class="user">
@@ -38,9 +38,9 @@ import { AuthService } from '../../../core/services/auth.service';
           <span class="user__name">{{ authService.currentUser()?.nom }}</span>
           <span class="user__email">{{ authService.currentUser()?.email }}</span>
         </div>
-        <button mat-stroked-button type="button" (click)="logout()">
+        <button mat-stroked-button type="button" aria-label="Se déconnecter" (click)="logout()">
           <mat-icon>logout</mat-icon>
-          Deconnexion
+          Déconnexion
         </button>
       </div>
     </mat-toolbar>
@@ -51,10 +51,10 @@ import { AuthService } from '../../../core/services/auth.service';
       top: 0;
       z-index: 5;
       gap: 1rem;
-      min-height: 76px;
+      min-height: 72px;
       padding: 0 1rem;
       color: var(--stockpro-ink);
-      background: rgba(255, 250, 242, 0.82);
+      background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(18px);
       border-bottom: 1px solid var(--stockpro-line);
     }
@@ -73,14 +73,13 @@ import { AuthService } from '../../../core/services/auth.service';
       font-size: 0.78rem;
       color: var(--stockpro-muted);
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0;
     }
 
     .brand__title {
-      font-family: 'Playfair Display', serif;
       font-size: 1.55rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
+      font-weight: 900;
+      letter-spacing: 0;
     }
 
     .spacer {
@@ -92,7 +91,7 @@ import { AuthService } from '../../../core/services/auth.service';
       align-items: center;
       gap: 0.45rem;
       padding: 0.45rem 0.9rem;
-      border-radius: 999px;
+      border-radius: 8px;
       background: rgba(29, 122, 92, 0.1);
       color: var(--stockpro-green);
       font-weight: 600;
@@ -133,6 +132,10 @@ import { AuthService } from '../../../core/services/auth.service';
       .user__copy {
         display: none;
       }
+
+      .brand__eyebrow {
+        display: none;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -144,5 +147,19 @@ export class HeaderComponent {
 
   protected logout(): void {
     this.authService.logout({ redirect: true });
+  }
+
+  protected roleLabel(): string {
+    const role = this.authService.currentUser()?.role;
+
+    if (role === 'ADMIN') {
+      return 'Administrateur';
+    }
+
+    if (role === 'GESTIONNAIRE') {
+      return 'Gestionnaire';
+    }
+
+    return 'Observateur';
   }
 }

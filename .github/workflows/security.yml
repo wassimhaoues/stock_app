@@ -109,20 +109,24 @@ jobs:
           path: backend/target/dependency-check-report.html
           retention-days: 30
 
-  # ── Trivy — Docker image scan ─────────────────────────────────────────────────
-  trivy:
-    name: Trivy — Docker image scan
+  # ── Trivy — Docker image scans ───────────────────────────────────────────────
+  trivy-backend:
+    name: Trivy — backend Docker image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Backend image
       - name: Build backend Docker image
         run: docker build -t stockpro-backend:scan ./backend
 
       - name: Scan backend image
+        id: trivy-backend-scan
+        continue-on-error: true
         uses: aquasecurity/trivy-action@v0.70.0
         with:
           image-ref: stockpro-backend:scan
@@ -139,12 +143,28 @@ jobs:
           sarif_file: trivy-backend.sarif
           category: trivy-backend
 
-      # Frontend image
+      - name: Fail backend job on vulnerabilities
+        if: steps.trivy-backend-scan.outcome == 'failure'
+        run: exit 1
+
+  trivy-frontend:
+    name: Trivy — frontend Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Build frontend Docker image
         run: docker build -t stockpro-frontend:scan ./frontend
 
       - name: Scan frontend image
-        uses: aquasecurity/trivy-action@v0.35.0
+        id: trivy-frontend-scan
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.70.0
         with:
           image-ref: stockpro-frontend:scan
           format: sarif
@@ -159,3 +179,7 @@ jobs:
         with:
           sarif_file: trivy-frontend.sarif
           category: trivy-frontend
+
+      - name: Fail frontend job on vulnerabilities
+        if: steps.trivy-frontend-scan.outcome == 'failure'
+        run: exit 1

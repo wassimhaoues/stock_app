@@ -18,8 +18,6 @@ describe('AuthService', () => {
     entrepotNom: null,
   };
   const authResponse: AuthResponse = {
-    token: 'jwt-token',
-    type: 'Bearer',
     utilisateur,
   };
   const credentials: LoginRequest = {
@@ -55,35 +53,61 @@ describe('AuthService', () => {
     localStorage.clear();
   });
 
-  it('stores the token and user after login', () => {
+  it('loads CSRF, logs in, and keeps only the user in memory', () => {
     service.login(credentials).subscribe((response) => {
       expect(response).toEqual(authResponse);
-      expect(service.token()).toBe('jwt-token');
       expect(service.currentUser()).toEqual(utilisateur);
       expect(service.isAuthenticated()).toBe(true);
-      expect(localStorage.getItem('stockpro.token')).toBe('jwt-token');
-      expect(localStorage.getItem('stockpro.user')).toBe(JSON.stringify(utilisateur));
+      expect(localStorage.length).toBe(0);
     });
 
-    const request = httpController.expectOne('/api/auth/login');
+    const csrfRequest = httpController.expectOne('/api/auth/csrf');
+    expect(csrfRequest.request.method).toBe('GET');
+    csrfRequest.flush(null);
 
-    expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual(credentials);
+    const loginRequest = httpController.expectOne('/api/auth/login');
+    expect(loginRequest.request.method).toBe('POST');
+    expect(loginRequest.request.body).toEqual(credentials);
 
-    request.flush(authResponse);
+    loginRequest.flush(authResponse);
   });
 
-  it('clears the session and redirects on logout', () => {
+  it('clears the session, calls backend logout, and redirects on logout', () => {
     service.login(credentials).subscribe();
+    httpController.expectOne('/api/auth/csrf').flush(null);
     httpController.expectOne('/api/auth/login').flush(authResponse);
 
     service.logout();
 
-    expect(service.token()).toBeNull();
     expect(service.currentUser()).toBeNull();
     expect(service.isAuthenticated()).toBe(false);
-    expect(localStorage.getItem('stockpro.token')).toBeNull();
-    expect(localStorage.getItem('stockpro.user')).toBeNull();
+
+    const logoutRequest = httpController.expectOne('/api/auth/logout');
+    expect(logoutRequest.request.method).toBe('POST');
+    logoutRequest.flush(null);
+
     expect(navigateByUrl).toHaveBeenCalledWith('/login');
+  });
+
+  it('restores the session from the backend current-user endpoint', () => {
+    service.ensureSession().subscribe((isAuthenticated) => {
+      expect(isAuthenticated).toBe(true);
+      expect(service.currentUser()).toEqual(utilisateur);
+      expect(service.isAuthenticated()).toBe(true);
+    });
+
+    const request = httpController.expectOne('/api/auth/me');
+    expect(request.request.method).toBe('GET');
+    request.flush(utilisateur);
+  });
+
+  it('clears memory state when session restore fails', () => {
+    service.ensureSession().subscribe((isAuthenticated) => {
+      expect(isAuthenticated).toBe(false);
+      expect(service.currentUser()).toBeNull();
+      expect(service.isAuthenticated()).toBe(false);
+    });
+
+    httpController.expectOne('/api/auth/me').flush({}, { status: 401, statusText: 'Unauthorized' });
   });
 });

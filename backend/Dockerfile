@@ -10,7 +10,7 @@ COPY src ./src
 RUN mvn package -DskipTests -q
 
 # ── Stage 2 : runtime ────────────────────────────────────────────────────────
-FROM eclipse-temurin:17-jre-jammy AS runtime
+FROM eclipse-temurin:17-jre-noble AS runtime
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends wget \

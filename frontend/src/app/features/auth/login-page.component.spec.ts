@@ -10,8 +10,6 @@ import { LoginPageComponent } from './login-page.component';
 
 describe('LoginPageComponent', () => {
   const authResponse: AuthResponse = {
-    token: 'jwt-token',
-    type: 'Bearer',
     utilisateur: {
       id: 1,
       nom: 'Admin StockPro',

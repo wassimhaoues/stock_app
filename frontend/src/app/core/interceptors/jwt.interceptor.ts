@@ -1,29 +1,29 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 
 export const jwtInterceptor: HttpInterceptorFn = (request, next) => {
   const authService = inject(AuthService);
-  const token = authService.token();
-
-  const requestWithToken = token
+  const router = inject(Router);
+  const apiRequest = request.url.startsWith('/api');
+  const requestWithCredentials = apiRequest
     ? request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-        },
+        withCredentials: true,
       })
     : request;
 
-  return next(requestWithToken).pipe(
+  return next(requestWithCredentials).pipe(
     catchError((error: unknown) => {
       if (
         error instanceof HttpErrorResponse &&
         error.status === 401 &&
-        !request.url.includes('/api/auth/login')
+        !request.url.includes('/api/auth/')
       ) {
-        authService.logout({ redirect: true });
+        authService.clearSession();
+        void router.navigateByUrl('/login');
       }
 
       return throwError(() => error);

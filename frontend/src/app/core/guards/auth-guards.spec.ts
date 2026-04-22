@@ -7,6 +7,7 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
+import { firstValueFrom, Observable, of } from 'rxjs';
 
 import { Role } from '../models/role.model';
 import { AuthService } from '../services/auth.service';
@@ -16,14 +17,14 @@ import { roleGuard } from './role.guard';
 
 describe('route guards', () => {
   let authService: {
-    isAuthenticated: ReturnType<typeof vi.fn>;
+    ensureSession: ReturnType<typeof vi.fn>;
     hasRole: ReturnType<typeof vi.fn>;
   };
   let router: Router;
 
   beforeEach(() => {
     authService = {
-      isAuthenticated: vi.fn(),
+      ensureSession: vi.fn(),
       hasRole: vi.fn(),
     };
 
@@ -37,48 +38,58 @@ describe('route guards', () => {
   function runGuard(
     guard: CanActivateFn,
     route: Partial<ActivatedRouteSnapshot> = {},
-  ): boolean | UrlTree {
+  ): boolean | UrlTree | Observable<boolean | UrlTree> {
     return TestBed.runInInjectionContext(() =>
       guard(route as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
-    ) as boolean | UrlTree;
+    ) as boolean | UrlTree | Observable<boolean | UrlTree>;
+  }
+
+  async function runGuardResult(
+    guard: CanActivateFn,
+    route: Partial<ActivatedRouteSnapshot> = {},
+  ): Promise<boolean | UrlTree> {
+    const result = runGuard(guard, route);
+    return result instanceof Observable ? firstValueFrom(result) : result;
   }
 
   function serialized(result: boolean | UrlTree): boolean | string {
     return result instanceof UrlTree ? router.serializeUrl(result) : result;
   }
 
-  it('allows authenticated users through the auth guard', () => {
-    authService.isAuthenticated.mockReturnValue(true);
+  it('allows authenticated users through the auth guard', async () => {
+    authService.ensureSession.mockReturnValue(of(true));
 
-    expect(runGuard(authGuard)).toBe(true);
+    expect(await runGuardResult(authGuard)).toBe(true);
   });
 
-  it('redirects guests to login through the auth guard', () => {
-    authService.isAuthenticated.mockReturnValue(false);
+  it('redirects guests to login through the auth guard', async () => {
+    authService.ensureSession.mockReturnValue(of(false));
 
-    expect(serialized(runGuard(authGuard))).toBe('/login');
+    expect(serialized(await runGuardResult(authGuard))).toBe('/login');
   });
 
-  it('keeps authenticated users away from the guest login route', () => {
-    authService.isAuthenticated.mockReturnValue(true);
+  it('keeps authenticated users away from the guest login route', async () => {
+    authService.ensureSession.mockReturnValue(of(true));
 
-    expect(serialized(runGuard(guestGuard))).toBe('/');
+    expect(serialized(await runGuardResult(guestGuard))).toBe('/');
   });
 
-  it('allows users with an accepted role through the role guard', () => {
-    authService.isAuthenticated.mockReturnValue(true);
+  it('allows users with an accepted role through the role guard', async () => {
+    authService.ensureSession.mockReturnValue(of(true));
     authService.hasRole.mockReturnValue(true);
 
-    expect(runGuard(roleGuard, { data: { roles: ['ADMIN'] satisfies Role[] } })).toBe(true);
+    expect(await runGuardResult(roleGuard, { data: { roles: ['ADMIN'] satisfies Role[] } })).toBe(
+      true,
+    );
     expect(authService.hasRole).toHaveBeenCalledWith('ADMIN');
   });
 
-  it('redirects authenticated users without the accepted role', () => {
-    authService.isAuthenticated.mockReturnValue(true);
+  it('redirects authenticated users without the accepted role', async () => {
+    authService.ensureSession.mockReturnValue(of(true));
     authService.hasRole.mockReturnValue(false);
 
-    expect(serialized(runGuard(roleGuard, { data: { roles: ['ADMIN'] satisfies Role[] } }))).toBe(
-      '/',
-    );
+    expect(
+      serialized(await runGuardResult(roleGuard, { data: { roles: ['ADMIN'] satisfies Role[] } })),
+    ).toBe('/');
   });
 });

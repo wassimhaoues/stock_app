@@ -28,6 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<jackson-bom.version>3.1.1</jackson-bom.version>
+		<tomcat.version>11.0.21</tomcat.version>
 	</properties>
 	<dependencies>
 		<dependency>

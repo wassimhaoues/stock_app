@@ -1,48 +1,67 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs';
+import { catchError, map, of, switchMap, tap } from 'rxjs';
 
 import { AuthResponse } from '../models/auth-response.model';
 import { LoginRequest } from '../models/login-request.model';
 import { Role } from '../models/role.model';
 import { Utilisateur } from '../models/utilisateur.model';
 
-const TOKEN_KEY = 'stockpro.token';
-const USER_KEY = 'stockpro.user';
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 
-  private readonly tokenState = signal<string | null>(this.readToken());
-  private readonly userState = signal<Utilisateur | null>(this.readUser());
+  private readonly userState = signal<Utilisateur | null>(null);
+  private readonly sessionCheckedState = signal(false);
 
-  readonly token = this.tokenState.asReadonly();
   readonly currentUser = this.userState.asReadonly();
-  readonly isAuthenticated = computed(() => Boolean(this.tokenState() && this.userState()));
+  readonly isAuthenticated = computed(() => Boolean(this.userState()));
 
   login(payload: LoginRequest) {
-    return this.http.post<AuthResponse>('/api/auth/login', payload).pipe(
+    return this.http.get<void>('/api/auth/csrf').pipe(
+      switchMap(() => this.http.post<AuthResponse>('/api/auth/login', payload)),
       tap((response) => {
-        this.tokenState.set(response.token);
         this.userState.set(response.utilisateur);
-        localStorage.setItem(TOKEN_KEY, response.token);
-        localStorage.setItem(USER_KEY, JSON.stringify(response.utilisateur));
+        this.sessionCheckedState.set(true);
       }),
     );
   }
 
   logout(options?: { redirect?: boolean }) {
-    this.tokenState.set(null);
-    this.userState.set(null);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    const redirect = options?.redirect ?? true;
+    this.clearSession();
 
-    if (options?.redirect ?? true) {
-      void this.router.navigateByUrl('/login');
+    this.http.post<void>('/api/auth/logout', {}).pipe(catchError(() => of(undefined))).subscribe(() => {
+      if (redirect) {
+        void this.router.navigateByUrl('/login');
+      }
+    });
+  }
+
+  ensureSession() {
+    if (this.sessionCheckedState()) {
+      return of(this.isAuthenticated());
     }
+
+    return this.http.get<Utilisateur>('/api/auth/me').pipe(
+      tap((user) => {
+        this.userState.set(user);
+        this.sessionCheckedState.set(true);
+      }),
+      map(() => true),
+      catchError(() => {
+        this.clearSession();
+        this.sessionCheckedState.set(true);
+        return of(false);
+      }),
+    );
+  }
+
+  clearSession(): void {
+    this.userState.set(null);
+    this.sessionCheckedState.set(false);
   }
 
   hasRole(...roles: Role[]): boolean {
@@ -50,21 +69,4 @@ export class AuthService {
     return role ? roles.includes(role) : false;
   }
 
-  private readToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
-  }
-
-  private readUser(): Utilisateur | null {
-    const rawUser = localStorage.getItem(USER_KEY);
-    if (!rawUser) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(rawUser) as Utilisateur;
-    } catch {
-      localStorage.removeItem(USER_KEY);
-      return null;
-    }
-  }
 }

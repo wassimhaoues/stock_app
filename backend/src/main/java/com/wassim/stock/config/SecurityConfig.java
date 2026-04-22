@@ -1,6 +1,8 @@
 package com.wassim.stock.config;
 
 import com.wassim.stock.security.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +21,15 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 
 @Configuration
 @EnableWebSecurity
@@ -31,7 +40,6 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
 
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/api/auth/**",
             "/api/health",
             "/swagger-ui/**",
             "/swagger-ui.html",
@@ -42,7 +50,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configure(http))
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(csrfTokenRepository())
+                .csrfTokenRequestHandler(spaCsrfTokenRequestHandler())
+            )
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exception -> exception
@@ -51,6 +62,9 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/**").authenticated()
                 .requestMatchers("/api/utilisateurs/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/entrepots", "/api/entrepots/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/entrepots", "/api/entrepots/**").hasRole("ADMIN")
@@ -90,6 +104,20 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieName("XSRF-TOKEN");
+        repository.setHeaderName("X-XSRF-TOKEN");
+        repository.setCookiePath("/");
+        return repository;
+    }
+
+    @Bean
+    public CsrfTokenRequestHandler spaCsrfTokenRequestHandler() {
+        return new SpaCsrfTokenRequestHandler();
+    }
+
+    @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return (request, response, authException) -> {
             response.setStatus(401);
@@ -111,5 +139,25 @@ public class SecurityConfig {
                     {"status":403,"message":"Acces refuse"}
                     """);
         };
+    }
+
+    private static final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
+
+        private final CsrfTokenRequestAttributeHandler plain = new CsrfTokenRequestAttributeHandler();
+        private final XorCsrfTokenRequestAttributeHandler xor = new XorCsrfTokenRequestAttributeHandler();
+
+        @Override
+        public void handle(HttpServletRequest request, HttpServletResponse response, Supplier<CsrfToken> csrfToken) {
+            xor.handle(request, response, csrfToken);
+            csrfToken.get();
+        }
+
+        @Override
+        public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
+            String headerValue = request.getHeader(csrfToken.getHeaderName());
+            return StringUtils.hasText(headerValue)
+                    ? plain.resolveCsrfTokenValue(request, csrfToken)
+                    : xor.resolveCsrfTokenValue(request, csrfToken);
+        }
     }
 }

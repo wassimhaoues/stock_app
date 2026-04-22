@@ -10,6 +10,7 @@ import com.wassim.stock.entity.TypeMouvement;
 import com.wassim.stock.repository.EntrepotRepository;
 import com.wassim.stock.repository.ProduitRepository;
 import com.wassim.stock.repository.StockRepository;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,10 +26,14 @@ import java.math.BigDecimal;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -53,17 +58,64 @@ class BackendSecurityIntegrationTest {
     private StockRepository stockRepository;
 
     @Test
-    void loginWithSeededAdminReturnsBearerTokenAndUserRole() throws Exception {
+    void loginWithSeededAdminSetsAuthCookieAndReturnsUserRole() throws Exception {
         LoginRequest request = new LoginRequest("admin@stockpro.local", "Admin123!");
 
         mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.type").value("Bearer"))
-                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(header().string("Set-Cookie", containsString("STOCKPRO_AUTH=")))
+                .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
+                .andExpect(header().string("Set-Cookie", containsString("SameSite=Lax")))
+                .andExpect(cookie().value("STOCKPRO_AUTH", notNullValue()))
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(jsonPath("$.type").doesNotExist())
                 .andExpect(jsonPath("$.utilisateur.email").value("admin@stockpro.local"))
                 .andExpect(jsonPath("$.utilisateur.role").value("ADMIN"));
+    }
+
+    @Test
+    void meReturnsCurrentUserFromAuthCookie() throws Exception {
+        Cookie authCookie = loginAsAdmin();
+
+        mockMvc.perform(get("/api/auth/me").cookie(authCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("admin@stockpro.local"))
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+    }
+
+    @Test
+    void meWithoutAuthCookieReturnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Authentification requise"));
+    }
+
+    @Test
+    void unsafeRequestWithAuthCookieRequiresCsrfToken() throws Exception {
+        Cookie authCookie = loginAsAdmin();
+        StockRequest request = new StockRequest(1L, 1L, 1, 1);
+
+        mockMvc.perform(post("/api/stocks")
+                        .cookie(authCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Acces refuse"));
+    }
+
+    @Test
+    void logoutClearsAuthCookie() throws Exception {
+        Cookie authCookie = loginAsAdmin();
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .cookie(authCookie)
+                        .with(csrf()))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string("Set-Cookie", containsString("STOCKPRO_AUTH=")))
+                .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
     }
 
     @Test
@@ -79,6 +131,7 @@ class BackendSecurityIntegrationTest {
 
         mockMvc.perform(post("/api/stocks")
                         .with(user("observateur@stockpro.local").roles("OBSERVATEUR"))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
@@ -92,6 +145,7 @@ class BackendSecurityIntegrationTest {
 
         mockMvc.perform(post("/api/stocks")
                         .with(user("gestionnaire@stockpro.local").roles("GESTIONNAIRE"))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden())
@@ -108,6 +162,7 @@ class BackendSecurityIntegrationTest {
 
         mockMvc.perform(post("/api/stocks")
                         .with(user("admin@stockpro.local").roles("ADMIN"))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
@@ -128,6 +183,7 @@ class BackendSecurityIntegrationTest {
 
         mockMvc.perform(post("/api/mouvements-stock")
                         .with(user("admin@stockpro.local").roles("ADMIN"))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
@@ -171,5 +227,23 @@ class BackendSecurityIntegrationTest {
         stock.setQuantite(quantite);
         stock.setSeuilAlerte(seuilAlerte);
         return stock;
+    }
+
+    private Cookie loginAsAdmin() throws Exception {
+        LoginRequest request = new LoginRequest("admin@stockpro.local", "Admin123!");
+        Cookie authCookie = mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getCookie("STOCKPRO_AUTH");
+
+        if (authCookie == null) {
+            throw new IllegalStateException("Login did not return STOCKPRO_AUTH cookie");
+        }
+
+        return authCookie;
     }
 }

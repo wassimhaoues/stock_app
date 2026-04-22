@@ -14,6 +14,7 @@ FROM eclipse-temurin:17-jre-noble AS runtime
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends wget \
+    && apt-get upgrade -y libcap2 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

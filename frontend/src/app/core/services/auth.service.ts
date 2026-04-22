@@ -33,11 +33,14 @@ export class AuthService {
     const redirect = options?.redirect ?? true;
     this.clearSession();
 
-    this.http.post<void>('/api/auth/logout', {}).pipe(catchError(() => of(undefined))).subscribe(() => {
-      if (redirect) {
-        void this.router.navigateByUrl('/login');
-      }
-    });
+    this.http
+      .post<void>('/api/auth/logout', {})
+      .pipe(catchError(() => of(undefined)))
+      .subscribe(() => {
+        if (redirect) {
+          void this.router.navigateByUrl('/login');
+        }
+      });
   }
 
   ensureSession() {
@@ -68,5 +71,4 @@ export class AuthService {
     const role = this.userState()?.role;
     return role ? roles.includes(role) : false;
   }
-
 }

@@ -8,9 +8,11 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  return authService.ensureSession().pipe(
-    map((isAuthenticated): boolean | UrlTree =>
-      isAuthenticated ? true : router.createUrlTree(['/login']),
-    ),
-  );
+  return authService
+    .ensureSession()
+    .pipe(
+      map((isAuthenticated): boolean | UrlTree =>
+        isAuthenticated ? true : router.createUrlTree(['/login']),
+      ),
+    );
 };

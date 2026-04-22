@@ -12,6 +12,8 @@ RUN npm run build -- --configuration=production
 # ── Stage 2 : serve ──────────────────────────────────────────────────────────
 FROM nginx:stable-alpine3.23 AS runtime
 
+RUN apk upgrade --no-cache libxpm
+
 COPY --from=build /app/dist/stockpro-frontend/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

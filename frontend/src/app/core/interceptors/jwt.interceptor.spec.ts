@@ -51,9 +51,7 @@ describe('jwtInterceptor', () => {
 
     http.get('/api/stocks').subscribe({ error: () => undefined });
 
-    httpController
-      .expectOne('/api/stocks')
-      .flush({}, { status: 401, statusText: 'Unauthorized' });
+    httpController.expectOne('/api/stocks').flush({}, { status: 401, statusText: 'Unauthorized' });
 
     expect(authService.clearSession).toHaveBeenCalled();
     expect(navigateByUrl).toHaveBeenCalledWith('/login');

@@ -73,7 +73,7 @@
 | 11    | Tests et nettoyage final                         | TODO   |
 | 12    | Socle d’exécution locale et préparation du poste | DONE   |
 | 13    | Conteneurisation complète                        | DONE   |
-| 14    | CI de base sur GitHub Actions                    | TODO   |
+| 14    | CI de base sur GitHub Actions                    | DONE   |
 | 15    | Qualité logicielle et sécurité de pipeline       | TODO   |
 | 16    | Déploiement Kubernetes local                     | TODO   |
 | 17    | GitOps et ArgoCD                                 | TODO   |
@@ -674,7 +674,7 @@
 
 ---
 
-## Phase 14 — CI de base sur GitHub Actions
+## Phase 14 — CI de base sur GitHub Actions [DONE]
 
 **Objectif :** automatiser une CI rapide, lisible et fiable sur les branches de travail et d'intégration.
 

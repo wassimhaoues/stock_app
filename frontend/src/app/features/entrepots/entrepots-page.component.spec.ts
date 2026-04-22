@@ -126,7 +126,9 @@ describe('EntrepotsPageComponent', () => {
   it('renders read-only mode and backend errors for non-admin users', () => {
     authService.hasRole.mockReturnValue(false);
     entrepotService.findAll.mockReturnValueOnce(
-      throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'Entrepôts indisponibles' } })),
+      throwError(
+        () => new HttpErrorResponse({ status: 500, error: { message: 'Entrepôts indisponibles' } }),
+      ),
     );
 
     const fixture = createComponent();

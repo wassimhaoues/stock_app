@@ -68,10 +68,18 @@ describe('HomePageComponent', () => {
       { produitId: 1, produitNom: 'Laptop', quantiteMouvementee: 8, valeurStock: 900 },
     ],
     stocksDormants: [
-      { stockId: 1, produitNom: 'Camera', entrepotNom: 'Tunis', quantite: 4, joursSansMouvement: 35 },
+      {
+        stockId: 1,
+        produitNom: 'Camera',
+        entrepotNom: 'Tunis',
+        quantite: 4,
+        joursSansMouvement: 35,
+      },
     ],
     alertesParGravite: [{ priorite: 'CRITIQUE', total: 1 }],
-    entrepotsActifs: [{ entrepotId: 1, entrepotNom: 'Tunis', quantiteMouvementee: 8, totalMouvements: 2 }],
+    entrepotsActifs: [
+      { entrepotId: 1, entrepotNom: 'Tunis', quantiteMouvementee: 8, totalMouvements: 2 },
+    ],
   };
   const adminAnalytics: AdminAnalytics = {
     valeurMoyenneParEntrepot: 625,

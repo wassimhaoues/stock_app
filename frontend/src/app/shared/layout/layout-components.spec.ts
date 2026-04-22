@@ -74,8 +74,12 @@ describe('layout components', () => {
     const emissions: boolean[] = [];
     fixture.componentInstance.collapsedChange.subscribe((value) => emissions.push(value));
 
-    expect(component.entries().map((entry: { label: string }) => entry.label)).toContain('Utilisateurs');
-    expect(component.entries().find((entry: { label: string }) => entry.label === 'Alertes').badge).toBe(2);
+    expect(component.entries().map((entry: { label: string }) => entry.label)).toContain(
+      'Utilisateurs',
+    );
+    expect(
+      component.entries().find((entry: { label: string }) => entry.label === 'Alertes').badge,
+    ).toBe(2);
 
     component.toggleCollapsed();
     expect(emissions).toEqual([true]);
@@ -89,12 +93,17 @@ describe('layout components', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance as any;
 
-    expect(component.entries().map((entry: { label: string }) => entry.label)).not.toContain('Utilisateurs');
-    expect(component.entries().find((entry: { label: string }) => entry.label === 'Alertes').badge).toBe(0);
+    expect(component.entries().map((entry: { label: string }) => entry.label)).not.toContain(
+      'Utilisateurs',
+    );
+    expect(
+      component.entries().find((entry: { label: string }) => entry.label === 'Alertes').badge,
+    ).toBe(0);
   });
 
   it('tracks desktop sidebar collapse state in the main layout', () => {
-    const fixture: ComponentFixture<MainLayoutComponent> = TestBed.createComponent(MainLayoutComponent);
+    const fixture: ComponentFixture<MainLayoutComponent> =
+      TestBed.createComponent(MainLayoutComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance as any;
 

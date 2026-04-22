@@ -75,7 +75,9 @@ describe('AlertesPageComponent', () => {
     expect(component.criticalAlerts()).toBe(1);
     expect(component.highAlerts()).toBe(1);
     expect(component.totalMissing()).toBe(7);
-    expect(fixture.nativeElement.textContent).toContain('Stocks sous seuil critique sur tous les entrepôts.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Stocks sous seuil critique sur tous les entrepôts.',
+    );
     expect(fixture.nativeElement.textContent).toContain('Laptop');
   });
 
@@ -94,7 +96,9 @@ describe('AlertesPageComponent', () => {
 
   it('shows backend errors from alert loading', () => {
     alerteService.findAll.mockReturnValueOnce(
-      throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'Alertes indisponibles' } })),
+      throwError(
+        () => new HttpErrorResponse({ status: 500, error: { message: 'Alertes indisponibles' } }),
+      ),
     );
 
     const fixture = createComponent();

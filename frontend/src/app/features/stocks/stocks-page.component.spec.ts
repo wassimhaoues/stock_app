@@ -237,7 +237,9 @@ describe('StocksPageComponent', () => {
   it('renders read-only observer mode and service errors', () => {
     currentRole = 'OBSERVATEUR';
     stockService.findAll.mockReturnValueOnce(
-      throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'Stocks indisponibles' } })),
+      throwError(
+        () => new HttpErrorResponse({ status: 500, error: { message: 'Stocks indisponibles' } }),
+      ),
     );
 
     const fixture = createComponent();

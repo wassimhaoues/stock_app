@@ -48,61 +48,73 @@ describe('API services', () => {
   });
 
   it('uses the expected product, stock, movement, and user endpoints', () => {
-    TestBed.inject(ProduitService).create({
-      nom: 'Laptop',
-      categorie: 'Informatique',
-      prix: 1200,
-      fournisseur: 'Supplier',
-      seuilMin: 2,
-    }).subscribe();
+    TestBed.inject(ProduitService)
+      .create({
+        nom: 'Laptop',
+        categorie: 'Informatique',
+        prix: 1200,
+        fournisseur: 'Supplier',
+        seuilMin: 2,
+      })
+      .subscribe();
     expect(httpController.expectOne('/api/produits').request.method).toBe('POST');
 
-    TestBed.inject(ProduitService).update(3, {
-      nom: 'Laptop Pro',
-      categorie: 'Informatique',
-      prix: 1500,
-      fournisseur: 'Supplier',
-      seuilMin: 3,
-    }).subscribe();
+    TestBed.inject(ProduitService)
+      .update(3, {
+        nom: 'Laptop Pro',
+        categorie: 'Informatique',
+        prix: 1500,
+        fournisseur: 'Supplier',
+        seuilMin: 3,
+      })
+      .subscribe();
     expect(httpController.expectOne('/api/produits/3').request.method).toBe('PUT');
 
     TestBed.inject(ProduitService).delete(3).subscribe();
     expect(httpController.expectOne('/api/produits/3').request.method).toBe('DELETE');
 
-    TestBed.inject(StockService).create({
-      produitId: 1,
-      entrepotId: 2,
-      quantite: 4,
-      seuilAlerte: 1,
-    }).subscribe();
+    TestBed.inject(StockService)
+      .create({
+        produitId: 1,
+        entrepotId: 2,
+        quantite: 4,
+        seuilAlerte: 1,
+      })
+      .subscribe();
     expect(httpController.expectOne('/api/stocks').request.method).toBe('POST');
 
-    TestBed.inject(StockService).update(9, {
-      produitId: 1,
-      entrepotId: 2,
-      quantite: 5,
-      seuilAlerte: 2,
-    }).subscribe();
+    TestBed.inject(StockService)
+      .update(9, {
+        produitId: 1,
+        entrepotId: 2,
+        quantite: 5,
+        seuilAlerte: 2,
+      })
+      .subscribe();
     expect(httpController.expectOne('/api/stocks/9').request.method).toBe('PUT');
 
     TestBed.inject(StockService).delete(9).subscribe();
     expect(httpController.expectOne('/api/stocks/9').request.method).toBe('DELETE');
 
-    TestBed.inject(MouvementStockService).create({
-      produitId: 1,
-      entrepotId: 2,
-      type: 'SORTIE',
-      quantite: 2,
-    }).subscribe();
+    TestBed.inject(MouvementStockService)
+      .create({
+        produitId: 1,
+        entrepotId: 2,
+        type: 'SORTIE',
+        quantite: 2,
+      })
+      .subscribe();
     expect(httpController.expectOne('/api/mouvements-stock').request.method).toBe('POST');
 
-    TestBed.inject(UtilisateurService).update(4, {
-      nom: 'User',
-      email: 'user@stockpro.local',
-      motDePasse: null,
-      role: 'ADMIN',
-      entrepotId: null,
-    }).subscribe();
+    TestBed.inject(UtilisateurService)
+      .update(4, {
+        nom: 'User',
+        email: 'user@stockpro.local',
+        motDePasse: null,
+        role: 'ADMIN',
+        entrepotId: null,
+      })
+      .subscribe();
     expect(httpController.expectOne('/api/utilisateurs/4').request.method).toBe('PUT');
   });
 

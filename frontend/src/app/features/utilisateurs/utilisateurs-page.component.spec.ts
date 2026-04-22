@@ -163,7 +163,10 @@ describe('UtilisateursPageComponent', () => {
 
   it('shows role labels and backend errors', () => {
     utilisateurService.findAll.mockReturnValueOnce(
-      throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'Utilisateurs indisponibles' } })),
+      throwError(
+        () =>
+          new HttpErrorResponse({ status: 500, error: { message: 'Utilisateurs indisponibles' } }),
+      ),
     );
 
     const fixture = createComponent();

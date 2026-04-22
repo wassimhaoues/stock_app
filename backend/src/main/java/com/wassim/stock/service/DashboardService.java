@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -48,6 +49,7 @@ public class DashboardService {
     private final ProduitRepository produitRepository;
     private final StockRepository stockRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public DashboardStatsResponse getStats() {
@@ -80,7 +82,7 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardKpisResponse getKpis() {
         DashboardScope scope = buildScope();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
         LocalDateTime startOfWeek = now.toLocalDate().minusDays(now.getDayOfWeek().getValue() - 1L).atStartOfDay();
         LocalDateTime startOfMonth = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
@@ -133,7 +135,7 @@ public class DashboardService {
         }
 
         List<AlerteResponse> alertes = alerteService.findAll();
-        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime startOfMonth = LocalDate.now(clock).withDayOfMonth(1).atStartOfDay();
         Map<Long, Long> alertesByWarehouse = alertes
                 .stream()
                 .collect(Collectors.groupingBy(AlerteResponse::entrepotId, Collectors.counting()));
@@ -213,7 +215,7 @@ public class DashboardService {
     }
 
     private Double estimateCoverageDays(List<Stock> stocks, List<MouvementStock> mouvements) {
-        LocalDateTime since = LocalDateTime.now().minusDays(DORMANT_DAYS);
+        LocalDateTime since = LocalDateTime.now(clock).minusDays(DORMANT_DAYS);
         int outgoingQuantity = sumMovements(mouvements, TypeMouvement.SORTIE, since);
         if (outgoingQuantity == 0) {
             return null;
@@ -262,9 +264,9 @@ public class DashboardService {
     }
 
     private List<DashboardAnalyticsResponse.MovementTrendPoint> buildMovementTrend(List<MouvementStock> mouvements) {
-        LocalDate firstDay = LocalDate.now().minusDays(6);
+        LocalDate firstDay = LocalDate.now(clock).minusDays(6);
         return firstDay
-                .datesUntil(LocalDate.now().plusDays(1))
+                .datesUntil(LocalDate.now(clock).plusDays(1))
                 .map(day -> new DashboardAnalyticsResponse.MovementTrendPoint(
                         day,
                         sumMovementsForDay(mouvements, TypeMouvement.ENTREE, day),
@@ -355,7 +357,7 @@ public class DashboardService {
             List<Stock> stocks,
             List<MouvementStock> mouvements
     ) {
-        LocalDateTime limit = LocalDateTime.now().minusDays(DORMANT_DAYS);
+        LocalDateTime limit = LocalDateTime.now(clock).minusDays(DORMANT_DAYS);
         Map<String, LocalDateTime> latestMovementByStock = mouvements
                 .stream()
                 .collect(Collectors.groupingBy(
@@ -379,7 +381,7 @@ public class DashboardService {
 
                     int daysWithoutMovement = latestMovement == null
                             ? DORMANT_DAYS
-                            : Math.toIntExact(ChronoUnit.DAYS.between(latestMovement.toLocalDate(), LocalDate.now()));
+                            : Math.toIntExact(ChronoUnit.DAYS.between(latestMovement.toLocalDate(), LocalDate.now(clock)));
                     return new DashboardAnalyticsResponse.DormantStockItem(
                             stock.getId(),
                             stock.getProduit().getNom(),

@@ -46,6 +46,16 @@ describe('jwtInterceptor', () => {
     request.flush([]);
   });
 
+  it('leaves non-API requests without credentials', () => {
+    const http = TestBed.inject(HttpClient);
+
+    http.get('/assets/config.json').subscribe();
+
+    const request = httpController.expectOne('/assets/config.json');
+    expect(request.request.withCredentials).toBe(false);
+    request.flush({});
+  });
+
   it('clears local auth state and redirects on protected API 401 responses', () => {
     const http = TestBed.inject(HttpClient);
 
@@ -55,5 +65,16 @@ describe('jwtInterceptor', () => {
 
     expect(authService.clearSession).toHaveBeenCalled();
     expect(navigateByUrl).toHaveBeenCalledWith('/login');
+  });
+
+  it('does not clear the session for auth endpoint 401 responses', () => {
+    const http = TestBed.inject(HttpClient);
+
+    http.get('/api/auth/me').subscribe({ error: () => undefined });
+
+    httpController.expectOne('/api/auth/me').flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    expect(authService.clearSession).not.toHaveBeenCalled();
+    expect(navigateByUrl).not.toHaveBeenCalled();
   });
 });

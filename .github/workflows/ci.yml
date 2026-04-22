@@ -93,7 +93,7 @@ jobs:
 
       - name: Build backend and generate coverage report
         working-directory: backend
-        run: mvn --batch-mode verify
+        run: mvn --batch-mode verify dependency:copy-dependencies -DincludeScope=compile -DoutputDirectory=target/dependency
         env:
           SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb
           SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver

@@ -74,6 +74,21 @@ describe('route guards', () => {
     expect(serialized(await runGuardResult(guestGuard))).toBe('/');
   });
 
+  it('allows unauthenticated users to reach the guest login route', async () => {
+    authService.ensureSession.mockReturnValue(of(false));
+
+    expect(await runGuardResult(guestGuard)).toBe(true);
+  });
+
+  it('redirects unauthenticated users before checking roles', async () => {
+    authService.ensureSession.mockReturnValue(of(false));
+
+    expect(
+      serialized(await runGuardResult(roleGuard, { data: { roles: ['ADMIN'] satisfies Role[] } })),
+    ).toBe('/login');
+    expect(authService.hasRole).not.toHaveBeenCalled();
+  });
+
   it('allows users with an accepted role through the role guard', async () => {
     authService.ensureSession.mockReturnValue(of(true));
     authService.hasRole.mockReturnValue(true);

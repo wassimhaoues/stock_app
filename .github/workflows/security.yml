@@ -1,0 +1,161 @@
+name: Security
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+  schedule:
+    # Weekly on Monday at 03:00 UTC
+    - cron: "0 3 * * 1"
+
+jobs:
+  # ── CodeQL — SAST ────────────────────────────────────────────────────────────
+  codeql:
+    name: CodeQL — ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [java-kotlin, javascript-typescript]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+
+      - name: Setup Java 17 (Java analysis only)
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+
+      - name: Compile backend (Java analysis only)
+        if: matrix.language == 'java-kotlin'
+        working-directory: backend
+        run: mvn --batch-mode compile -DskipTests
+        env:
+          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb
+          SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
+          SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # ── OWASP Dependency-Check — Maven ───────────────────────────────────────────
+  dependency-check:
+    name: OWASP Dependency-Check — backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+
+      - name: Cache NVD database
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp
+          key: owasp-nvd-${{ runner.os }}-${{ hashFiles('backend/pom.xml') }}
+          restore-keys: |
+            owasp-nvd-${{ runner.os }}-
+
+      - name: Run OWASP Dependency-Check
+        working-directory: backend
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          EXTRA=""
+          if [ -n "$NVD_API_KEY" ]; then
+            EXTRA="-DnvdApiKey=$NVD_API_KEY"
+          fi
+          mvn --batch-mode \
+            org.owasp:dependency-check-maven:8.4.3:check \
+            -DfailBuildOnCVSS=9 \
+            -Dformat=HTML \
+            -DnvdApiDelay=6000 \
+            $EXTRA
+
+      - name: Upload dependency-check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: backend/target/dependency-check-report.html
+          retention-days: 30
+
+  # ── Trivy — Docker image scan ─────────────────────────────────────────────────
+  trivy:
+    name: Trivy — Docker image scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Backend image
+      - name: Build backend Docker image
+        run: docker build -t stockpro-backend:scan ./backend
+
+      - name: Scan backend image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: stockpro-backend:scan
+          format: sarif
+          output: trivy-backend.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
+      - name: Upload backend scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-backend.sarif
+          category: trivy-backend
+
+      # Frontend image
+      - name: Build frontend Docker image
+        run: docker build -t stockpro-frontend:scan ./frontend
+
+      - name: Scan frontend image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: stockpro-frontend:scan
+          format: sarif
+          output: trivy-frontend.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
+      - name: Upload frontend scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-frontend.sarif
+          category: trivy-frontend

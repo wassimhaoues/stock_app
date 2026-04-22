@@ -74,7 +74,7 @@
 | 12    | Socle d’exécution locale et préparation du poste | DONE   |
 | 13    | Conteneurisation complète                        | DONE   |
 | 14    | CI de base sur GitHub Actions                    | DONE   |
-| 15    | Qualité logicielle et sécurité de pipeline       | TODO   |
+| 15    | Qualité logicielle et sécurité de pipeline       | DONE   |
 | 16    | Déploiement Kubernetes local                     | TODO   |
 | 17    | GitOps et ArgoCD                                 | TODO   |
 | 18    | Observabilité et alerting                        | TODO   |
@@ -720,7 +720,7 @@
 
 ---
 
-## Phase 15 — Qualité logicielle et sécurité de pipeline
+## Phase 15 — Qualité logicielle et sécurité de pipeline [DONE]
 
 **Objectif :** transformer la CI en vrai quality gate de production pour le backend Spring Boot, le frontend Angular et la stack Docker.
 

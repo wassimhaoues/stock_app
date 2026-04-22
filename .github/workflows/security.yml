@@ -95,7 +95,7 @@ jobs:
             EXTRA="-DnvdApiKey=$NVD_API_KEY"
           fi
           mvn --batch-mode \
-            org.owasp:dependency-check-maven:8.4.3:check \
+            org.owasp:dependency-check-maven:12.2.1:check \
             -DfailBuildOnCVSS=9 \
             -Dformat=HTML \
             -DnvdApiDelay=6000 \
@@ -123,7 +123,7 @@ jobs:
         run: docker build -t stockpro-backend:scan ./backend
 
       - name: Scan backend image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: stockpro-backend:scan
           format: sarif
@@ -144,7 +144,7 @@ jobs:
         run: docker build -t stockpro-frontend:scan ./frontend
 
       - name: Scan frontend image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: stockpro-frontend:scan
           format: sarif

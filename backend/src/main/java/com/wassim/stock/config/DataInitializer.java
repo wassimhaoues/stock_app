@@ -26,6 +26,9 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class DataInitializer {
 
+    private static final String CATEGORY_GAMING = "Gaming";
+    private static final String SUPPLIER_SAMSUNG_TUNISIE = "Samsung Tunisie";
+
     private final EntrepotService entrepotService;
     private final MouvementStockRepository mouvementStockRepository;
     private final ProduitRepository produitRepository;
@@ -74,7 +77,7 @@ public class DataInitializer {
 
         Produit msiThin = seedProduit(
                 "Gamer MSI Thin 15 B13UCX i5 13è Gén 24G RTX 2050",
-                "Gaming",
+                CATEGORY_GAMING,
                 "2499.00",
                 "Tunisianet",
                 6
@@ -97,14 +100,14 @@ public class DataInitializer {
                 "Samsung Galaxy A55 5G 256 Go Bleu",
                 "Téléphonie",
                 "1699.00",
-                "Samsung Tunisie",
+                SUPPLIER_SAMSUNG_TUNISIE,
                 12
         );
         Produit samsungTv = seedProduit(
                 "TV Samsung Crystal UHD 55 pouces 4K",
                 "TV",
                 "2199.00",
-                "Samsung Tunisie",
+                SUPPLIER_SAMSUNG_TUNISIE,
                 5
         );
         Produit lgOled = seedProduit(
@@ -139,7 +142,7 @@ public class DataInitializer {
                 "Lave-linge Samsung EcoBubble 9kg",
                 "Électroménager",
                 "1999.00",
-                "Samsung Tunisie",
+                SUPPLIER_SAMSUNG_TUNISIE,
                 4
         );
         Produit lgFridge = seedProduit(
@@ -158,14 +161,14 @@ public class DataInitializer {
         );
         Produit ps5 = seedProduit(
                 "PlayStation 5 Slim Standard",
-                "Gaming",
+                CATEGORY_GAMING,
                 "2599.00",
                 "GamesZone Tunisie",
                 5
         );
         Produit switchOled = seedProduit(
                 "Nintendo Switch OLED Neon",
-                "Gaming",
+                CATEGORY_GAMING,
                 "1690.00",
                 "GamesZone Tunisie",
                 6

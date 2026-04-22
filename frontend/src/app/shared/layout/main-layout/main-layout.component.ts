@@ -90,7 +90,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainLayoutComponent {
-  @ViewChild('drawer') private drawer?: MatSidenav;
+  @ViewChild('drawer') private readonly drawer?: MatSidenav;
 
   private readonly breakpointObserver = inject(BreakpointObserver);
 

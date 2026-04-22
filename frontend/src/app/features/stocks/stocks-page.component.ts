@@ -806,7 +806,7 @@ export class StocksPageComponent {
     }
 
     const editingStock = this.editingStock();
-    if (editingStock && editingStock.entrepotId === entrepot.id) {
+    if (editingStock?.entrepotId === entrepot.id) {
       const usedCapacityWithoutCurrentStock = entrepot.capaciteUtilisee - editingStock.quantite;
       return Math.max(entrepot.capacite - usedCapacityWithoutCurrentStock, 0);
     }

@@ -10,6 +10,7 @@ class StockBackendApplicationTests {
 
 	@Test
 	void contextLoads() {
+		// Intentionally empty: @SpringBootTest fails if the application context cannot start.
 	}
 
 }

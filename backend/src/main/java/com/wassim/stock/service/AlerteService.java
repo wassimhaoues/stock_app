@@ -21,6 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AlerteService {
 
+    private static final String PRIORITY_CRITICAL = "CRITIQUE";
+
     private final StockRepository stockRepository;
     private final UtilisateurRepository utilisateurRepository;
 
@@ -46,7 +48,7 @@ public class AlerteService {
     }
 
     private int priorityRank(Stock stock) {
-        return "CRITIQUE".equals(resolvePriority(stock)) ? 0 : 1;
+        return PRIORITY_CRITICAL.equals(resolvePriority(stock)) ? 0 : 1;
     }
 
     private AlerteResponse toResponse(Stock stock) {
@@ -68,14 +70,14 @@ public class AlerteService {
 
     private String resolvePriority(Stock stock) {
         if (stock.getQuantite() == 0 || stock.getQuantite() * 2 <= stock.getSeuilAlerte()) {
-            return "CRITIQUE";
+            return PRIORITY_CRITICAL;
         }
 
         return "ELEVEE";
     }
 
     private String resolveExpectedAction(String priorite) {
-        if ("CRITIQUE".equals(priorite)) {
+        if (PRIORITY_CRITICAL.equals(priorite)) {
             return "Reapprovisionnement immediat";
         }
 

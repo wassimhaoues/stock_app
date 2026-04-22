@@ -14,7 +14,7 @@ public record AuthCookieProperties(
             name = "STOCKPRO_AUTH";
         }
         if (path == null || path.isBlank()) {
-            path = "/api";
+            throw new IllegalArgumentException("stockpro.auth.cookie.path must be configured");
         }
         if (sameSite == null || sameSite.isBlank()) {
             sameSite = "Lax";

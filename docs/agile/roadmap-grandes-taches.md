@@ -95,6 +95,7 @@ Ce document résume les grandes tâches du `Project_plan.md` en une vue simple, 
 - intégrer l'analyse qualité
 - ajouter les scans de dépendances et d'images
 - protéger les secrets et seuils de blocage
+- GitHub Actions, secrets et protections de branche déjà en place
 
 ### Phase 16 — Kubernetes local
 

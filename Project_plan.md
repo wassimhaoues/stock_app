@@ -722,24 +722,54 @@
 
 ## Phase 15 — Qualité logicielle et sécurité de pipeline
 
-**Objectif :** renforcer la CI avec les contrôles qualité et sécurité exigés par le sujet.
+**Objectif :** transformer la CI en vrai quality gate de production pour le backend Spring Boot, le frontend Angular et la stack Docker.
+
+**Stack recommandée :**
+
+- **Analyse qualité principale :** SonarCloud
+- **SAST complémentaire :** GitHub CodeQL sur Java et TypeScript
+- **Vulnérabilités dépendances backend :** OWASP Dependency-Check ou équivalent Maven compatible
+- **Vulnérabilités dépendances frontend :** audit npm au niveau de sévérité `high` et `critical`
+- **Scan images Docker :** Trivy
+- **Protection de branches :** GitHub branch protection rules sur `dev` et `main`
+
+**Principes de la phase :**
+
+- bloquer les régressions de qualité avant qu’elles n’atteignent `dev` ou `main`
+- garder le pipeline lisible, rapide et exploitable par un jury
+- faire reposer la décision finale sur des seuils objectifs et documentés
+- ne pas dupliquer les règles de la phase 14 ; cette phase ajoute les contrôles de sécurité et de qualité avancés
+
+**Préparation administrateur déjà effectuée :**
+
+- GitHub Actions activé
+- secrets GitHub configurés : `SONAR_TOKEN`, `JWT_SECRET`, variables MySQL et variables de base de données
+- variables d’environnement GitHub configurées pour `DB_NAME` et `DB_USERNAME`
+- règles de protection de branche configurées sur `dev` et `main`
+- pull request requise avant fusion
+- status checks obligatoires avant fusion
+- branche à jour requise avant fusion
 
 **Travaux :**
 
-- intégrer SonarQube ou SonarCloud
-- ajouter un scan des dépendances
-- ajouter un scan d’image Docker avec Trivy
-- utiliser les GitHub Secrets pour les jetons et identifiants
-- définir les seuils de blocage
-- protéger les branches critiques avec les contrôles qualité
-- documenter les règles de passage en vert du pipeline
+- intégrer SonarCloud comme gate principal avec Quality Gate bloquant
+- ajouter CodeQL sur les langages du projet pour détecter les failles courantes côté code
+- ajouter un scan des dépendances backend côté Maven et frontend côté npm
+- ajouter un scan d’image Docker avec Trivy sur les images construites par la CI
+- définir des seuils de blocage clairs pour les bugs, vulnérabilités et dettes techniques
+- faire tourner les scans uniquement sur les branches et événements pertinents pour éviter le bruit
+- archiver les rapports de qualité de manière exploitable dans GitHub Actions
+- documenter les règles de passage en vert du pipeline et l’interprétation des rapports
+- garder cette phase compatible avec la stack actuelle : Spring Boot, Maven, Angular, npm et Docker
 
 **Définition of done :**
 
-- les vulnérabilités critiques bloquent le pipeline
-- la qualité du code est visible dans l’outillage
-- les secrets ne sont jamais stockés en dur
-- les contrôles qualité deviennent obligatoires avant fusion
+- toute vulnérabilité critique détectée par les scans bloque la fusion
+- le Quality Gate SonarCloud est obligatoire sur `dev` et `main`
+- les branches protégées refusent la fusion si les contrôles qualité échouent
+- les secrets restent uniquement dans GitHub Secrets et jamais dans le dépôt
+- les rapports de qualité et de sécurité sont lisibles et exploitables
+- la CI reste cohérente avec les contraintes du projet et ne ralentit pas inutilement le flux de travail
 
 **Sortie attendue :**
 

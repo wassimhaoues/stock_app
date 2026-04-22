@@ -781,28 +781,62 @@
 
 ## Phase 16 — Déploiement Kubernetes local
 
-**Objectif :** faire tourner la stack dans Kubernetes sans déploiement manuel hors manifests.
+**Objectif :** préparer les manifests Kubernetes locaux pour la stack, puis laisser le déploiement manuel à l’apprenant pour apprendre le flux de bout en bout.
+
+**Stack recommandée :**
+
+- **Cluster local :** kind
+- **CLI :** kubectl
+- **État local actuel :** kind et kubectl sont déjà installés, et un cluster kind est déjà créé (`kubectl cluster-info --context kind-stockpro`)
+- **Organisation des manifests :** kustomize avec `k8s/base` et `k8s/overlays/local`
+- **Images locales :** build Docker puis chargement dans kind pour éviter un registry externe pendant la phase
+- **Stockage base :** PVC dédié pour MySQL
+
+**Périmètre de cette phase :**
+
+- l’agent crée uniquement les fichiers Kubernetes et la documentation associée
+- le déploiement réel, le chargement des images et la validation du cluster sont effectués manuellement par l’apprenant
+- un guide séparé décrit exactement les commandes à exécuter après la génération des fichiers
+
+**Principes de la phase :**
+
+- garder les manifests simples, lisibles et réutilisables pour la phase 17
+- rappeler que les Dockerfiles servent à construire les images, puis que Kubernetes lance ces images dans des pods
+- ne plus utiliser Docker Compose comme mécanisme principal de démarrage pour cette phase
+- commenter chaque fichier de manifeste avec une explication courte et précise de ce qu’il sert, pourquoi il existe et comment il s’intègre dans le flux de déploiement
+- séparer clairement `ConfigMap` (non sensible) et `Secret` (DB, JWT)
+- utiliser des noms de services stables pour rester compatible avec le proxy nginx du frontend et la configuration backend actuelle
+- exposer uniquement ce qui doit l’être depuis l’extérieur ; garder MySQL et le backend en `ClusterIP`
+- définir `readinessProbe`, `livenessProbe` et des ressources CPU/mémoire sur chaque composant
+- utiliser des labels homogènes (`app.kubernetes.io/*`) pour faciliter le suivi et les futures évolutions GitOps
+- éviter toute valeur `latest` ou toute configuration implicite difficile à reproduire
 
 **Travaux :**
 
-- choisir un environnement local de test Kubernetes : Minikube ou kind
-- créer les manifests `Deployment`, `Service` et les ressources associées
-- gérer les ConfigMaps et Secrets nécessaires
-- valider le déploiement du backend, du frontend et de la base
-- documenter la commande de bootstrap du cluster
-- ajouter les probes de readiness/liveness et les ressources CPU/mémoire
-- prévoir un namespace dédié à l’application
+- créer une arborescence `k8s/` structurée par couche :
+  - `k8s/base/namespace.yaml`
+  - `k8s/base/mysql/`
+  - `k8s/base/backend/`
+  - `k8s/base/frontend/`
+  - `k8s/overlays/local/kustomization.yaml`
+- déployer MySQL 8.0 avec un `StatefulSet` ou un `Deployment` adapté, un `Service`, un `PVC` et l’initialisation du schéma à partir de `infra/mysql-init/01-schema.sql`
+- déployer le backend Spring Boot avec `Deployment`, `Service`, variables d’environnement issues de `ConfigMap` et `Secret`, et probes basées sur `/api/health`
+- déployer le frontend Angular/Nginx avec `Deployment` et `Service`, en gardant le routage `/api/` vers le service backend
+- prévoir un accès local simple au frontend via un port stable documenté ou un `port-forward` explicite
+- éviter les manifestes trop “magiques” : chaque fichier doit rester lisible sans connaissance préalable poussée de Kubernetes
+- créer un guide manuel séparé qui explique les étapes à exécuter après génération des fichiers
+- faire en sorte que le guide couvre le build des images, leur chargement dans kind, l’application des manifests et la vérification du résultat
 
 **Définition of done :**
 
-- un cluster neuf peut recevoir l’application via les manifests
-- l’application fonctionne dans Kubernetes en local
-- aucune étape critique ne dépend d’un clic manuel dans l’interface
-- le déploiement est reproductible à partir des manifests seuls
+- les manifests Kubernetes de base sont créés et cohérents
+- chaque fichier de manifeste est commenté avec son rôle, son utilité et sa place dans le flux de déploiement
+- un guide manuel séparé existe pour exécuter le déploiement après génération des fichiers
+- la structure des manifests est prête à être reprise telle quelle pour la phase 17
 
 **Sortie attendue :**
 
-- premier déploiement Kubernetes reproductible
+- premier déploiement Kubernetes local reproductible
 
 **Branch git :** `feature/devops-phase-16-k8s`
 

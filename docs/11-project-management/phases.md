@@ -76,10 +76,11 @@
 | 14    | CI de base sur GitHub Actions                    | DONE   |
 | 15    | Qualité logicielle et sécurité de pipeline       | DONE   |
 | 16    | Déploiement Kubernetes local                     | DONE   |
-| 17    | GitOps et ArgoCD                                 | TODO   |
+| 17    | GitOps et ArgoCD                                 | DONE   |
 | 18    | CD automatisé par image versionnée               | DONE   |
-| 19    | Observabilité et alerting                        | TODO   |
-| 20    | Amélioration continue et finalisation soutenance | TODO   |
+| 19    | Logging centralisé backend                       | TODO   |
+| 20    | Observabilité et alerting                        | TODO   |
+| 21    | Finalisation et soutenance                       | TODO   |
 
 ---
 
@@ -962,49 +963,274 @@
 
 ---
 
-## Phase 19 — Observabilité et alerting
+## Phase 19 — Logging centralisé backend [TODO]
 
-**Objectif :** exposer des métriques et superviser réellement l’application.
+**Objectif :** instrumenter tout le backend avec un système de logging cohérent, contextuel et exploitable, afin que la phase 20 puisse collecter, visualiser et alerter sur des données réelles.
 
-**Travaux :**
+**Constat de départ :**
 
-- ajouter un endpoint de métriques côté backend
-- intégrer Prometheus
-- intégrer Grafana avec un dashboard utile
-- ajouter des alerte simple et complexe
-- documenter où récupérer les métriques et comment lire les tableaux de bord
-- exposer quelques métriques métier utiles en plus des métriques techniques
-- prévoir au moins une alerte d’application et une alerte d’infrastructure
+- le backend ne contient actuellement aucun appel de log (`@Slf4j`, `log.*`) et aucune configuration Logback
+- les exceptions dans `GlobalExceptionHandler` sont silencieuses : les erreurs 500 ne laissent aucune trace exploitable
+- `JwtAuthFilter` ne signale pas les tokens invalides ou expirés
+- les opérations métier critiques (ENTREE/SORTIE de stock, rejets de capacité, créations d’utilisateurs) ne sont pas tracées
+- Lombok est déjà utilisé dans le projet (`@RequiredArgsConstructor`) : `@Slf4j` est disponible sans dépendance supplémentaire
+- Spring Boot embarque Logback par défaut : aucune dépendance externe n’est nécessaire
 
-**Définition of done :**
+**Périmètre de la phase :**
 
-- les métriques sont collectées automatiquement
-- le dashboard montre des données réelles
-- une alerte de base peut être déclenchée
-- les métriques et alertes sont compréhensibles pour une soutenance
+- l’agent crée tous les fichiers de configuration et modifie les classes Java concernées
+- aucune logique métier ne doit être modifiée, uniquement des appels de log ajoutés
+- les travaux manuels de vérification restent à la charge de l’apprenant
 
-**Sortie attendue :**
+**Stack de logging :**
 
-- observabilité complète de la stack
-
-**Branch git :** `feature/devops-phase-19-observability`
+- **Logger :** SLF4J + Logback (déjà embarqué dans Spring Boot)
+- **Annotation :** `@Slf4j` de Lombok sur chaque classe concernée
+- **Contexte par requête :** MDC (Mapped Diagnostic Context) via un filtre HTTP dédié
+- **Format local :** pattern lisible en console (timestamp, niveau, correlationId, logger court, message)
+- **Format Docker/Kubernetes :** même pattern ou JSON structuré selon profil Spring Boot actif
 
 ---
 
-## Phase 20 — Amélioration continue et finalisation soutenance
+**Travaux de l’agent :**
 
-**Objectif :** stabiliser la solution et préparer la démonstration finale.
+### 1 — Configuration Logback
+
+- créer `src/main/resources/logback-spring.xml` avec :
+  - un appender console avec pattern : `%d{HH:mm:ss.SSS} %-5level [%X{correlationId}] [%X{userEmail}] %logger{30} - %msg%n`
+  - profil `docker` et profil `k8s` avec format JSON structuré (champs : `timestamp`, `level`, `correlationId`, `userEmail`, `logger`, `message`, `exception` si présente)
+  - niveau racine `INFO`, niveau `DEBUG` pour `com.wassim.stock` en profil `dev` uniquement
+- ajouter dans `application.properties` :
+  ```
+  logging.level.root=INFO
+  logging.level.com.wassim.stock=INFO
+  logging.level.org.springframework.security=WARN
+  logging.level.org.hibernate.SQL=WARN
+  ```
+- ajouter dans `application-dev.properties` :
+  ```
+  logging.level.com.wassim.stock=DEBUG
+  logging.level.org.hibernate.SQL=DEBUG
+  ```
+
+### 2 — Filtre MDC de corrélation de requête
+
+- créer `com.wassim.stock.logging.RequestCorrelationFilter` (implémente `OncePerRequestFilter`) :
+  - génère un `correlationId` UUID court (8 premiers caractères) par requête
+  - extrait l’email de l’utilisateur depuis `SecurityContextHolder` si authentifié, `anonymous` sinon
+  - place `correlationId` et `userEmail` dans le MDC en début de requête
+  - nettoie le MDC en fin de requête (`MDC.clear()` dans le bloc `finally`)
+  - ajoute `X-Correlation-Id` dans l’en-tête HTTP de la réponse pour traçabilité front/back
+
+### 3 — Intégration dans les classes existantes
+
+Ajouter `@Slf4j` et les appels de log suivants, sans modifier la logique métier :
+
+**`GlobalExceptionHandler`** :
+- `log.warn(“Ressource non trouvée : {}”, ex.getMessage())` sur `ResourceNotFoundException`
+- `log.warn(“Requête invalide : {}”, ex.getMessage())` sur `BadRequestException` et `ConflictException`
+- `log.warn(“Accès refusé pour {}”, MDC.get(“userEmail”))` sur `AccessDeniedException`
+- `log.warn(“Échec d’authentification”)` sur `BadCredentialsException` (pas de détail dans le log)
+- `log.error(“Erreur interne non gérée”, ex)` sur `Exception` générique (stack trace complète utile ici)
+
+**`JwtAuthFilter`** :
+- `log.debug(“Token JWT absent dans la requête vers {}”, request.getRequestURI())` quand token null
+- `log.warn(“Token JWT invalide ou expiré sur {}”, request.getRequestURI())` quand `isTokenValid` échoue
+
+**`AuthService` ou `AuthController`** :
+- `log.info(“Connexion réussie pour {}”, email)` après login accepté
+- `log.warn(“Échec de connexion pour {}”, email)` après `BadCredentialsException`
+
+**`StockService`** :
+- `log.info(“Stock créé : produit={}, entrepot={}, quantite={}”, produitId, entrepotId, quantite)` à la création
+- `log.info(“Stock mis à jour : id={}, nouvelle quantite={}”, stockId, quantite)` à la modification
+- `log.warn(“Création de stock refusée : capacité insuffisante (disponible={}, demandé={})”, dispo, demande)` sur rejet capacité
+
+**`MouvementStockService`** :
+- `log.info(“Mouvement {} enregistré : produit={}, entrepot={}, quantite={}”, type, produitId, entrepotId, quantite)` à chaque mouvement accepté
+- `log.warn(“Mouvement SORTIE refusé : stock insuffisant (disponible={}, demandé={})”, dispo, demande)` sur rejet stock
+- `log.warn(“Mouvement ENTREE refusé : capacité insuffisante (disponible={}, demandé={})”, dispo, demande)` sur rejet capacité
+
+**`DataInitializer`** :
+- `log.info(“Données de démo chargées : {} utilisateurs, {} entrepôts, {} produits”, ...)` en mode démo
+- `log.info(“Compte admin initial créé”)` en mode normal
+
+**Règles communes à tous les appels de log :**
+- ne jamais logger un token JWT, un mot de passe, un cookie ou toute valeur de secret
+- utiliser `log.warn` pour les cas métier rejetés (400, 403, 404, 409), `log.error` uniquement pour les exceptions inattendues (500)
+- ne pas ajouter de log dans les repositories ou les entités
+- ne pas dupliquer un log si l’exception est déjà loggée plus haut dans la chaîne d’appel
+
+### 4 — Documentation
+
+- créer `docs/09-operations/logging.md` :
+  - table des niveaux de log et leur signification dans ce projet
+  - liste des événements loggés et à quel niveau
+  - comment lire les logs en local, en Docker et en Kubernetes
+  - explication du `correlationId` et comment le retrouver dans les logs
+- créer `docs/13-manual-work/phase-19-logging-verification.md` :
+  - commandes pour lancer le backend et observer les logs : `mvn spring-boot:run`, `docker compose logs -f backend`, `kubectl logs -f deployment/stockpro-backend -n stockpro`
+  - scénarios de vérification : login réussi, login échoué, accès refusé, ENTREE de stock, SORTIE refusée, erreur 500 simulée
+  - checklist pour confirmer l’absence de données sensibles dans les logs
+
+---
+
+**Règles de sécurité des logs :**
+
+- aucun token JWT, aucun mot de passe, aucune valeur de cookie ne doit apparaître dans un log
+- les emails utilisateurs peuvent être loggés au niveau `INFO` ou supérieur comme identifiant métier non sensible
+- les identifiants numériques (ids produit, entrepôt, stock) sont acceptés dans les logs
+- les stack traces complètes ne sont autorisées qu’au niveau `ERROR` (`log.error(“...”, ex)`)
+
+---
+
+**Définition of done :**
+
+- `GlobalExceptionHandler` logue toutes les exceptions avec le niveau approprié
+- `JwtAuthFilter` logue les tokens invalides en `WARN`
+- `StockService` et `MouvementStockService` tracent chaque opération critique acceptée ou refusée
+- le `correlationId` apparaît dans chaque ligne de log associée à une requête HTTP
+- aucun secret, token ou mot de passe n’est visible dans les logs
+- les logs sont lisibles en local et compatibles avec une collecte Docker / Kubernetes en phase 20
+- `docs/09-operations/logging.md` et le fichier de travaux manuels sont créés
+- `mvn test` et `npm run build` passent sans régression
+
+**Sortie attendue :**
+
+- backend avec des logs réellement exploitables pour le diagnostic et la future observabilité de la phase 20
+
+**Branch git :** `feature/devops-phase-19-centralized-logging`
+
+---
+
+## Phase 20 — Observabilité et alerting [TODO]
+
+**Objectif :** exposer des métriques techniques et métier depuis le backend, les collecter avec Prometheus, les visualiser dans Grafana et déclencher des alertes simples — en s’appuyant sur les logs structurés mis en place à la phase 19.
+
+**Prérequis :** phase 19 terminée — le backend produit des logs cohérents avec `correlationId`, niveau et contexte utilisateur, exploitables par un système de collecte.
+
+**Périmètre de la phase :**
+
+- l’agent prépare tous les fichiers de configuration, les dépendances backend et les manifests ou fichiers de déploiement
+- l’apprenant lance lui-même les commandes d’installation, d’application des manifests et de vérification
+- aucune mesure ne doit rester “implicite” : chaque métrique ou alerte doit avoir une source claire et une façon de la tester
+
+**Stack recommandée :**
+
+- **Instrumentation backend :** Spring Boot Actuator + Micrometer (dépendances à ajouter dans `pom.xml`)
+- **Endpoint de scraping :** `/actuator/prometheus` exposé par Micrometer
+- **Collecte métriques :** Prometheus
+- **Visualisation :** Grafana
+- **Alerting :** règles Prometheus AlertManager ou alertes Grafana natives
+- **Logs (optionnel) :** Grafana Loki pour agréger les logs structurés de la phase 19 dans le même tableau de bord
+- **Organisation :** `infra/monitoring/` pour les fichiers de configuration Prometheus, Grafana et Loki
+
+**Principes de la phase :**
+
+- garder un périmètre simple et démontrable en soutenance
+- privilégier des métriques compréhensibles : requêtes HTTP par code de statut, santé applicative, latence, JVM, erreurs
+- les logs structurés de la phase 19 sont déjà prêts à être ingérés par Loki si l’apprenant choisit d’aller jusque là
+- distinguer clairement métriques techniques (JVM, HTTP, DB pool) et métriques métier (mouvements de stock, alertes actives)
+- documenter comment lire un dashboard, comment vérifier qu’une alerte se déclenche et comment interpréter une anomalie
+
+**Travaux de l’agent :**
+
+### 1 — Instrumentation backend
+
+- ajouter dans `pom.xml` :
+  - `spring-boot-starter-actuator`
+  - `micrometer-registry-prometheus`
+- configurer dans `application.properties` :
+  ```
+  management.endpoints.web.exposure.include=health,info,prometheus,metrics
+  management.endpoint.health.show-details=when_authorized
+  management.metrics.tags.application=stockpro
+  ```
+- sécuriser `/actuator/prometheus` pour qu’il reste accessible depuis Prometheus (autoriser sans auth ou via IP interne selon l’environnement)
+- ajouter des compteurs métier personnalisés dans `MouvementStockService` via `MeterRegistry` :
+  - `stockpro.mouvements.total` avec tag `type=ENTREE|SORTIE`
+  - `stockpro.mouvements.rejets` avec tag `raison=stock_insuffisant|capacite_depassee`
+- ne pas modifier la logique métier, uniquement ajouter les enregistrements de métriques
+
+### 2 — Configuration Prometheus
+
+- créer `infra/monitoring/prometheus/prometheus.yml` :
+  - scraping de `/actuator/prometheus` sur le backend toutes les 15 secondes
+  - scraping de l’endpoint de métriques MySQL si disponible
+  - labels communs : `env=local`, `app=stockpro`
+- créer `infra/monitoring/prometheus/rules/stockpro_alerts.yml` avec au moins :
+  - alerte `BackendDown` : backend injoignable depuis 1 minute
+  - alerte `HighErrorRate` : taux d’erreurs HTTP 5xx > 5% sur 5 minutes
+  - alerte `StockRejectionsSpike` : plus de 10 rejets de mouvements en 5 minutes
+
+### 3 — Dashboard Grafana
+
+- créer `infra/monitoring/grafana/provisioning/dashboards/stockpro.json` avec :
+  - panel : requêtes HTTP par statut (200, 400, 401, 403, 404, 409, 500) sur les dernières 30 minutes
+  - panel : latence moyenne et p95 des requêtes backend
+  - panel : santé de la JVM (heap utilisée, threads actifs, GC)
+  - panel : compteur de mouvements ENTREE/SORTIE par heure
+  - panel : compteur de rejets de mouvements (stock insuffisant, capacité)
+  - panel : état de l’alerte `BackendDown`
+- créer `infra/monitoring/grafana/provisioning/datasources/prometheus.yml` pointant vers Prometheus
+
+### 4 — Déploiement local (Docker ou Kubernetes)
+
+**Option Docker Compose :** créer `infra/monitoring/docker-compose.monitoring.yml` avec les services `prometheus` et `grafana` branchés sur le réseau applicatif existant du `docker-compose.yml` principal
+
+**Option Kubernetes :** créer les manifests dans `k8s/base/monitoring/` : Deployment + Service pour Prometheus et Grafana, ConfigMap pour `prometheus.yml` et les règles d’alerte, PVC pour la persistance Grafana
+
+L’agent prépare les deux options et documente le choix recommandé pour la soutenance.
+
+### 5 — Documentation
+
+- créer `docs/09-operations/observability.md` :
+  - liste des métriques exposées et leur signification
+  - description de chaque panel du dashboard Grafana
+  - description de chaque règle d’alerte et son seuil
+  - comment interpréter un pic d’erreurs ou un rejet de mouvement dans Grafana
+  - lien avec les logs phase 19 : comment croiser un `correlationId` vu dans Grafana avec les logs Kubernetes/Docker
+- créer `docs/13-manual-work/phase-20-observability-setup.md` :
+  - commandes pour lancer la stack monitoring en local
+  - commandes pour appliquer les manifests Kubernetes monitoring
+  - comment vérifier que Prometheus scrape bien le backend (`/api/actuator/prometheus`)
+  - comment importer le dashboard Grafana ou vérifier le provisioning automatique
+  - scénario pour déclencher manuellement l’alerte `BackendDown` et observer le résultat dans Grafana
+
+---
+
+**Définition of done :**
+
+- `/actuator/prometheus` répond avec des métriques valides sur le backend en cours d’exécution
+- Prometheus scrape le backend et stocke les métriques sans erreur
+- Grafana affiche des données réelles depuis Prometheus
+- les compteurs métier `stockpro.mouvements.total` et `stockpro.mouvements.rejets` remontent dans Grafana
+- au moins une alerte Prometheus peut être déclenchée et observée
+- la documentation d’observabilité est complète et lisible pour une présentation en soutenance
+- `mvn test` et `npm run build` passent sans régression
+
+**Sortie attendue :**
+
+- observabilité complète et démontrable de la stack, avec corrélation possible entre métriques (Prometheus/Grafana) et logs (phase 19)
+
+**Branch git :** `feature/devops-phase-20-observability`
+
+---
+
+## Phase 21 — Finalisation et soutenance [TODO]
+
+**Objectif :** stabiliser la solution complète et préparer une démonstration finale reproductible et professionnelle.
 
 **Travaux :**
 
-- identifier les points faibles restants
+- identifier les points faibles restants après les phases 19 et 20
 - corriger les frictions de build, déploiement ou supervision
-- compléter le README final
-- rédiger le document technique demandé
-- préparer un scénario de démo reproductible
-- ajouter les captures nécessaires
+- compléter le README final avec le parcours complet de démarrage
+- rédiger le document technique requis pour la soutenance
+- préparer un scénario de démo reproductible par rôle et par phase
+- ajouter les captures d’écran nécessaires (dashboard Grafana, pipeline CI/CD, cluster Kubernetes, interface applicative)
 - geler le périmètre fonctionnel final
-- vérifier la cohérence entre le plan, le code et la documentation
+- vérifier la cohérence entre le plan, le code, les logs, les métriques et la documentation
 - préparer les derniers correctifs de stabilité et de présentation
 
 **Définition of done :**
@@ -1018,6 +1244,6 @@
 
 - version finale prête pour dépôt et présentation
 
-**Branch git :** `feature/devops-phase-20-finalization`
+**Branch git :** `feature/devops-phase-21-finalization`
 
 ---

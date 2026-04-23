@@ -46,8 +46,7 @@ spec:
       - CreateNamespace=true
       # Applique le ServerSideApply de Kubernetes (gestion des champs plus propre).
       - ServerSideApply=true
-
     # Synchronisation automatique — DÉCOMMENTER après la première sync manuelle validée.
-    # automated:
-    #   prune: false    # ne supprime PAS les ressources retirées de Git (prudence)
-    #   selfHeal: true  # re-synchronise si quelqu'un modifie le cluster à la main
+    automated:
+      prune: false # ne supprime PAS les ressources retirées de Git (prudence)
+      selfHeal: true # re-synchronise si quelqu'un modifie le cluster à la main

@@ -27,7 +27,7 @@ spec:
     # URL HTTPS du dépôt GitHub (ArgoCD clone ce dépôt pour lire les manifests).
     repoURL: https://github.com/wassimhaoues/stock_app.git
     # Branche ou tag cible. HEAD suit toujours la branche par défaut (main).
-    targetRevision: HEAD
+    targetRevision: feature/devops-phase-17-argocd
     # Chemin dans le dépôt où se trouve le kustomization.yaml GitOps.
     # L'overlay gitops est identique à local mais sans secretGenerator
     # (le Secret stockpro-secrets est créé manuellement avant la première sync).

@@ -1,0 +1,28 @@
+# ConfigMap backend — variables de configuration non-sensibles.
+# Ces valeurs peuvent être versionnées sans risque (pas de secrets ici).
+# Le profil "docker" active application-docker.properties dans Spring Boot,
+# qui lit DB_HOST, DB_PORT, DB_NAME pour construire l'URL JDBC.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: stockpro
+  labels:
+    app: stockpro
+    component: backend
+data:
+  # Profil Spring Boot : active application-docker.properties
+  SPRING_PROFILES_ACTIVE: docker
+
+  # Adresse du service MySQL dans le cluster (correspond au nom du Service stock-db)
+  DB_HOST: stock-db
+  DB_PORT: "3306"
+  DB_NAME: stock_app_db
+
+  # Port d'écoute du backend (doit correspondre à server.port dans application.properties)
+  SERVER_PORT: "8085"
+
+  # STOCKPRO_DEMO_DATA vient du .env via le Secret stockpro-secrets (voir deployment.yaml)
+
+  # Origines autorisées pour CORS — remplace le défaut localhost:4200 du dev local
+  CORS_ALLOWED_ORIGINS: "http://localhost:30080"

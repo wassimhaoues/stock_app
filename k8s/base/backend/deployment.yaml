@@ -1,0 +1,101 @@
+# Deployment du backend Spring Boot.
+# Variables non-sensibles : injectées depuis le ConfigMap backend-config (envFrom).
+# Variables sensibles    : injectées depuis le Secret "stockpro-secrets", généré
+#                          depuis le .env racine par le secretGenerator de l'overlay.
+# Mapping de clés : le .env utilise MYSQL_USER / MYSQL_PASSWORD ; Spring Boot
+# attend DB_USERNAME / DB_PASSWORD — la correspondance est faite ici via secretKeyRef.
+# Un initContainer attend que MySQL soit joignable avant de démarrer Spring Boot.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock-backend
+  namespace: stockpro
+  labels:
+    app: stockpro
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stockpro
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: stockpro
+        component: backend
+    spec:
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "En attente de MySQL sur stock-db:3306..."
+              until nc -z stock-db 3306; do
+                echo "MySQL pas encore prêt. Nouvelle tentative dans 3s..."
+                sleep 3
+              done
+              echo "MySQL est prêt. Démarrage du backend."
+
+      containers:
+        - name: stock-backend
+          image: stockpro-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8085
+          # Variables non-sensibles depuis le ConfigMap
+          envFrom:
+            - configMapRef:
+                name: backend-config
+          # Variables sensibles depuis le Secret généré à partir du .env
+          env:
+            # Le .env a MYSQL_USER=stockpro → Spring Boot attend DB_USERNAME
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: stockpro-secrets
+                  key: MYSQL_USER
+            # Le .env a MYSQL_PASSWORD=... → Spring Boot attend DB_PASSWORD
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stockpro-secrets
+                  key: MYSQL_PASSWORD
+            # Clé identique dans le .env et dans Spring Boot
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: stockpro-secrets
+                  key: JWT_SECRET
+            # Clé identique dans le .env et dans Spring Boot
+            - name: STOCKPRO_DEMO_DATA
+              valueFrom:
+                secretKeyRef:
+                  name: stockpro-secrets
+                  key: STOCKPRO_DEMO_DATA
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8085
+            initialDelaySeconds: 90
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8085
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5

@@ -1,0 +1,21 @@
+# Service frontend — expose le port 80 (nginx) à l'intérieur du cluster.
+# Type ClusterIP dans la base : non accessible directement depuis l'hôte.
+# L'overlay local patche ce Service en NodePort (port 30080) pour permettre
+# l'accès depuis le navigateur sur http://localhost:30080.
+apiVersion: v1
+kind: Service
+metadata:
+  name: stock-frontend
+  namespace: stockpro
+  labels:
+    app: stockpro
+    component: frontend
+spec:
+  selector:
+    app: stockpro
+    component: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP

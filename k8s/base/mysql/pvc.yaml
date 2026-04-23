@@ -1,0 +1,18 @@
+# PersistentVolumeClaim MySQL — réserve un espace disque dédié à la base de données.
+# Sans ce volume, toutes les données sont perdues au redémarrage du pod.
+# ReadWriteOnce : un seul pod peut écrire à la fois (normal pour MySQL standalone).
+# La StorageClass par défaut du cluster est utilisée (local-path sur kind).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: stockpro
+  labels:
+    app: stockpro
+    component: mysql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

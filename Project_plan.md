@@ -75,7 +75,7 @@
 | 13    | Conteneurisation complète                        | DONE   |
 | 14    | CI de base sur GitHub Actions                    | DONE   |
 | 15    | Qualité logicielle et sécurité de pipeline       | DONE   |
-| 16    | Déploiement Kubernetes local                     | TODO   |
+| 16    | Déploiement Kubernetes local                     | DONE   |
 | 17    | GitOps et ArgoCD                                 | TODO   |
 | 18    | Observabilité et alerting                        | TODO   |
 | 19    | Amélioration continue et finalisation soutenance | TODO   |
@@ -779,7 +779,7 @@
 
 ---
 
-## Phase 16 — Déploiement Kubernetes local
+## Phase 16 — Déploiement Kubernetes local [DONE]
 
 **Objectif :** préparer les manifests Kubernetes locaux pour la stack, puis laisser le déploiement manuel à l’apprenant pour apprendre le flux de bout en bout.
 

@@ -1,0 +1,9 @@
+# Namespace dédié à StockPro.
+# Toutes les ressources du projet vivent dans ce namespace, ce qui les isole
+# des autres applications éventuellement déployées sur le même cluster.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stockpro
+  labels:
+    app: stockpro

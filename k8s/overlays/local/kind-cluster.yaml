@@ -1,0 +1,20 @@
+# Configuration du cluster kind pour le déploiement local de StockPro.
+# kind crée un cluster Kubernetes dans un conteneur Docker.
+# extraPortMappings : rend les NodePorts accessibles sur localhost.
+#   - 30080 → frontend (http://localhost:30080)
+#   - 30085 → backend direct (http://localhost:30085/api — pour Postman / curl)
+# Ce fichier est passé à "kind create cluster --config" (voir le runbook).
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: stockpro
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # Accès au frontend Angular depuis le navigateur
+      - containerPort: 30080
+        hostPort: 30080
+        protocol: TCP
+      # Accès direct à l'API backend (utile pour Postman / Swagger)
+      - containerPort: 30085
+        hostPort: 30085
+        protocol: TCP

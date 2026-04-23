@@ -1,0 +1,44 @@
+# Overlay local — adapte la base pour un déploiement kind sur poste de développement.
+# Différences par rapport à la base :
+#   - Secrets générés automatiquement depuis le fichier .env racine (jamais commités)
+#   - Images taguées :local (construites et chargées manuellement dans kind)
+#   - Services frontend et backend exposés en NodePort (accessibles sur localhost)
+# Commande d'application : kubectl apply -k k8s/overlays/local
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: stockpro
+
+# Référence à la base commune
+resources:
+  - ../../base
+
+# Génération du Secret depuis le .env racine.
+# Kustomize lit le fichier .env et crée un Secret Kubernetes nommé "stockpro-secrets".
+# Le fichier .env n'est jamais commité (gitignore) — les secrets restent hors du dépôt.
+# disableNameSuffixHash : conserve le nom stable "stockpro-secrets" (sans hash)
+# afin que les Deployments puissent le référencer par nom fixe via secretKeyRef.
+# Le .env doit être placé dans ce répertoire (k8s/overlays/local/.env) avant de déployer.
+# Kustomize interdit les chemins remontant hors de sa racine, donc ../../../.env est rejeté.
+# Ce fichier est gitignore — voir .gitignore. Étape de préparation dans le runbook.
+# Pour copier rapidement : cp .env k8s/overlays/local/.env
+secretGenerator:
+  - name: stockpro-secrets
+    envs:
+      - .env
+    options:
+      disableNameSuffixHash: true
+
+# Remplacement des tags d'image.
+# "local" correspond au tag utilisé lors du build Docker et du chargement dans kind :
+#   docker build -t stockpro-backend:local ./backend
+#   kind load docker-image stockpro-backend:local --name stockpro
+images:
+  - name: stockpro-backend
+    newTag: local
+  - name: stockpro-frontend
+    newTag: local
+
+# Passage en NodePort pour l'accès depuis le navigateur et les outils de test.
+patches:
+  - path: patches/expose-services.yaml

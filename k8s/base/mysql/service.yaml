@@ -1,0 +1,22 @@
+# Service MySQL — expose le port 3306 à l'intérieur du cluster.
+# Nom : stock-db, ce qui correspond exactement à la valeur par défaut de DB_HOST
+# dans application-docker.properties (${DB_HOST:stock-db}).
+# Type ClusterIP : accessible uniquement depuis l'intérieur du cluster (backend uniquement).
+# MySQL n'a pas besoin d'être accessible depuis l'extérieur en local.
+apiVersion: v1
+kind: Service
+metadata:
+  name: stock-db
+  namespace: stockpro
+  labels:
+    app: stockpro
+    component: mysql
+spec:
+  selector:
+    app: stockpro
+    component: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP

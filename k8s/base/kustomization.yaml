@@ -1,0 +1,31 @@
+# Kustomization de base : liste toutes les ressources communes aux environnements.
+# Les Secrets ne sont PAS gérés ici — chaque overlay les génère depuis son propre
+# fichier .env via secretGenerator. Voir overlays/local/kustomization.yaml.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: stockpro
+
+resources:
+  - namespace.yaml
+  # MySQL — base de données persistante
+  - mysql/pvc.yaml
+  - mysql/deployment.yaml
+  - mysql/service.yaml
+  # Backend Spring Boot
+  - backend/configmap.yaml
+  - backend/deployment.yaml
+  - backend/service.yaml
+  # Frontend Angular (nginx)
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+
+# Le fichier SQL existant est transformé en ConfigMap automatiquement par Kustomize.
+# MySQL le détecte à son démarrage et l'exécute via /docker-entrypoint-initdb.d/.
+# Le SQL est dans assets/ (dans l'arbre de base) pour satisfaire la restriction
+# de chargement de Kustomize qui interdit les chemins remontant hors de la racine.
+# Source canonique Docker Compose : infra/mysql-init/01-schema.sql — garder en sync.
+configMapGenerator:
+  - name: mysql-init-sql
+    files:
+      - 01-schema.sql=assets/01-schema.sql

@@ -1,0 +1,23 @@
+# Service backend — expose le port 8085 à l'intérieur du cluster.
+# Nom : stock-backend, ce qui correspond exactement à la valeur attendue par le proxy
+# nginx du frontend dans nginx.conf : proxy_pass http://stock-backend:8085;
+# Type ClusterIP (base) : accessible uniquement depuis l'intérieur du cluster.
+# L'overlay local peut patcher ce Service en NodePort pour exposer l'API directement
+# sur l'hôte (utile pour les tests Postman / curl sans passer par le frontend).
+apiVersion: v1
+kind: Service
+metadata:
+  name: stock-backend
+  namespace: stockpro
+  labels:
+    app: stockpro
+    component: backend
+spec:
+  selector:
+    app: stockpro
+    component: backend
+  ports:
+    - name: http
+      port: 8085
+      targetPort: 8085
+  type: ClusterIP

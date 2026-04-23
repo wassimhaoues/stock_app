@@ -844,23 +844,47 @@
 
 ## Phase 17 — GitOps et ArgoCD
 
-**Objectif :** transformer le déploiement Kubernetes en flux GitOps.
+**Objectif :** transformer le déploiement Kubernetes en flux GitOps, avec des fichiers prêts à l’emploi puis une installation ArgoCD faite manuellement par l’apprenant.
+
+**Périmètre de cette phase :**
+
+- l’agent prépare les fichiers GitOps, les manifests ArgoCD et la documentation associée
+- l’apprenant exécute lui-même les commandes kubectl/argocd pour installer et vérifier ArgoCD
+- aucun déploiement automatique ne doit être présumé sans validation humaine
+
+**Stack recommandée :**
+
+- **GitOps controller :** ArgoCD
+- **Source de vérité :** dossier `k8s/`
+- **Organisation :** base commune + overlay local si nécessaire
+- **Accès initial :** port-forward ou Ingress local simple pour l’UI ArgoCD
+
+**Principes de la phase :**
+
+- conserver la structure `k8s/` déjà créée en phase 16 comme base GitOps
+- ne pas dupliquer inutilement les manifests applicatifs, mais les réutiliser via ArgoCD
+- garder les fichiers lisibles et expliqués pour qu’un débutant comprenne ce qu’ArgoCD lit et applique
+- documenter le bootstrap initial, la première synchronisation et la vérification du drift
+- laisser les commandes d’installation et de validation à l’apprenant pour l’apprentissage
 
 **Travaux :**
 
-- préparer le dossier `k8s/` comme source de vérité
-- installer ArgoCD sur le cluster choisi
-- définir l’application ArgoCD
-- activer la synchronisation automatique
-- vérifier qu’un commit Git déclenche la mise à jour du cluster
+- préparer le dossier `k8s/` comme source de vérité GitOps
+- créer les manifests ArgoCD nécessaires (`Application`, namespaces, accès UI si utile)
+- documenter les commandes manuelles pour installer ArgoCD dans le cluster existant
+- définir l’application ArgoCD sur le dépôt et l’overlay appropriés
+- activer la synchronisation automatique avec prudence après la première synchro manuelle
 - organiser la structure GitOps pour distinguer base commune et overlays si nécessaire
-- documenter le bootstrap initial d’ArgoCD et la première synchronisation
+- documenter comment vérifier que le cluster suit bien le dépôt Git
+- prévoir une procédure simple pour accéder à l’interface ArgoCD en local
+- si de nouveaux fichiers sont nécessaires, les créer sans modifier le code applicatif
 
 **Définition of done :**
 
-- le déploiement provient du dépôt Git
-- le cluster se synchronise automatiquement
-- aucune commande manuelle de `kubectl apply` n’est nécessaire après le setup
+- le cluster peut être installé et synchronisé à partir du dépôt Git
+- l’application ArgoCD est définie et fonctionnelle
+- la première synchronisation est reproductible et documentée
+- la synchronisation automatique peut être activée après validation initiale
 - l’état réel du cluster reste aligné avec le dépôt
 
 **Sortie attendue :**

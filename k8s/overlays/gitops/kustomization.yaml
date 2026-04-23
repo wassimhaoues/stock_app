@@ -1,0 +1,33 @@
+# Overlay GitOps — utilisé par ArgoCD comme source de vérité.
+#
+# Différences par rapport à l'overlay local :
+#   - PAS de secretGenerator : le fichier .env est gitignore et ArgoCD ne peut pas le lire.
+#     Le Secret "stockpro-secrets" doit être créé manuellement UNE FOIS avant la première sync.
+#     Commande de bootstrap (depuis la racine du dépôt) :
+#       kubectl create secret generic stockpro-secrets \
+#         --from-env-file=.env -n stockpro
+#     ArgoCD ne gère pas ce Secret — il reste stable entre les synchros.
+#   - Images taguées :local (images chargées manuellement dans kind, inchangé vs local).
+#   - NodePort 30080/30085 conservés via le même patch que l'overlay local.
+#
+# ArgoCD lit ce fichier depuis le dépôt Git et applique le résultat dans le cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: stockpro
+
+resources:
+  - ../../base
+
+# Pas de secretGenerator ici.
+# Le Secret stockpro-secrets est un "bootstrap secret" créé manuellement.
+# Voir la commande dans le commentaire d'en-tête et dans docs/phase-17-manual-steps.md.
+
+images:
+  - name: stockpro-backend
+    newTag: local
+  - name: stockpro-frontend
+    newTag: local
+
+patches:
+  - path: patches/expose-services.yaml

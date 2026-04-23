@@ -1,0 +1,29 @@
+# Patch GitOps — même exposition NodePort que l'overlay local.
+# Frontend : http://localhost:30080
+# Backend  : http://localhost:30085 (Swagger, tests directs)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stock-frontend
+  namespace: stockpro
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 30080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stock-backend
+  namespace: stockpro
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 8085
+      targetPort: 8085
+      nodePort: 30085

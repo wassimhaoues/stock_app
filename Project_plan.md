@@ -842,7 +842,7 @@
 
 ---
 
-## Phase 17 — GitOps et ArgoCD
+## Phase 17 — GitOps et ArgoCD `[DONE]`
 
 **Objectif :** transformer le déploiement Kubernetes en flux GitOps, avec des fichiers prêts à l’emploi puis une installation ArgoCD faite manuellement par l’apprenant.
 

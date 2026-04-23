@@ -1,0 +1,53 @@
+# Manifest ArgoCD Application — objet central du flux GitOps.
+#
+# Ce fichier dit à ArgoCD :
+#   - où se trouve le dépôt Git (source de vérité)
+#   - quel chemin Kustomize lire dans ce dépôt
+#   - dans quel cluster et namespace déployer
+#   - quelle politique de synchronisation appliquer
+#
+# Appliquer ce fichier APRÈS avoir installé ArgoCD et vérifié le cluster :
+#   kubectl apply -f k8s/argocd/stockpro-app.yaml
+#
+# Cet objet vit dans le namespace "argocd" (namespace d'ArgoCD lui-même).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stockpro
+  namespace: argocd
+  # Finalizer : ArgoCD supprime les ressources déployées si l'Application est supprimée.
+  # Retirer ce finalizer pour supprimer l'Application sans toucher au cluster.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Projet ArgoCD : "default" convient pour un déploiement local mono-projet.
+  project: default
+
+  source:
+    # URL HTTPS du dépôt GitHub (ArgoCD clone ce dépôt pour lire les manifests).
+    repoURL: https://github.com/wassimhaoues/stock_app.git
+    # Branche ou tag cible. HEAD suit toujours la branche par défaut (main).
+    targetRevision: HEAD
+    # Chemin dans le dépôt où se trouve le kustomization.yaml GitOps.
+    # L'overlay gitops est identique à local mais sans secretGenerator
+    # (le Secret stockpro-secrets est créé manuellement avant la première sync).
+    path: k8s/overlays/gitops
+
+  destination:
+    # Cluster cible : https://kubernetes.default.svc désigne le cluster local
+    # (celui dans lequel ArgoCD lui-même est installé).
+    server: https://kubernetes.default.svc
+    # Namespace où les ressources applicatives sont déployées.
+    namespace: stockpro
+
+  syncPolicy:
+    syncOptions:
+      # Crée le namespace stockpro si absent (évite une erreur au premier déploiement).
+      - CreateNamespace=true
+      # Applique le ServerSideApply de Kubernetes (gestion des champs plus propre).
+      - ServerSideApply=true
+
+    # Synchronisation automatique — DÉCOMMENTER après la première sync manuelle validée.
+    # automated:
+    #   prune: false    # ne supprime PAS les ressources retirées de Git (prudence)
+    #   selfHeal: true  # re-synchronise si quelqu'un modifie le cluster à la main

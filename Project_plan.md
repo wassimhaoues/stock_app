@@ -77,8 +77,9 @@
 | 15    | Qualité logicielle et sécurité de pipeline       | DONE   |
 | 16    | Déploiement Kubernetes local                     | DONE   |
 | 17    | GitOps et ArgoCD                                 | TODO   |
-| 18    | Observabilité et alerting                        | TODO   |
-| 19    | Amélioration continue et finalisation soutenance | TODO   |
+| 18    | CD automatisé par image versionnée               | DONE   |
+| 19    | Observabilité et alerting                        | TODO   |
+| 20    | Amélioration continue et finalisation soutenance | TODO   |
 
 ---
 
@@ -895,7 +896,73 @@
 
 ---
 
-## Phase 18 — Observabilité et alerting
+## Phase 18 — CD automatisé par image versionnée `[DONE]`
+
+**Objectif :** supprimer les actions manuelles après un changement de code en automatisant la chaîne code -> image versionnée -> GitOps -> déploiement.
+
+**Périmètre de la phase :**
+
+- l’agent prépare les fichiers, les workflows et la documentation nécessaires pour automatiser la mise à jour des images et du déploiement
+- l’apprenant exécute lui-même les commandes de build, push et vérification pendant l’apprentissage
+- le flux doit s’appuyer sur la CI existante, le dépôt Git, GitHub Container Registry et ArgoCD déjà en place
+- aucun changement de code ne doit rester dépendant d’un `kubectl apply` manuel une fois la phase terminée
+
+**Stack recommandée :**
+
+- **Registry d’images :** GitHub Container Registry
+- **Authentification registre :** `GITHUB_TOKEN` dans GitHub Actions
+- **Mise à jour GitOps :** bump explicite du tag d’image dans le dépôt
+- **Déclenchement :** workflow GitHub Actions sur `main`
+- **Synchronisation :** ArgoCD en auto-sync sur `main`
+
+**Flux cible :**
+
+1. Un changement de code est fusionné dans `main`.
+2. La CI exécute tests, qualité et sécurité.
+3. Un job de publication construit les images frontend/backend.
+4. Le job pousse les images dans GHCR avec un tag unique, par exemple le SHA du commit.
+5. Le même flux met à jour le tag référencé dans le dépôt GitOps (`k8s/overlays/gitops`).
+6. ArgoCD détecte le changement Git sur `main`.
+7. ArgoCD synchronise le cluster et remplace les pods avec la nouvelle image.
+8. La version déployée peut être vérifiée dans Kubernetes et dans GHCR.
+
+**Principes de la phase :**
+
+- partir du constat que la CI et la sécurité existent déjà
+- automatiser ce qui manque encore : publication d’une nouvelle image et déclenchement d’un déploiement GitOps
+- garder le mécanisme lisible pour un débutant : code change -> image versionnée -> manifeste mis à jour -> ArgoCD sync
+- éviter les tags vagues comme `local` pour le flux automatisé final
+- conserver le déploiement local kind comme environnement d’apprentissage, sans le confondre avec le flux automatisé final
+- garder une séparation claire entre le flux local de phase 16/17 et le flux automatisé final de cette phase
+
+**Travaux :**
+
+- définir la stratégie de version d’image à partir du commit SHA ou d’un tag de release
+- préparer ou ajuster les workflows GitHub Actions pour builder et publier les images backend/frontend
+- ajouter un job de publication sur `main` après les jobs de tests et de qualité
+- faire en sorte que le pipeline produise un tag unique par version livrée
+- mettre à jour le manifest GitOps pour consommer le bon tag d’image
+- documenter comment le flux GitHub Actions met à jour le dépôt GitOps sans commande manuelle de `kubectl apply`
+- documenter le point de contrôle final : visibilité du tag dans GHCR, mise à jour du YAML, sync ArgoCD, pods recréés
+- préciser ce qui reste manuel pendant l’apprentissage local et ce qui devient automatisé dans le flux final
+- si de nouveaux fichiers sont nécessaires, les créer sans toucher au code applicatif
+
+**Définition of done :**
+
+- une modification de code mergée sur `main` peut produire une nouvelle image versionnée
+- le tag d’image consommé par Kubernetes est mis à jour de façon traçable dans Git
+- ArgoCD synchronise automatiquement le cluster après la mise à jour Git
+- le flux code -> image -> Git -> cluster est expliqué, documenté et reproductible
+
+**Sortie attendue :**
+
+- boucle CD automatisée et traçable
+
+**Branch git :** `feature/devops-phase-18-cd-automation`
+
+---
+
+## Phase 19 — Observabilité et alerting
 
 **Objectif :** exposer des métriques et superviser réellement l’application.
 
@@ -920,11 +987,11 @@
 
 - observabilité complète de la stack
 
-**Branch git :** `feature/devops-phase-18-observability`
+**Branch git :** `feature/devops-phase-19-observability`
 
 ---
 
-## Phase 19 — Amélioration continue et finalisation soutenance
+## Phase 20 — Amélioration continue et finalisation soutenance
 
 **Objectif :** stabiliser la solution et préparer la démonstration finale.
 
@@ -951,6 +1018,6 @@
 
 - version finale prête pour dépôt et présentation
 
-**Branch git :** `feature/devops-phase-19-finalization`
+**Branch git :** `feature/devops-phase-20-finalization`
 
 ---

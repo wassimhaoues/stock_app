@@ -1,0 +1,398 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# CD — Publish & GitOps update (builds sélectifs)
+#
+# Ce workflow automatise la chaîne de livraison après chaque fusion sur main.
+# Il ne s'exécute JAMAIS manuellement : il est toujours déclenché par le
+# workflow CI, qui garantit que tests et qualité sont vérifiés en amont.
+#
+# Flux automatisé (Phase 18) :
+#
+#   1. Un commit est fusionné dans la branche main.
+#   2. Le workflow CI (ci.yml) s'exécute : tests backend, tests frontend, SonarCloud.
+#   3. Si CI est entièrement verte, CE workflow démarre automatiquement.
+#   4. Le job detect-changes analyse quels dossiers ont été modifiés.
+#      → Seules les images dont le code a changé sont reconstruites.
+#      → Un changement dans backend/** déclenche le build backend.
+#      → Un changement dans frontend/** déclenche le build frontend.
+#      → Les deux peuvent se construire en parallèle.
+#   5. Les images reconstruites sont poussées sur GHCR avec le tag sha-<7 chars>.
+#   6. Le fichier k8s/overlays/gitops/kustomization.yaml est mis à jour uniquement
+#      pour les images effectivement reconstruites.
+#   7. Ce changement est commité dans main avec [skip ci] pour couper la boucle.
+#   8. ArgoCD détecte le changement Git et synchronise le cluster.
+#   9. Kubernetes recrée les pods concernés avec la nouvelle image GHCR.
+#
+# Graphe des jobs :
+#
+#   detect-changes
+#        ├── build-backend   (si backend/** modifié)
+#        └── build-frontend  (si frontend/** modifié)
+#                 └── gitops-bump  (si au moins un build a réussi)
+#
+# Séparation local vs automatisé :
+#   Phase 16/17 : images "stockpro-*:local" chargées manuellement dans kind.
+#   Phase 18    : images ghcr.io/<owner>/stockpro-*:sha-XXXXXXX via ce workflow.
+#   Les deux overlays coexistent — l'overlay local reste intact.
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: CD — Publish & GitOps update
+
+on:
+  # Se déclenche uniquement quand le workflow "CI" se termine sur la branche main.
+  # Si CI a été ignoré ([skip ci] dans le commit) ou a échoué, ce workflow ne démarre pas.
+  # Cela garantit que seul du code validé produit une image publiée.
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+# ── Job 1 : Détecter les changements ──────────────────────────────────────────
+#
+# Ce job est le point d'entrée du workflow CD.
+# Il répond à deux questions avant de construire quoi que ce soit :
+#   - Est-ce que le dossier backend/ a été modifié dans ce commit ?
+#   - Est-ce que le dossier frontend/ a été modifié dans ce commit ?
+#
+# Les réponses (true/false) sont transmises aux jobs suivants via des "outputs".
+# Les jobs build-backend et build-frontend lisent ces outputs pour décider
+# s'ils doivent s'exécuter ou non.
+#
+# Avantage : si seul le backend a changé, le build frontend est ignoré.
+# Cela économise du temps de pipeline et évite de publier une image identique.
+# ──────────────────────────────────────────────────────────────────────────────
+jobs:
+  detect-changes:
+    name: Détecter les fichiers modifiés et calculer le tag
+    runs-on: ubuntu-latest
+
+    # ── Conditions d'entrée ────────────────────────────────────────────────────
+    # Deux conditions doivent être vraies simultanément :
+    #
+    #   1. CI s'est terminée avec succès (tous les jobs verts).
+    #      Un échec ou une annulation de CI stoppe le workflow ici.
+    #
+    #   2. Le commit déclencheur n'est PAS un commit GitOps ("chore(gitops):").
+    #      Protection anti-boucle : le commit de mise à jour de tag que ce
+    #      workflow pousse dans main ne doit pas déclencher un nouveau cycle.
+    #      [skip ci] dans le message empêche CI de se relancer sur ce commit,
+    #      donc CD ne démarre pas non plus. Cette vérification est une
+    #      protection supplémentaire si CI est relancée manuellement.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      !startsWith(github.event.workflow_run.head_commit.message, 'chore(gitops):')
+
+    # Les outputs de ce job sont lus par les trois jobs suivants.
+    outputs:
+      # "true" si au moins un fichier sous backend/ a changé dans ce commit.
+      backend:  ${{ steps.paths.outputs.backend }}
+      # "true" si au moins un fichier sous frontend/ a changé dans ce commit.
+      frontend: ${{ steps.paths.outputs.frontend }}
+      # Tag d'image calculé depuis le SHA du commit (ex : "sha-a1b2c3d").
+      # Partagé avec tous les jobs pour garantir que backend et frontend
+      # portent le même tag même s'ils se construisent en parallèle.
+      tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      # ── 1a. Checkout du commit testé par CI ──────────────────────────────────
+      - name: Checkout — commit testé par CI (avec parent pour git diff)
+        uses: actions/checkout@v4
+        with:
+          # head_sha : SHA exact du commit qui a déclenché CI.
+          # On cible ce SHA précis, pas le HEAD courant de main, pour garantir
+          # que l'image construite correspond exactement au code validé.
+          ref: ${{ github.event.workflow_run.head_sha }}
+          # fetch-depth: 2 récupère ce commit ET son commit parent.
+          # git diff HEAD~1 HEAD a besoin des deux pour lister les fichiers modifiés.
+          # (fetch-depth: 1 ne récupère que HEAD et rendrait git diff impossible.)
+          fetch-depth: 2
+
+      # ── 1b. Calculer le tag de version ───────────────────────────────────────
+      - name: Calculer le tag d'image (sha-<7 chars>)
+        id: version
+        run: |
+          # Les 7 premiers caractères du SHA identifient le commit de manière
+          # unique (convention git standard pour les SHA courts).
+          # Exemple : commit a1b2c3d4e5f67890... → tag "sha-a1b2c3d"
+          # Ce tag est traçable : on peut retrouver l'image depuis le dépôt Git
+          # et retrouver le commit depuis l'image publiée sur GHCR.
+          SHORT_SHA=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+          echo "tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "Tag calculé : sha-${SHORT_SHA}"
+
+      # ── 1c. Détecter les dossiers modifiés ───────────────────────────────────
+      - name: Détecter les chemins modifiés (backend/ et frontend/)
+        id: paths
+        run: |
+          # git diff HEAD~1 HEAD --name-only liste tous les fichiers modifiés
+          # entre le commit parent (HEAD~1) et le commit courant (HEAD).
+          #
+          # Cela fonctionne pour les trois stratégies de merge GitHub :
+          #   - "Create a merge commit" : HEAD~1 = état précédent de main
+          #   - "Squash and merge"      : HEAD~1 = commit précédent sur main
+          #   - "Rebase and merge"      : HEAD~1 = commit précédent sur main
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+
+          echo "Fichiers modifiés dans ce commit :"
+          echo "${CHANGED}"
+          echo "---"
+
+          # grep -q "^backend/" : cherche les lignes qui COMMENCENT par "backend/"
+          # (le ^ ancre le début de ligne, évitant les faux positifs comme
+          # "docs/backend-notes.md" qui contient "backend" mais n'est pas dans le dossier).
+          if echo "${CHANGED}" | grep -q "^backend/"; then
+            echo "backend=true"  >> "$GITHUB_OUTPUT"
+            echo "→ backend/ modifié  : build backend activé."
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+            echo "→ backend/ inchangé : build backend ignoré."
+          fi
+
+          if echo "${CHANGED}" | grep -q "^frontend/"; then
+            echo "frontend=true"  >> "$GITHUB_OUTPUT"
+            echo "→ frontend/ modifié  : build frontend activé."
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+            echo "→ frontend/ inchangé : build frontend ignoré."
+          fi
+
+# ── Job 2 : Construire et publier l'image backend ─────────────────────────────
+#
+# Ne s'exécute QUE si detect-changes a détecté au moins un fichier modifié
+# sous backend/. Sinon, ce job est ignoré (status "skipped") sans erreur.
+# ──────────────────────────────────────────────────────────────────────────────
+  build-backend:
+    name: Build & push — backend
+    needs: detect-changes
+    runs-on: ubuntu-latest
+
+    # Condition : lire l'output "backend" du job detect-changes.
+    # Si "false" (dossier backend inchangé), ce job est ignoré entièrement.
+    if: needs.detect-changes.outputs.backend == 'true'
+
+    permissions:
+      # Écriture dans GHCR nécessaire pour `docker push`.
+      packages: write
+
+    steps:
+      - name: Checkout — commit testé par CI
+        uses: actions/checkout@v4
+        with:
+          # Même SHA que detect-changes : on construit exactement le code validé.
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Se connecter à GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          # GITHUB_TOKEN est automatiquement fourni ; le droit "packages: write"
+          # ci-dessus lui permet de pousser sur GHCR sans secret supplémentaire.
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurer Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        # Buildx active le cache de couches Docker (cache-from/cache-to).
+        # Les dépendances Maven non modifiées ne sont pas retéléchargées.
+
+      - name: Construire et pousser l'image backend
+        uses: docker/build-push-action@v6
+        with:
+          # Dockerfile backend multi-stage (phase 13) :
+          #   stage 1 — mvn package sur JDK 17
+          #   stage 2 — runtime Eclipse Temurin JRE 17 allégé
+          context: ./backend
+          push: true
+          # Un seul tag SHA — immuable et traçable.
+          # ArgoCD référence ce tag précis dans kustomization.yaml.
+          # Pas de tag "latest" : il serait muable et masquerait quelle version est réellement déployée.
+          tags: ghcr.io/${{ github.repository_owner }}/stockpro-backend:${{ needs.detect-changes.outputs.tag }}
+          # Le cache GHA évite de reconstruire les couches inchangées
+          # (ex : couche des dépendances Maven si pom.xml n'a pas bougé).
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+# ── Job 3 : Construire et publier l'image frontend ────────────────────────────
+#
+# Symétrique à build-backend. S'exécute en parallèle si les deux dossiers
+# ont changé simultanément (backend et frontend dans le même commit).
+# ──────────────────────────────────────────────────────────────────────────────
+  build-frontend:
+    name: Build & push — frontend
+    needs: detect-changes
+    runs-on: ubuntu-latest
+
+    # Condition : lire l'output "frontend" du job detect-changes.
+    if: needs.detect-changes.outputs.frontend == 'true'
+
+    permissions:
+      packages: write
+
+    steps:
+      - name: Checkout — commit testé par CI
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Se connecter à GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurer Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construire et pousser l'image frontend
+        uses: docker/build-push-action@v6
+        with:
+          # Dockerfile frontend multi-stage (phase 13) :
+          #   stage 1 — ng build --configuration production sur Node 20
+          #   stage 2 — nginx:alpine servant les fichiers statiques compilés
+          context: ./frontend
+          push: true
+          # Même principe : tag SHA uniquement.
+          tags: ghcr.io/${{ github.repository_owner }}/stockpro-frontend:${{ needs.detect-changes.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+# ── Job 4 : Mettre à jour le tag GitOps et déclencher ArgoCD ──────────────────
+#
+# Ce job attend la fin de build-backend ET build-frontend (qu'ils aient réussi
+# ou été ignorés). Il ne s'exécute que si au moins un build a réussi.
+#
+# Il met à jour UNIQUEMENT les tags des images effectivement reconstruites.
+# Si seul le backend a changé, seul le tag backend est modifié dans
+# kustomization.yaml ; le tag frontend reste à sa valeur précédente.
+#
+# Une fois le commit GitOps poussé, ArgoCD détecte le changement et
+# synchronise le cluster sans aucune commande kubectl manuelle.
+# ──────────────────────────────────────────────────────────────────────────────
+  gitops-bump:
+    name: Mettre à jour le tag GitOps
+    needs: [detect-changes, build-backend, build-frontend]
+    runs-on: ubuntu-latest
+
+    # always() : ce job s'exécute même si build-backend ou build-frontend
+    # a été ignoré (status "skipped"). Sans always(), un job skipped en amont
+    # rendrait ce job skipped aussi, même si l'autre build a réussi.
+    #
+    # La condition vérifie ensuite qu'au moins un build a produit une image :
+    #   - needs.build-backend.result  == 'success' : backend reconstruit ✓
+    #   - needs.build-frontend.result == 'success' : frontend reconstruit ✓
+    # Si les deux sont "skipped" (aucun dossier modifié), ce job est ignoré.
+    if: >-
+      always() &&
+      (needs.build-backend.result == 'success' ||
+       needs.build-frontend.result == 'success')
+
+    permissions:
+      # Le push vers main passe maintenant par la clé SSH de déploiement
+      # (secret SSH_PRIVATE_KEY), pas par GITHUB_TOKEN.
+      # GITHUB_TOKEN n'a besoin que de la lecture pour le checkout.
+      contents: read
+
+    steps:
+      - name: Checkout — historique complet pour git push
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          # fetch-depth: 0 récupère tout l'historique Git.
+          # Nécessaire pour `git checkout main && git pull --rebase` ci-dessous.
+          fetch-depth: 0
+          # Pas de token: GITHUB_TOKEN ici — la lecture seule suffit pour checkout.
+          # L'authentification pour le push est assurée par la clé SSH ci-dessous.
+
+      # ── SSH deploy key ─────────────────────────────────────────────────────────
+      # La clé privée est stockée dans le secret GitHub "SSH_PRIVATE_KEY".
+      # La clé publique correspondante est enregistrée comme "Deploy key" du dépôt
+      # avec le droit d'écriture (Settings → Deploy keys).
+      # Un ruleset autorise les deploy keys à bypasser la protection de branche main.
+      #
+      # webfactory/ssh-agent charge la clé dans l'agent SSH du runner et ajoute
+      # automatiquement github.com dans ~/.ssh/known_hosts.
+      # Après cette étape, `git push` via SSH fonctionne sans token supplémentaire.
+      - name: Charger la clé SSH de déploiement
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Installer kustomize
+        run: |
+          # kustomize est l'outil de gestion de manifests Kubernetes (depuis phase 16).
+          # `kustomize edit set image` met à jour newName et newTag dans le bloc
+          # images[] de kustomization.yaml de façon structurée (pas de sed fragile).
+          KUSTOMIZE_VERSION="v5.4.3"
+          curl -sLo /tmp/kustomize.tar.gz \
+            "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+          tar -xzf /tmp/kustomize.tar.gz -C /tmp
+          sudo mv /tmp/kustomize /usr/local/bin/kustomize
+          kustomize version
+
+      - name: Mettre à jour kustomization.yaml et pousser le commit GitOps
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Le checkout a utilisé l'URL HTTPS par défaut.
+          # On bascule le remote sur SSH pour que le push utilise la deploy key
+          # chargée par webfactory/ssh-agent à l'étape précédente.
+          git remote set-url origin git@github.com:${{ github.repository }}.git
+
+          # Synchroniser avec le HEAD actuel de main avant d'écrire.
+          # Entre le démarrage de CI et maintenant, un autre commit a pu arriver.
+          # --rebase évite un commit de merge inutile.
+          git fetch origin main
+          git checkout main
+          git pull --rebase origin main
+
+          cd k8s/overlays/gitops
+
+          # Mettre à jour UNIQUEMENT les images effectivement reconstruites.
+          #
+          # On vérifie le résultat de chaque job de build via l'expression
+          # ${{ needs.build-backend.result }} qui vaut "success", "failure" ou "skipped".
+          # Seules les images avec le statut "success" reçoivent un nouveau tag.
+          #
+          # FORMAT de kustomize edit set image :
+          #   <nom-dans-les-manifests>=<nouvelle-URL-GHCR>:<nouveau-tag>
+          #   "stockpro-backend" correspond au champ "image:" dans
+          #   k8s/base/backend/deployment.yaml → image: stockpro-backend:latest
+
+          if [ "${{ needs.build-backend.result }}" == "success" ]; then
+            kustomize edit set image \
+              "stockpro-backend=ghcr.io/${{ github.repository_owner }}/stockpro-backend:${{ needs.detect-changes.outputs.tag }}"
+            echo "Tag backend mis à jour : ${{ needs.detect-changes.outputs.tag }}"
+          else
+            echo "Build backend ignoré ou échoué — tag backend inchangé."
+          fi
+
+          if [ "${{ needs.build-frontend.result }}" == "success" ]; then
+            kustomize edit set image \
+              "stockpro-frontend=ghcr.io/${{ github.repository_owner }}/stockpro-frontend:${{ needs.detect-changes.outputs.tag }}"
+            echo "Tag frontend mis à jour : ${{ needs.detect-changes.outputs.tag }}"
+          else
+            echo "Build frontend ignoré ou échoué — tag frontend inchangé."
+          fi
+
+          cd ../../..
+
+          git add k8s/overlays/gitops/kustomization.yaml
+
+          # Si le fichier n'a pas changé (même SHA retrigger manuel), ne pas
+          # créer un commit vide qui polluerait l'historique Git.
+          if git diff --cached --quiet; then
+            echo "Aucun changement de tag détecté. Commit GitOps ignoré."
+            exit 0
+          fi
+
+          # [skip ci] dans le message demande à GitHub Actions d'ignorer ce commit
+          # pour les déclencheurs push → CI ne se relancera pas → CD non plus.
+          # La condition "!startsWith(..., 'chore(gitops):')" du job detect-changes
+          # fournit une protection supplémentaire si CI est relancée manuellement.
+          git commit -m "chore(gitops): bump images to ${{ needs.detect-changes.outputs.tag }} [skip ci]"
+
+          # Pousser vers main via SSH (deploy key chargée par ssh-agent).
+          # Le ruleset du dépôt autorise les deploy keys à bypasser la protection
+          # de branche — aucun GITHUB_TOKEN avec droits d'écriture n'est nécessaire.
+          git push origin main

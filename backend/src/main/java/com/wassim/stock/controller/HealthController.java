@@ -12,6 +12,7 @@ public class HealthController {
 
     @GetMapping("/health")
     public Map<String, String> health() {
+        // phase-18-cd-test
         return Map.of("status", "UP", "application", "StockPro");
     }
 }

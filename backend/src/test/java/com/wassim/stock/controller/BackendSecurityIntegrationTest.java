@@ -212,6 +212,21 @@ class BackendSecurityIntegrationTest {
                 .andExpect(jsonPath("$[*].entrepotNom", not(hasItem("Autre depot"))));
     }
 
+    @Test
+    void stocksPageDataLoadsWithoutLazyInitializationError() throws Exception {
+        mockMvc.perform(get("/api/stocks")
+                        .with(user("admin@stockpro.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].produitNom").isNotEmpty())
+                .andExpect(jsonPath("$[0].entrepotNom").isNotEmpty());
+
+        mockMvc.perform(get("/api/mouvements-stock")
+                        .with(user("admin@stockpro.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].produitNom").isNotEmpty())
+                .andExpect(jsonPath("$[0].entrepotNom").isNotEmpty());
+    }
+
     private Entrepot entrepot(String nom, String adresse, int capacite) {
         Entrepot entrepot = new Entrepot();
         entrepot.setNom(nom);

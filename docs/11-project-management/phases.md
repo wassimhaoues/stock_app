@@ -1027,6 +1027,7 @@
 Ajouter `@Slf4j` et les appels de log suivants, sans modifier la logique métier :
 
 **`GlobalExceptionHandler`** :
+
 - `log.warn(“Ressource non trouvée : {}”, ex.getMessage())` sur `ResourceNotFoundException`
 - `log.warn(“Requête invalide : {}”, ex.getMessage())` sur `BadRequestException` et `ConflictException`
 - `log.warn(“Accès refusé pour {}”, MDC.get(“userEmail”))` sur `AccessDeniedException`
@@ -1034,28 +1035,34 @@ Ajouter `@Slf4j` et les appels de log suivants, sans modifier la logique métier
 - `log.error(“Erreur interne non gérée”, ex)` sur `Exception` générique (stack trace complète utile ici)
 
 **`JwtAuthFilter`** :
+
 - `log.debug(“Token JWT absent dans la requête vers {}”, request.getRequestURI())` quand token null
 - `log.warn(“Token JWT invalide ou expiré sur {}”, request.getRequestURI())` quand `isTokenValid` échoue
 
 **`AuthService` ou `AuthController`** :
+
 - `log.info(“Connexion réussie pour {}”, email)` après login accepté
 - `log.warn(“Échec de connexion pour {}”, email)` après `BadCredentialsException`
 
 **`StockService`** :
+
 - `log.info(“Stock créé : produit={}, entrepot={}, quantite={}”, produitId, entrepotId, quantite)` à la création
 - `log.info(“Stock mis à jour : id={}, nouvelle quantite={}”, stockId, quantite)` à la modification
 - `log.warn(“Création de stock refusée : capacité insuffisante (disponible={}, demandé={})”, dispo, demande)` sur rejet capacité
 
 **`MouvementStockService`** :
+
 - `log.info(“Mouvement {} enregistré : produit={}, entrepot={}, quantite={}”, type, produitId, entrepotId, quantite)` à chaque mouvement accepté
 - `log.warn(“Mouvement SORTIE refusé : stock insuffisant (disponible={}, demandé={})”, dispo, demande)` sur rejet stock
 - `log.warn(“Mouvement ENTREE refusé : capacité insuffisante (disponible={}, demandé={})”, dispo, demande)` sur rejet capacité
 
 **`DataInitializer`** :
+
 - `log.info(“Données de démo chargées : {} utilisateurs, {} entrepôts, {} produits”, ...)` en mode démo
 - `log.info(“Compte admin initial créé”)` en mode normal
 
 **Règles communes à tous les appels de log :**
+
 - ne jamais logger un token JWT, un mot de passe, un cookie ou toute valeur de secret
 - utiliser `log.warn` pour les cas métier rejetés (400, 403, 404, 409), `log.error` uniquement pour les exceptions inattendues (500)
 - ne pas ajouter de log dans les repositories ou les entités
@@ -1122,7 +1129,7 @@ Ajouter `@Slf4j` et les appels de log suivants, sans modifier la logique métier
 - **Collecte métriques :** Prometheus
 - **Visualisation :** Grafana
 - **Alerting :** règles Prometheus AlertManager ou alertes Grafana natives
-- **Logs (optionnel) :** Grafana Loki pour agréger les logs structurés de la phase 19 dans le même tableau de bord
+- **Logs:** Grafana Loki pour agréger les logs structurés de la phase 19 dans le même tableau de bord
 - **Organisation :** `infra/monitoring/` pour les fichiers de configuration Prometheus, Grafana et Loki
 
 **Principes de la phase :**

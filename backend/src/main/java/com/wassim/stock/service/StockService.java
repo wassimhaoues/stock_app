@@ -16,6 +16,7 @@ import com.wassim.stock.repository.ProduitRepository;
 import com.wassim.stock.repository.StockRepository;
 import com.wassim.stock.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class StockService {
 
@@ -63,8 +65,14 @@ public class StockService {
         stock.setProduit(produit);
         stock.setEntrepot(entrepot);
         applyQuantities(stock, request);
-
-        return toResponse(stockRepository.save(stock));
+        Stock savedStock = stockRepository.save(stock);
+        log.info(
+                "Stock cree : produit={}, entrepot={}, quantite={}",
+                produit.getId(),
+                entrepot.getId(),
+                request.quantite()
+        );
+        return toResponse(savedStock);
     }
 
     public StockResponse update(Long id, StockRequest request) {
@@ -79,8 +87,9 @@ public class StockService {
         stock.setProduit(produit);
         stock.setEntrepot(entrepot);
         applyQuantities(stock, request);
-
-        return toResponse(stockRepository.save(stock));
+        Stock savedStock = stockRepository.save(stock);
+        log.info("Stock mis a jour : id={}, nouvelle quantite={}", savedStock.getId(), savedStock.getQuantite());
+        return toResponse(savedStock);
     }
 
     public void delete(Long id) {
@@ -141,6 +150,11 @@ public class StockService {
 
         if (finalCapacity > entrepot.getCapacite()) {
             long availableCapacity = Math.max(entrepot.getCapacite() - usedCapacity, 0);
+            log.warn(
+                    "Creation de stock refusee : capacite insuffisante (disponible={}, demande={})",
+                    availableCapacity,
+                    requestedQuantity
+            );
             throw new ConflictException(
                     "Capacite insuffisante pour cet entrepot. Capacite disponible : "
                             + availableCapacity

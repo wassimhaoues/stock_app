@@ -9,12 +9,15 @@ import com.wassim.stock.entity.Produit;
 import com.wassim.stock.entity.Role;
 import com.wassim.stock.entity.Stock;
 import com.wassim.stock.entity.TypeMouvement;
+import com.wassim.stock.repository.EntrepotRepository;
 import com.wassim.stock.repository.MouvementStockRepository;
 import com.wassim.stock.repository.ProduitRepository;
 import com.wassim.stock.repository.StockRepository;
+import com.wassim.stock.repository.UtilisateurRepository;
 import com.wassim.stock.service.EntrepotService;
 import com.wassim.stock.service.UtilisateurService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Configuration
+@Slf4j
 @RequiredArgsConstructor
 public class DataInitializer {
 
@@ -35,6 +39,8 @@ public class DataInitializer {
     private final StockRepository stockRepository;
     private final UtilisateurService utilisateurService;
     private final StockProProperties stockProProperties;
+    private final EntrepotRepository entrepotRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     @Bean
     public CommandLineRunner seedData() {
@@ -48,6 +54,7 @@ public class DataInitializer {
     }
 
     private void seedAdminAccount() {
+        boolean adminExists = utilisateurRepository.existsByEmailIgnoreCase(stockProProperties.seed().admin().email());
         utilisateurService.seedUtilisateur(
                 new UtilisateurRequest(
                         stockProProperties.seed().admin().nom(),
@@ -57,6 +64,10 @@ public class DataInitializer {
                         null
                 )
         );
+
+        if (!stockProProperties.demoData() && !adminExists) {
+            log.info("Compte admin initial cree");
+        }
     }
 
     private void seedDemoData() {
@@ -197,6 +208,13 @@ public class DataInitializer {
         seedStocksAndMovements(nabeul, ps5, 2, 5);
         seedStocksAndMovements(nabeul, jblPartyBox, 5, 6);
         seedStocksAndMovements(nabeul, galaxy, 10, 12);
+
+        log.info(
+                "Donnees de demo chargees : {} utilisateurs, {} entrepots, {} produits",
+                utilisateurRepository.count(),
+                entrepotRepository.count(),
+                produitRepository.count()
+        );
     }
 
     private void seedDemoUsers(Entrepot tunis, Entrepot sfax, Entrepot sousse, Entrepot nabeul) {

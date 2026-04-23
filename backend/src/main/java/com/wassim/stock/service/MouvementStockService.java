@@ -18,6 +18,7 @@ import com.wassim.stock.repository.ProduitRepository;
 import com.wassim.stock.repository.StockRepository;
 import com.wassim.stock.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class MouvementStockService {
 
@@ -66,6 +68,11 @@ public class MouvementStockService {
                 .orElseThrow(() -> new BadRequestException("Aucun stock n'existe pour ce produit dans cet entrepot"));
 
         if (request.type() == TypeMouvement.SORTIE && stock.getQuantite() < request.quantite()) {
+            log.warn(
+                    "Mouvement SORTIE refuse : stock insuffisant (disponible={}, demande={})",
+                    stock.getQuantite(),
+                    request.quantite()
+            );
             throw new ConflictException("Stock insuffisant pour effectuer cette sortie");
         }
 
@@ -83,8 +90,15 @@ public class MouvementStockService {
         mouvementStock.setType(request.type());
         mouvementStock.setQuantite(request.quantite());
         mouvementStock.setDate(LocalDateTime.now());
-
-        return toResponse(mouvementStockRepository.save(mouvementStock));
+        MouvementStock savedMouvement = mouvementStockRepository.save(mouvementStock);
+        log.info(
+                "Mouvement {} enregistre : produit={}, entrepot={}, quantite={}",
+                request.type(),
+                produit.getId(),
+                entrepot.getId(),
+                request.quantite()
+        );
+        return toResponse(savedMouvement);
     }
 
     private Produit findProduitById(Long id) {
@@ -103,6 +117,11 @@ public class MouvementStockService {
 
         if (finalCapacity > entrepot.getCapacite()) {
             long availableCapacity = Math.max(entrepot.getCapacite() - usedCapacity, 0);
+            log.warn(
+                    "Mouvement ENTREE refuse : capacite insuffisante (disponible={}, demande={})",
+                    availableCapacity,
+                    requestedQuantity
+            );
             throw new ConflictException(
                     "Capacite insuffisante pour cet entrepot. Capacite disponible : "
                             + availableCapacity

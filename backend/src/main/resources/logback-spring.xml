@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="LOCAL_PATTERN"
+              value="%d{HH:mm:ss.SSS} %-5level [%X{correlationId:-}] [%X{userEmail:-anonymous}] %logger{30} - %msg%n"/>
+    <property name="JSON_PATTERN"
+              value="{&quot;timestamp&quot;:&quot;%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}&quot;,&quot;level&quot;:&quot;%level&quot;,&quot;correlationId&quot;:&quot;%X{correlationId:-}&quot;,&quot;userEmail&quot;:&quot;%X{userEmail:-anonymous}&quot;,&quot;logger&quot;:&quot;%logger{30}&quot;,&quot;message&quot;:&quot;%replace(%replace(%replace(%msg){'\\','\\\\'}){'&quot;','\\&quot;'}){'\n','\\n'}&quot;,&quot;exception&quot;:&quot;%replace(%replace(%replace(%xException){'\\','\\\\'}){'&quot;','\\&quot;'}){'\n','\\n'}&quot;}%n"/>
+
+    <springProfile name="docker | k8s">
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>${JSON_PATTERN}</pattern>
+            </encoder>
+        </appender>
+
+        <logger name="com.wassim.stock" level="INFO"/>
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!docker &amp; !k8s">
+        <appender name="LOCAL_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>${LOCAL_PATTERN}</pattern>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="LOCAL_CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev">
+        <logger name="com.wassim.stock" level="DEBUG"/>
+    </springProfile>
+</configuration>

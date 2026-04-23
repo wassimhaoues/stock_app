@@ -8,6 +8,7 @@ import com.wassim.stock.entity.Utilisateur;
 import com.wassim.stock.repository.UtilisateurRepository;
 import com.wassim.stock.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.Locale;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuthService {
 
@@ -32,6 +34,7 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(email, request.motDePasse())
             );
         } catch (BadCredentialsException ex) {
+            log.warn("Echec de connexion pour {}", email);
             throw new BadCredentialsException("Email ou mot de passe invalide");
         }
 
@@ -39,6 +42,7 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Email ou mot de passe invalide"));
 
         String token = jwtUtil.generateToken(utilisateur.getEmail(), utilisateur.getRole().name());
+        log.info("Connexion reussie pour {}", email);
 
         return new LoginResult(token, new AuthResponse(toResponse(utilisateur)));
     }

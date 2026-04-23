@@ -66,6 +66,7 @@ class BackendSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
+                .andExpect(header().string("X-Correlation-Id", notNullValue()))
                 .andExpect(header().string("Set-Cookie", containsString("STOCKPRO_AUTH=")))
                 .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
                 .andExpect(header().string("Set-Cookie", containsString("SameSite=Lax")))
@@ -122,7 +123,16 @@ class BackendSecurityIntegrationTest {
     void stocksEndpointRequiresAuthentication() throws Exception {
         mockMvc.perform(get("/api/stocks"))
                 .andExpect(status().isUnauthorized())
+                .andExpect(header().string("X-Correlation-Id", notNullValue()))
                 .andExpect(jsonPath("$.message").value("Authentification requise"));
+    }
+
+    @Test
+    void healthEndpointExposesCorrelationIdHeader() throws Exception {
+        mockMvc.perform(get("/api/health"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Correlation-Id", notNullValue()))
+                .andExpect(jsonPath("$.status").value("UP"));
     }
 
     @Test

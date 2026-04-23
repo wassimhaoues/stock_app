@@ -78,7 +78,7 @@
 | 16    | Déploiement Kubernetes local                     | DONE   |
 | 17    | GitOps et ArgoCD                                 | DONE   |
 | 18    | CD automatisé par image versionnée               | DONE   |
-| 19    | Logging centralisé backend                       | TODO   |
+| 19    | Logging centralisé backend                       | DONE   |
 | 20    | Observabilité et alerting                        | TODO   |
 | 21    | Finalisation et soutenance                       | TODO   |
 
@@ -963,7 +963,7 @@
 
 ---
 
-## Phase 19 — Logging centralisé backend [TODO]
+## Phase 19 — Logging centralisé backend [DONE]
 
 **Objectif :** instrumenter tout le backend avec un système de logging cohérent, contextuel et exploitable, afin que la phase 20 puisse collecter, visualiser et alerter sur des données réelles.
 

@@ -1,6 +1,6 @@
 # ConfigMap backend — variables de configuration non-sensibles.
 # Ces valeurs peuvent être versionnées sans risque (pas de secrets ici).
-# Le profil "docker" active application-docker.properties dans Spring Boot,
+# Le profil "k8s" active application-k8s.properties dans Spring Boot,
 # qui lit DB_HOST, DB_PORT, DB_NAME pour construire l'URL JDBC.
 apiVersion: v1
 kind: ConfigMap
@@ -11,8 +11,8 @@ metadata:
     app: stockpro
     component: backend
 data:
-  # Profil Spring Boot : active application-docker.properties
-  SPRING_PROFILES_ACTIVE: docker
+  # Profil Spring Boot : active application-k8s.properties
+  SPRING_PROFILES_ACTIVE: k8s
 
   # Adresse du service MySQL dans le cluster (correspond au nom du Service stock-db)
   DB_HOST: stock-db

@@ -7,6 +7,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
@@ -31,11 +34,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = extractToken(request);
         if (token == null) {
+            log.debug("Token JWT absent dans la requete vers {}", request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
 
         if (!jwtUtil.isTokenValid(token)) {
+            log.warn("Token JWT invalide ou expire sur {}", request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
@@ -49,6 +54,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             );
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
+            MDC.put("userEmail", email);
         }
 
         filterChain.doFilter(request, response);

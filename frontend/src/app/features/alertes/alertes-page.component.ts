@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Title } from '@angular/platform-browser';
 import { finalize } from 'rxjs';
 
 import { Alerte } from '../../core/models/alerte.model';
@@ -272,6 +273,7 @@ import { AlerteService } from '../../core/services/alerte.service';
 export class AlertesPageComponent {
   private readonly alerteService = inject(AlerteService);
   private readonly authService = inject(AuthService);
+  private readonly titleService = inject(Title);
 
   protected readonly alertes = signal<Alerte[]>([]);
   protected readonly isLoading = signal(true);
@@ -288,6 +290,7 @@ export class AlertesPageComponent {
   );
 
   constructor() {
+    this.titleService.setTitle('Alertes — StockPro');
     this.loadAlertes();
   }
 

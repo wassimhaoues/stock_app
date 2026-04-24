@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Title } from '@angular/platform-browser';
 import { MatSelectModule } from '@angular/material/select';
 import { finalize } from 'rxjs';
 
@@ -624,6 +625,7 @@ export class StocksPageComponent {
   private readonly mouvementStockService = inject(MouvementStockService);
   private readonly produitService = inject(ProduitService);
   private readonly stockService = inject(StockService);
+  private readonly titleService = inject(Title);
 
   protected readonly pageSizeOptions = [5, 10, 20];
   protected readonly mouvementTypes: TypeMouvement[] = ['ENTREE', 'SORTIE'];
@@ -670,6 +672,7 @@ export class StocksPageComponent {
   });
 
   constructor() {
+    this.titleService.setTitle('Stocks — StockPro');
     this.loadCatalogs();
     this.loadStocks();
     this.loadMouvements();

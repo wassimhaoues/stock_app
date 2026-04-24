@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Title } from '@angular/platform-browser';
 import { MatSelectModule } from '@angular/material/select';
 import { finalize, startWith } from 'rxjs';
 
@@ -362,6 +363,7 @@ export class UtilisateursPageComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly entrepotService = inject(EntrepotService);
+  private readonly titleService = inject(Title);
   private readonly utilisateurService = inject(UtilisateurService);
 
   protected readonly roles: Role[] = ['ADMIN', 'GESTIONNAIRE', 'OBSERVATEUR'];
@@ -388,6 +390,7 @@ export class UtilisateursPageComponent {
   });
 
   constructor() {
+    this.titleService.setTitle('Utilisateurs — StockPro');
     this.form.controls.role.valueChanges
       .pipe(startWith(this.form.controls.role.value), takeUntilDestroyed())
       .subscribe((role) => {

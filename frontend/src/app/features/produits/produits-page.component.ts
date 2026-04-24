@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Title } from '@angular/platform-browser';
 import { finalize } from 'rxjs';
 
 import { Produit } from '../../core/models/produit.model';
@@ -374,6 +375,7 @@ export class ProduitsPageComponent {
   private readonly dialog = inject(MatDialog);
   private readonly formBuilder = inject(FormBuilder);
   private readonly produitService = inject(ProduitService);
+  private readonly titleService = inject(Title);
 
   protected readonly produits = signal<Produit[]>([]);
   protected readonly selectedProduitId = signal<number | null>(null);
@@ -393,6 +395,7 @@ export class ProduitsPageComponent {
   });
 
   constructor() {
+    this.titleService.setTitle('Produits — StockPro');
     this.loadProduits();
   }
 

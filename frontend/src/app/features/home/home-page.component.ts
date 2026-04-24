@@ -1,6 +1,7 @@
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -884,6 +885,7 @@ export class HomePageComponent {
   protected readonly authService = inject(AuthService);
   private readonly dashboardService = inject(DashboardService);
   private readonly alerteService = inject(AlerteService);
+  private readonly titleService = inject(Title);
 
   protected readonly isLoading = signal(true);
   protected readonly feedbackMessage = signal('');
@@ -922,6 +924,7 @@ export class HomePageComponent {
   });
 
   constructor() {
+    this.titleService.setTitle('Tableau de bord — StockPro');
     this.loadDashboard();
   }
 

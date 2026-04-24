@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Title } from '@angular/platform-browser';
 import { finalize } from 'rxjs';
 
 import { Entrepot } from '../../core/models/entrepot.model';
@@ -448,6 +449,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 })
 export class EntrepotsPageComponent {
   private readonly authService = inject(AuthService);
+  private readonly titleService = inject(Title);
   private readonly dialog = inject(MatDialog);
   private readonly entrepotService = inject(EntrepotService);
   private readonly formBuilder = inject(FormBuilder);
@@ -471,6 +473,7 @@ export class EntrepotsPageComponent {
   });
 
   constructor() {
+    this.titleService.setTitle('Entrepôts — StockPro');
     this.loadEntrepots();
   }
 

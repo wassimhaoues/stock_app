@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    env: local
+    app: stockpro
+
+rule_files:
+  - "rules/stockpro_alerts.yml"
+
+scrape_configs:
+
+  # Backend Spring Boot — endpoint Micrometer/Prometheus
+  - job_name: stockpro-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - stock-backend:8085
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance

@@ -1,0 +1,19 @@
+# Service Prometheus — ClusterIP (interne au cluster).
+# Grafana l'atteint via http://stockpro-prometheus:9090.
+# Pour accéder depuis l'extérieur : kubectl port-forward svc/stockpro-prometheus 9090:9090 -n stockpro
+apiVersion: v1
+kind: Service
+metadata:
+  name: stockpro-prometheus
+  namespace: stockpro
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: stockpro-monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: prometheus
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090

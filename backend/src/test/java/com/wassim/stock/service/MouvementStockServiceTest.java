@@ -15,10 +15,11 @@ import com.wassim.stock.repository.MouvementStockRepository;
 import com.wassim.stock.repository.ProduitRepository;
 import com.wassim.stock.repository.StockRepository;
 import com.wassim.stock.repository.UtilisateurRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -53,8 +54,19 @@ class MouvementStockServiceTest {
     @Mock
     private UtilisateurRepository utilisateurRepository;
 
-    @InjectMocks
     private MouvementStockService mouvementStockService;
+
+    @BeforeEach
+    void setUp() {
+        mouvementStockService = new MouvementStockService(
+                mouvementStockRepository,
+                stockRepository,
+                produitRepository,
+                entrepotRepository,
+                utilisateurRepository,
+                new SimpleMeterRegistry()
+        );
+    }
 
     @AfterEach
     void tearDown() {

@@ -1,0 +1,24 @@
+# ConfigMap contenant la datasource Prometheus provisionnée automatiquement dans Grafana.
+# Grafana la charge au démarrage depuis /etc/grafana/provisioning/datasources/.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: stockpro
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: stockpro-monitoring
+data:
+  prometheus.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus
+        access: proxy
+        url: http://stockpro-prometheus:9090
+        isDefault: true
+        editable: false
+        jsonData:
+          httpMethod: POST
+          timeInterval: 15s

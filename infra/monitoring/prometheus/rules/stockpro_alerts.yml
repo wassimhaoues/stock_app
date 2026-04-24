@@ -1,0 +1,38 @@
+groups:
+  - name: stockpro
+    rules:
+
+      # Le backend est injoignable depuis 1 minute
+      - alert: BackendDown
+        expr: up{job="stockpro-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend StockPro injoignable"
+          description: "Prometheus ne peut pas scraper le backend depuis {{ $value }} seconde(s). Instance : {{ $labels.instance }}"
+
+      # Taux d'erreurs HTTP 5xx supérieur à 5 % sur 5 minutes
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{job="stockpro-backend", status=~"5.."}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count{job="stockpro-backend"}[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taux d'erreurs 5xx élevé sur StockPro"
+          description: "Le taux d'erreurs HTTP 5xx est de {{ $value | humanizePercentage }} sur les 5 dernières minutes."
+
+      # Pic de rejets de mouvements de stock (> 10 en 5 minutes)
+      - alert: StockRejectionsSpike
+        expr: |
+          sum(increase(stockpro_mouvements_rejets_total{job="stockpro-backend"}[5m])) > 10
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pic de rejets de mouvements de stock"
+          description: "Plus de 10 mouvements refusés en 5 minutes (stock insuffisant ou capacité dépassée)."

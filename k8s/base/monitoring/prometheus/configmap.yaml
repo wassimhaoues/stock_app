@@ -1,0 +1,64 @@
+# ConfigMap contenant la configuration Prometheus et les règles d'alerte.
+# Prometheus lit ce fichier au démarrage et sur rechargement (POST /-/reload).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: stockpro
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: stockpro-monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        env: k8s
+        app: stockpro
+
+    rule_files:
+      - /etc/prometheus/rules/stockpro_alerts.yml
+
+    scrape_configs:
+      - job_name: stockpro-backend
+        metrics_path: /actuator/prometheus
+        static_configs:
+          - targets:
+              - stockpro-backend.stockpro.svc.cluster.local:8085
+
+  stockpro_alerts.yml: |
+    groups:
+      - name: stockpro
+        rules:
+          - alert: BackendDown
+            expr: up{job="stockpro-backend"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Backend StockPro injoignable"
+              description: "Prometheus ne peut pas scraper le backend. Instance : {{ $labels.instance }}"
+
+          - alert: HighErrorRate
+            expr: |
+              sum(rate(http_server_requests_seconds_count{job="stockpro-backend", status=~"5.."}[5m]))
+              /
+              sum(rate(http_server_requests_seconds_count{job="stockpro-backend"}[5m]))
+              > 0.05
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Taux d'erreurs 5xx élevé"
+              description: "{{ $value | humanizePercentage }} d'erreurs HTTP 5xx sur 5 minutes."
+
+          - alert: StockRejectionsSpike
+            expr: |
+              sum(increase(stockpro_mouvements_rejets_total{job="stockpro-backend"}[5m])) > 10
+            for: 0m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pic de rejets de mouvements"
+              description: "Plus de 10 mouvements refusés en 5 minutes."

@@ -29,6 +29,7 @@ namespace: stockpro
 
 resources:
 - ../../base
+- ../../base/monitoring
 
 # Pas de secretGenerator ici.
 # Le Secret stockpro-secrets est un "bootstrap secret" créé manuellement.

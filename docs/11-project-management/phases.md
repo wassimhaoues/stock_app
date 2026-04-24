@@ -67,10 +67,8 @@
 | 7     | Gestion de la capacité des entrepôts             | DONE   |
 | 8     | Alertes & dashboard analytique                   | DONE   |
 | 9     | Revue UX/UI frontend professionnelle             | DONE   |
-| 10    | Validation métier, sécurité & données réalistes  | TODO   |
-| 11    | Tests et nettoyage final                         | DONE   |
 | 10    | Validation métier, sécurité & données réalistes  | DONE   |
-| 11    | Tests et nettoyage final                         | TODO   |
+| 11    | Tests et nettoyage final                         | DONE   |
 | 12    | Socle d’exécution locale et préparation du poste | DONE   |
 | 13    | Conteneurisation complète                        | DONE   |
 | 14    | CI de base sur GitHub Actions                    | DONE   |
@@ -79,8 +77,9 @@
 | 17    | GitOps et ArgoCD                                 | DONE   |
 | 18    | CD automatisé par image versionnée               | DONE   |
 | 19    | Logging centralisé backend                       | DONE   |
-| 20    | Observabilité et alerting                        | TODO   |
-| 21    | Finalisation et soutenance                       | TODO   |
+| 20    | Observabilité et alerting                        | DONE   |
+| 21    | Améliorations backend & polish frontend          | TODO   |
+| 22    | Finalisation et soutenance                       | TODO   |
 
 ---
 
@@ -1110,7 +1109,7 @@ Ajouter `@Slf4j` et les appels de log suivants, sans modifier la logique métier
 
 ---
 
-## Phase 20 — Observabilité et alerting [TODO]
+## Phase 20 — Observabilité et alerting [DONE]
 
 **Objectif :** exposer des métriques techniques et métier depuis le backend, les collecter avec Prometheus, les visualiser dans Grafana et déclencher des alertes simples — en s’appuyant sur les logs structurés mis en place à la phase 19.
 
@@ -1224,7 +1223,201 @@ L’agent prépare les deux options et documente le choix recommandé pour la so
 
 ---
 
-## Phase 21 — Finalisation et soutenance [TODO]
+## Phase 21 — Améliorations backend & polish frontend [TODO]
+
+**Objectif :** renforcer la robustesse et la qualité perçue de l'application avant la soutenance — côté backend avec des fonctionnalités de production réelles, côté frontend avec des corrections UX visibles et une couverture de tests solide (>80%).
+
+---
+
+### 21.1 — Rate limiting API (backend)
+
+Protéger l'API contre les abus et les attaques par force brute.
+
+**Stack :** Bucket4j (`bucket4j-core`) avec un filtre Spring `OncePerRequestFilter`.
+
+**Travaux :**
+
+- Ajouter la dépendance `bucket4j-core` dans `pom.xml`
+- Créer `RateLimitFilter` : filtre HTTP qui maintient un `Bucket` par IP en mémoire (`ConcurrentHashMap`)
+- Appliquer deux règles distinctes :
+  - Endpoint `POST /api/auth/login` : **5 requêtes / minute par IP** (anti-brute-force)
+  - Tous les autres endpoints `/api/**` : **120 requêtes / minute par IP** (anti-flood général)
+- Retourner `429 Too Many Requests` avec un message JSON `{"status":429,"message":"Trop de requêtes. Réessayez dans quelques secondes."}` quand le quota est dépassé
+- Ajouter l'en-tête `X-RateLimit-Remaining` sur chaque réponse pour rendre la limite visible
+- Enregistrer la dépendance dans `SecurityConfig` après `RequestCorrelationFilter`
+- Ajouter un log `WARN` avec l'IP et l'endpoint quand le quota est dépassé (format `log.warn("Rate limit atteint : ip={}, uri={}", ip, uri)`)
+
+**Intégration Prometheus / Grafana :**
+
+> Les réponses 429 produites par le filtre court-circuitent le `DispatcherServlet`. Micrometer les enregistre dans `http_server_requests_seconds_count` avec `uri="UNKNOWN"`, ce qui les rend inutilisables pour identifier l'endpoint attaqué.
+
+- Injecter `MeterRegistry` dans `RateLimitFilter` et incrémenter un compteur dédié à chaque 429 :
+  ```java
+  meterRegistry.counter("stockpro.rate.limit.rejections",
+      "endpoint", uri,   // "/api/auth/login" ou "/api/**"
+      "ip_hash", Integer.toHexString(ip.hashCode()) // IP hashée, jamais en clair
+  ).increment();
+  ```
+- Ajouter dans `infra/monitoring/prometheus/rules/stockpro_alerts.yml` une règle d'alerte :
+  - `RateLimitSpike` : plus de 20 rejets en 1 minute toutes IP confondues → sévérité `warning`
+- Ajouter dans le dashboard Grafana (`infra/monitoring/grafana/provisioning/dashboards/stockpro.json`) un panel supplémentaire :
+  - **Rejets rate limit** : `increase(stockpro_rate_limit_rejections_total[5m])` groupé par `endpoint` — détecte les attaques ciblées sur le login
+
+---
+
+### 21.2 — Pagination des listes (backend)
+
+Les endpoints de liste peuvent retourner des centaines de lignes. Ajouter la pagination Spring Data.
+
+**Endpoints concernés :** `GET /api/mouvements-stock` et `GET /api/stocks` (les deux listes les plus volumineuses).
+
+**Travaux :**
+
+- Adapter `MouvementStockRepository` et `StockRepository` pour accepter `Pageable`
+- Adapter les services et contrôleurs correspondants : le paramètre `Pageable` est injecté automatiquement par Spring MVC depuis les query params `?page=0&size=20&sort=date,desc`
+- Retourner `Page<T>` converti en DTO `PagedResponse<T>` contenant `{ content, page, size, totalElements, totalPages }`
+- Valeur par défaut : `page=0`, `size=20`, tri par `date` décroissant pour les mouvements, par `id` pour les stocks
+- Mettre à jour les tests unitaires des services concernés pour couvrir les cas de pagination
+- Adapter le frontend pour consommer la réponse paginée : afficher le total et permettre la navigation page suivante / page précédente dans les tableaux concernés (Angular Material `MatPaginator`)
+
+---
+
+### 21.3 — Cache applicatif Spring (backend)
+
+Les listes de produits et d'entrepôts changent rarement. Mettre en cache leurs réponses pour réduire la charge DB.
+
+**Stack :** Spring Cache avec `CaffeineCacheManager` (cache in-memory rapide et léger).
+
+**Travaux :**
+
+- Ajouter les dépendances `spring-boot-starter-cache` et `com.github.ben-manes.caffeine:caffeine` dans `pom.xml`
+- Activer `@EnableCaching` dans une classe de configuration dédiée `CacheConfig`
+- Configurer deux caches nommés :
+  - `produits` : TTL 5 minutes, max 500 entrées
+  - `entrepots` : TTL 5 minutes, max 200 entrées
+- Annoter `ProduitService.findAll()` avec `@Cacheable("produits")`
+- Annoter `EntrepotService.findAll()` avec `@Cacheable("entrepots")`
+- Annoter les méthodes d'écriture (`save`, `update`, `delete`) avec `@CacheEvict` sur le cache correspondant pour invalider l'entrée après modification
+- Exposer `cache` dans les endpoints Actuator : `management.endpoints.web.exposure.include=health,info,prometheus,metrics,caches` pour permettre une vérification via `/actuator/caches`
+
+---
+
+### 21.4 — Renforcement des en-têtes de sécurité HTTP (backend)
+
+Des en-têtes HTTP de sécurité standard manquent actuellement. Les ajouter via Spring Security.
+
+**Travaux :**
+
+- Dans `SecurityConfig`, activer les en-têtes de sécurité suivants :
+  - `X-Content-Type-Options: nosniff` — empêche le MIME-sniffing
+  - `X-Frame-Options: DENY` — déjà partiellement configuré, vérifier et compléter
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- Activer la compression gzip pour les réponses API dans `application.properties` :
+  ```
+  server.compression.enabled=true
+  server.compression.mime-types=application/json,application/xml,text/plain
+  server.compression.min-response-size=1024
+  ```
+- Ces ajouts ne modifient aucune logique métier, uniquement la configuration Spring Security et les properties
+
+---
+
+### 21.5 — Corrections UX frontend
+
+**Problème 1 — Sidebar qui défile avec le contenu de la page**
+
+La sidebar doit rester fixe à gauche pendant que seul le contenu principal défile. Actuellement, quand le contenu d'une page est long et que l'utilisateur fait défiler vers le bas, la sidebar remonte et disparaît hors de l'écran.
+
+La cause : `.shell` et `.shell__main` utilisent `min-height: 100dvh`. Avec `min-height`, le conteneur `mat-sidenav-container` peut grandir au-delà de la hauteur du viewport pour suivre le contenu. La sidebar fait alors partie d'un bloc plus grand que l'écran et défile avec lui.
+
+**Fix :**
+- Dans `main-layout.component.ts`, remplacer `min-height: 100dvh` par `height: 100dvh` sur `.shell`
+- Remplacer `min-height: 100dvh` par `height: 100%` sur `.shell__main`
+- Ajouter `overflow-y: auto` sur `.shell__content` pour que le scroll se produise uniquement dans la zone de contenu
+- Résultat : `mat-sidenav-container` est ancré à la hauteur exacte du viewport, la `mat-sidenav` ne bouge plus, et le scroll se produit uniquement à l'intérieur du `mat-sidenav-content`
+
+**Problème 2 — Badge d'alertes statique**
+
+Le compteur d'alertes dans la sidebar est chargé une seule fois au démarrage (`constructor`) et ne se met jamais à jour. Si une nouvelle alerte apparaît en cours de session, le badge reste à son ancienne valeur.
+
+- Remplacer l'appel unique dans le constructeur par un `interval(60_000)` combiné à `startWith(0)` pour rafraîchir le compteur toutes les 60 secondes
+- Utiliser `takeUntilDestroyed()` pour nettoyer le timer à la destruction du composant
+
+**Problème 3 — Absence de gestion globale des erreurs réseau**
+
+Quand une requête HTTP échoue avec une erreur 500 ou que le réseau est indisponible, chaque composant gère l'erreur séparément (ou pas du tout). Il n'y a pas de notification cohérente à l'utilisateur.
+
+- Créer un `ErrorInterceptor` (`HttpInterceptorFn`) qui intercepte les erreurs 5xx et les erreurs réseau (`status === 0`)
+- Afficher une notification `MatSnackBar` avec un message générique `"Une erreur est survenue. Réessayez."` et une action "Fermer"
+- Ne pas intercepter les 4xx (déjà gérées par les composants individuellement) ni les 401 (déjà gérés par `jwtInterceptor`)
+- Enregistrer l'intercepteur dans `app.config.ts`
+
+**Problème 4 — Titre de page navigateur générique**
+
+Le titre de l'onglet navigateur reste "StockPro" sur toutes les pages. Cela nuit à l'expérience de navigation multi-onglets.
+
+- Injecter le service Angular `Title` dans chaque page feature (dashboard, entrepôts, produits, stocks, alertes, utilisateurs)
+- Appeler `this.titleService.setTitle('Entrepôts — StockPro')` dans `ngOnInit` de chaque composant de page
+- Format uniforme : `"<Nom page> — StockPro"`
+
+---
+
+### 21.6 — Tests : combler les lacunes et garantir >80% de couverture
+
+Après les phases 19 et 20, des éléments critiques ne sont pas couverts.
+
+**Backend — tests manquants :**
+
+- `RateLimitFilterTest` : vérifier que le 5ème appel consécutif depuis la même IP sur `/api/auth/login` retourne `429`
+- `MouvementStockServiceTest` — compléter avec les cas Micrometer (phase 20) : vérifier que les compteurs `stockpro.mouvements.total` et `stockpro.mouvements.rejets` s'incrémentent après les opérations correspondantes (utiliser `SimpleMeterRegistry` déjà en place)
+- `StockServiceTest` — ajouter les cas de pagination : vérifier que `findAll(Pageable)` transmet correctement le `Pageable` au repository
+- `ProduitServiceTest` / `EntrepotServiceTest` — ajouter les cas cache : vérifier que `@CacheEvict` est déclenché après un `save` ou `delete`
+- `GlobalExceptionHandlerTest` via `MockMvc` : couvrir les cas 400, 404, 409, 500 et vérifier le format JSON de réponse
+
+**Frontend — tests manquants :**
+
+- Créer `home-page.component.spec.ts` : rendre le composant, vérifier qu'il affiche l'état `loading` puis l'état `connected`
+- Créer `mouvements-page.component.spec.ts` si le composant existe, ou ajouter des cas dans `stocks-page.component.spec.ts` couvrant le formulaire de mouvement
+- Compléter `layout-components.spec.ts` : ajouter un test vérifiant que `SidebarComponent` affiche le bon nombre d'entrées selon le rôle (`ADMIN` → 6 entrées, autres → 5)
+- Vérifier avec `vitest --coverage` que la couverture globale reste au-dessus de **80%** après l'ajout des fonctionnalités de la phase 21
+- Ajouter dans `api-services.spec.ts` les cas pour `AlerteService` et `MouvementStockService` si non couverts
+
+**Commande de vérification couverture backend :**
+```bash
+mvn test jacoco:report
+# Rapport dans target/site/jacoco/index.html
+```
+
+**Commande de vérification couverture frontend :**
+```bash
+npm run test -- --coverage
+# Seuil minimal à configurer dans vitest.config.ts : lines: 80, functions: 80
+```
+
+---
+
+**Définition of done :**
+
+- `POST /api/auth/login` retourne `429` après 5 appels consécutifs depuis la même IP en moins d'une minute
+- Le compteur `stockpro_rate_limit_rejections_total{endpoint="/api/auth/login"}` s'incrémente dans Prometheus à chaque 429
+- Le panel **Rejets rate limit** est visible dans le dashboard Grafana avec des données réelles
+- Les endpoints `GET /api/mouvements-stock` et `GET /api/stocks` acceptent les paramètres `page`, `size`, `sort` et retournent un objet paginé
+- `/actuator/caches` liste les caches `produits` et `entrepots`
+- Les en-têtes `X-Content-Type-Options` et `Referrer-Policy` sont présents sur toutes les réponses API
+- La sidebar défile quand le nombre d'entrées de navigation dépasse la hauteur de l'écran
+- Le badge d'alertes se rafraîchit automatiquement toutes les 60 secondes
+- Une erreur 500 déclenche une notification `MatSnackBar` visible à l'utilisateur
+- Chaque page a un titre d'onglet navigateur distinct au format `"<Nom page> — StockPro"`
+- La couverture de tests backend est >80% (JaCoCo)
+- La couverture de tests frontend est >80% (Vitest coverage)
+- `mvn test`, `npm run build` et `npm run test` passent sans régression
+
+**Branch git :** `feature/phase-21-backend-enhancements-frontend-polish`
+
+---
+
+## Phase 22 — Finalisation et soutenance [TODO]
 
 **Objectif :** stabiliser la solution complète et préparer une démonstration finale reproductible et professionnelle.
 
@@ -1251,6 +1444,6 @@ L’agent prépare les deux options et documente le choix recommandé pour la so
 
 - version finale prête pour dépôt et présentation
 
-**Branch git :** `feature/devops-phase-21-finalization`
+**Branch git :** `feature/devops-phase-22-finalization`
 
 ---

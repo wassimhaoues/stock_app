@@ -17,6 +17,7 @@ import com.wassim.stock.repository.MouvementStockRepository;
 import com.wassim.stock.repository.ProduitRepository;
 import com.wassim.stock.repository.StockRepository;
 import com.wassim.stock.repository.UtilisateurRepository;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -37,6 +38,7 @@ public class MouvementStockService {
     private final ProduitRepository produitRepository;
     private final EntrepotRepository entrepotRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final MeterRegistry meterRegistry;
 
     public List<MouvementStockResponse> findAll() {
         Utilisateur currentUser = getCurrentUser();
@@ -73,6 +75,7 @@ public class MouvementStockService {
                     stock.getQuantite(),
                     request.quantite()
             );
+            meterRegistry.counter("stockpro.mouvements.rejets", "raison", "stock_insuffisant").increment();
             throw new ConflictException("Stock insuffisant pour effectuer cette sortie");
         }
 
@@ -98,6 +101,7 @@ public class MouvementStockService {
                 entrepot.getId(),
                 request.quantite()
         );
+        meterRegistry.counter("stockpro.mouvements.total", "type", request.type().name()).increment();
         return toResponse(savedMouvement);
     }
 
@@ -122,6 +126,7 @@ public class MouvementStockService {
                     availableCapacity,
                     requestedQuantity
             );
+            meterRegistry.counter("stockpro.mouvements.rejets", "raison", "capacite_depassee").increment();
             throw new ConflictException(
                     "Capacite insuffisante pour cet entrepot. Capacite disponible : "
                             + availableCapacity

@@ -1,0 +1,25 @@
+# Kustomization du module monitoring (Prometheus + Grafana).
+# Ce module est OPTIONNEL et n'est pas inclus dans k8s/base/kustomization.yaml par défaut.
+#
+# Pour l'activer dans un overlay, ajouter dans kustomization.yaml de l'overlay :
+#   resources:
+#     - ../../base/monitoring
+#
+# Ou appliquer directement :
+#   kubectl apply -k k8s/base/monitoring
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: stockpro
+
+resources:
+  # Prometheus
+  - prometheus/pvc.yaml
+  - prometheus/configmap.yaml
+  - prometheus/deployment.yaml
+  - prometheus/service.yaml
+  # Grafana
+  - grafana/pvc.yaml
+  - grafana/configmap-datasources.yaml
+  - grafana/deployment.yaml
+  - grafana/service.yaml

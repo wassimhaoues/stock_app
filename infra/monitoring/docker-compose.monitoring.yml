@@ -1,0 +1,112 @@
+# Stack monitoring à lancer en supplément du docker-compose.yml principal.
+#
+# Commande de démarrage :
+#   docker compose -f docker-compose.yml -f infra/monitoring/docker-compose.monitoring.yml up -d
+#
+# Prometheus  → http://localhost:9090
+# Grafana     → http://localhost:3000  (admin / admin au premier démarrage)
+# Loki        → http://localhost:3100  (ingestion de logs)
+
+services:
+
+  # ── Prometheus — collecte des métriques ─────────────────────────────────────
+  stockpro-prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: stockpro-prometheus
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    networks:
+      - default
+    depends_on:
+      stock-backend:
+        condition: service_healthy
+
+  # ── Grafana — visualisation ──────────────────────────────────────────────────
+  stockpro-grafana:
+    image: grafana/grafana:10.4.2
+    container_name: stockpro-grafana
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/stockpro.json
+    volumes:
+      - ./infra/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./infra/monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    networks:
+      - default
+    depends_on:
+      - stockpro-prometheus
+
+  # ── Loki — agrégation des logs structurés (optionnel) ───────────────────────
+  # Les logs JSON produits par le backend (profil docker) sont ingérés ici.
+  # Promtail les collecte depuis les conteneurs Docker et les envoie à Loki.
+  # Ajouter la datasource Loki dans Grafana pour croiser logs et métriques.
+  stockpro-loki:
+    image: grafana/loki:2.9.7
+    container_name: stockpro-loki
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - default
+
+  stockpro-promtail:
+    image: grafana/promtail:2.9.7
+    container_name: stockpro-promtail
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/config.yml
+    environment:
+      HOSTNAME: stockpro-promtail
+    entrypoint:
+      - sh
+      - -c
+      - |
+        cat > /etc/promtail/config.yml <<'EOF'
+        server:
+          http_listen_port: 9080
+        positions:
+          filename: /tmp/positions.yaml
+        clients:
+          - url: http://stockpro-loki:3100/loki/api/v1/push
+        scrape_configs:
+          - job_name: docker
+            docker_sd_configs:
+              - host: unix:///var/run/docker.sock
+                refresh_interval: 5s
+                filters:
+                  - name: name
+                    values: [stock-backend]
+            relabel_configs:
+              - source_labels: [__meta_docker_container_name]
+                target_label: container
+              - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+                target_label: service
+        EOF
+        exec /usr/bin/promtail -config.file=/etc/promtail/config.yml
+    networks:
+      - default
+    depends_on:
+      - stockpro-loki
+
+volumes:
+  prometheus_data:
+  grafana_data:

@@ -16,6 +16,10 @@ on:
 # Phase 22.1:
 # Sur main, ce workflow devient une validation bloquante au meme titre que CI.
 # Le CD attend sa conclusion "success" avant toute livraison.
+#
+# Phase 22.2:
+# Sur les PR vers main, ce workflow reste un required check avant merge ou
+# auto-merge, aux cotes de CI et du workflow PR Validation.
 
 jobs:
   # ── CodeQL — SAST ────────────────────────────────────────────────────────────

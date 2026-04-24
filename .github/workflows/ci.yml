@@ -14,6 +14,10 @@ on:
 # Phase 22.1:
 # Sur main, ce workflow fait partie des validations obligatoires que le CD
 # attend explicitement avant toute publication ou toute modification GitOps.
+#
+# Phase 22.2:
+# Sur les PR vers main, ce workflow reste un required check avant merge ou
+# auto-merge, aux cotes de Security et du workflow PR Validation.
 
 jobs:
   backend:

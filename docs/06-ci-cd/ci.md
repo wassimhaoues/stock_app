@@ -12,6 +12,8 @@ on:
     branches: [main, dev]
 ```
 
+Pour la phase 22.2, les PR vers `main` continuent donc bien à exécuter `CI`.
+
 ## Rôle sur `main`
 
 Sur `main`, `CI` fait partie des validations obligatoires du flux de livraison.
@@ -57,6 +59,19 @@ Dépend de `backend` et `frontend`. S'exécute uniquement sur `main` ou les PRs 
 
 Requiert le secret `SONAR_TOKEN`.
 
+## PR Validation
+
+Le workflow léger `.github/workflows/pr-validation.yml` complète `CI` sur les PR vers `main`.
+
+Il vérifie rapidement :
+
+- la syntaxe YAML des workflows GitHub Actions
+- les manifests Kubernetes sous `k8s/`
+- les fichiers YAML d'infrastructure sous `infra/`
+- `docker-compose.yml`
+
+Ce check reste volontairement indépendant du build applicatif pour fournir un signal rapide avant merge ou auto-merge.
+
 ## Conditions de succès
 
 La CI est verte si :
@@ -86,3 +101,11 @@ La branche `main` est protégée. Une fusion nécessite :
 - Au moins une revue de code (selon configuration GitHub)
 
 En phase 22.1, cette protection doit rester cohérente avec les checks GitHub obligatoires configurés sur `main`.
+
+En phase 22.2, pour une PR contributeur vers `main`, les checks obligatoires attendus doivent inclure au minimum :
+
+- `CI`
+- `Security`
+- `PR Validation`
+
+L'auto-merge GitHub peut alors être activé pour les contributeurs autorisés, sans contourner la protection de branche.

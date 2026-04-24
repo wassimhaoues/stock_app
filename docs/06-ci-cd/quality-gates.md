@@ -2,16 +2,17 @@
 
 ## Vue d'ensemble
 
-| Contrôle                | Workflow       | Seuil de blocage                                |
-| ----------------------- | -------------- | ----------------------------------------------- |
-| Tests backend           | `ci.yml`       | Tout test en échec bloque                       |
-| Tests frontend          | `ci.yml`       | Tout test en échec bloque                       |
-| Formatage Prettier      | `ci.yml`       | Tout écart bloque                               |
-| Audit npm               | `ci.yml`       | Vulnérabilité `high` ou `critical` bloque       |
-| SonarCloud Quality Gate | `ci.yml`       | Voir métriques ci-dessous                       |
-| CodeQL SAST             | `security.yml` | Résultat dans Security → Code scanning          |
-| OWASP Dependency-Check  | `security.yml` | CVSS ≥ 9 bloque                                 |
-| Trivy images Docker     | `security.yml` | `HIGH` ou `CRITICAL` avec fix disponible bloque |
+| Contrôle                    | Workflow            | Seuil de blocage                                |
+| --------------------------- | ------------------- | ----------------------------------------------- |
+| Tests backend               | `ci.yml`            | Tout test en échec bloque                       |
+| Tests frontend              | `ci.yml`            | Tout test en échec bloque                       |
+| Formatage Prettier          | `ci.yml`            | Tout écart bloque                               |
+| Audit npm                   | `ci.yml`            | Vulnérabilité `high` ou `critical` bloque       |
+| SonarCloud Quality Gate     | `ci.yml`            | Voir métriques ci-dessous                       |
+| Validation YAML / manifests | `pr-validation.yml` | Toute erreur de syntaxe bloque                  |
+| CodeQL SAST                 | `security.yml`      | Résultat dans Security → Code scanning          |
+| OWASP Dependency-Check      | `security.yml`      | CVSS ≥ 9 bloque                                 |
+| Trivy images Docker         | `security.yml`      | `HIGH` ou `CRITICAL` avec fix disponible bloque |
 
 ## SonarCloud
 
@@ -88,9 +89,23 @@ Pour qu'une PR soit mergeable dans `main` :
 4. Le format Prettier est respecté (`npm run format:check`)
 5. Aucune dépendance npm à risque `high+` (`npm audit`)
 6. Le Quality Gate SonarCloud valide les 6 métriques ci-dessus
-7. La CI est verte globalement
+7. La validation légère YAML / manifests passe
+8. La CI est verte globalement
 
 Les scans CodeQL, OWASP et Trivy tournent en parallèle dans `security.yml` et génèrent des alertes mais ne bloquent pas directement la PR (sauf configuration explicite des required checks).
+
+## Auto-merge contrôlé en phase 22.2
+
+Le comportement attendu pour une PR contributeur vers `main` est le suivant :
+
+1. la PR s'ouvre
+2. `CI`, `Security` et `PR Validation` s'exécutent
+3. les checks obligatoires passent
+4. GitHub auto-merge la PR si le ruleset et les permissions l'autorisent
+5. le merge crée un nouveau push sur `main`
+6. `CD` se déclenche ensuite uniquement sur ce code déjà validé
+
+L'auto-merge doit rester gouverné par le ruleset / branch protection GitHub, pas par une logique de contournement implémentée dans les workflows.
 
 ## Gouvernance `main` en phase 22.1
 

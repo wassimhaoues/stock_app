@@ -1456,7 +1456,7 @@ npm run test -- --coverage
 
 ---
 
-### 22.2 — PR contributeurs avec auto-merge contrôlé
+### 22.2 — PR contributeurs avec auto-merge contrôlé [DONE]
 
 **But :** faire converger les PR "normales" vers un modèle où les validations tournent avant merge et où GitHub peut auto-merger uniquement après réussite des checks obligatoires.
 

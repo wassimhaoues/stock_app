@@ -11,11 +11,11 @@ argocd app diff stockpro
 
 **Causes fréquentes :**
 
-| Cause | Solution |
-|-------|----------|
-| Nouveau commit sur `main` pas encore détecté | Attendre quelques secondes ou forcer : `argocd app sync stockpro` |
-| Modification manuelle dans le cluster | ArgoCD corrige automatiquement avec `selfHeal: true`. Forcer : `argocd app sync stockpro --force` |
-| Erreur de chemin dans le manifest ArgoCD | Vérifier que `path: k8s/overlays/gitops` est correct |
+| Cause                                        | Solution                                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Nouveau commit sur `main` pas encore détecté | Attendre quelques secondes ou forcer : `argocd app sync stockpro`                                 |
+| Modification manuelle dans le cluster        | ArgoCD corrige automatiquement avec `selfHeal: true`. Forcer : `argocd app sync stockpro --force` |
+| Erreur de chemin dans le manifest ArgoCD     | Vérifier que `path: k8s/overlays/gitops` est correct                                              |
 
 ## Les pods ne démarrent pas après une sync
 
@@ -32,11 +32,11 @@ kubectl get events -n stockpro --sort-by='.lastTimestamp'
 
 **Causes fréquentes :**
 
-| Symptôme | Cause probable |
-|----------|---------------|
-| `ImagePullBackOff` | Image GHCR non trouvée ou privée sans `imagePullSecret` |
-| `CrashLoopBackOff` backend | Secret `stockpro-secrets` absent ou incomplet |
-| `Pending` | Ressources insuffisantes dans le cluster kind |
+| Symptôme                   | Cause probable                                          |
+| -------------------------- | ------------------------------------------------------- |
+| `ImagePullBackOff`         | Image GHCR non trouvée ou privée sans `imagePullSecret` |
+| `CrashLoopBackOff` backend | Secret `stockpro-secrets` absent ou incomplet           |
+| `Pending`                  | Ressources insuffisantes dans le cluster kind           |
 
 ## Erreur ImagePullBackOff (image GHCR privée)
 
@@ -66,13 +66,53 @@ Solution : suivre la procédure de [bootstrap.md](bootstrap.md).
 
 ## Le pipeline CD boucle à l'infini
 
-**Symptôme :** le workflow CD se déclenche en boucle après son propre commit GitOps.
+**Symptôme :** le workflow CD republie alors qu'une PR GitOps vient d'être mergee.
 
 **Protection en place :**
-1. Le commit GitOps contient `[skip ci]` → GitHub ne déclenche pas la CI
-2. La condition `!startsWith(head_commit.message, 'chore(gitops):')` sur le job `detect-changes` bloque le CD si ce mécanisme était contourné
 
-Si la boucle se produit quand même, vérifier que la branche `main` reçoit bien les commits avec le message `chore(gitops): bump images to sha-XXXXXXX [skip ci]`.
+1. le merge de la PR GitOps doit se faire en `squash`
+2. le commit final sur `main` doit commencer par `chore(gitops): bump images to sha-XXXXXXX`
+3. le job `wait-for-main-validations` de `cd.yml` ignore ces commits GitOps sur `main`
+
+Si la boucle se produit quand même :
+
+- verifier que l'auto-merge GitHub est bien configure en squash pour la PR GitOps
+- verifier que le commit final sur `main` commence bien par `chore(gitops):`
+- verifier qu'aucun contournement manuel n'a pousse directement `k8s/overlays/gitops/kustomization.yaml` sur `main`
+
+## La PR GitOps n'est pas créée
+
+Verifier :
+
+1. que le job `gitops-bump` a les permissions `contents: write` et `pull-requests: write`
+2. que `Settings → Actions → General → Workflow permissions` est en `Read and write permissions`
+3. que le workflow a bien publie au moins une image backend ou frontend
+
+Si aucun code applicatif n'a change dans `backend/` ou `frontend/`, le job GitOps est normalement ignore.
+
+## La PR GitOps est créée mais l'auto-merge ne s'active pas
+
+Verifier :
+
+1. que l'auto-merge est active au niveau du depot GitHub
+2. que les checks requis du ruleset pour une PR GitOps correspondent bien aux checks legers attendus
+3. que `github-actions[bot]` n'est pas bloque par la politique du depot
+
+Dans ce cas, la PR GitOps reste ouverte jusqu'a correction de la configuration ou merge manuel.
+
+## Une PR GitOps lance encore CI ou Security
+
+Verifier :
+
+1. que la PR est bien creee par `github-actions[bot]`
+2. que la branche source commence bien par `gitops/bump-images-`
+3. que les conditions `if` de `ci.yml` et `security.yml` n'ont pas ete modifiees
+
+Le comportement attendu en phase 22.4 est :
+
+- `CI` ignore les PR GitOps bot
+- `Security` ignore les PR GitOps bot
+- seul `GitOps Validation` doit tourner
 
 ## Rollback à une version précédente
 
@@ -90,8 +130,9 @@ argocd app rollback stockpro <revision_id>
 
 1. Éditer `k8s/overlays/gitops/kustomization.yaml`
 2. Remplacer `newTag` par l'ancien SHA souhaité
-3. Committer et pousser sur `main`
-4. ArgoCD détecte le changement et resynchronise automatiquement
+3. Ouvrir une PR vers `main`
+4. Merger la PR
+5. ArgoCD détecte le changement et resynchronise automatiquement
 
 ## ArgoCD ne détecte pas les changements Git
 
@@ -114,3 +155,5 @@ kubectl get deployment stock-backend -n stockpro \
 # Comparer avec le kustomization.yaml
 grep newTag k8s/overlays/gitops/kustomization.yaml
 ```
+
+Pour les réglages GitHub UI liés à la phase 22, voir aussi [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).

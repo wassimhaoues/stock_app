@@ -2,38 +2,78 @@
 
 Cette section couvre les trois workflows GitHub Actions du projet.
 
-| Fichier | Contenu |
-|---------|---------|
-| [ci.md](ci.md) | Pipeline CI : tests, build, SonarCloud |
-| [cd.md](cd.md) | Pipeline CD : détection des changements, build GHCR, bump GitOps |
-| [quality-gates.md](quality-gates.md) | Quality gates, seuils, scans de sécurité |
-| [secrets.md](secrets.md) | Secrets GitHub requis et procédure de configuration |
+| Fichier                                                                                      | Contenu                                                        |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| [ci.md](ci.md)                                                                               | Pipeline CI : tests, build, SonarCloud                         |
+| [cd.md](cd.md)                                                                               | Pipeline CD : détection des changements, build GHCR, PR GitOps |
+| [pr-validation.md](ci.md#pr-validation)                                                      | Validation légère PR : YAML et manifests                       |
+| [quality-gates.md](quality-gates.md)                                                         | Quality gates, seuils, scans de sécurité                       |
+| [secrets.md](secrets.md)                                                                     | Secrets GitHub requis et procédure de configuration            |
+| [phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md) | Réglages GitHub UI manuels pour la phase 22                    |
 
 ## Workflows disponibles
 
-| Fichier | Déclencheur | Rôle |
-|---------|-------------|------|
-| `.github/workflows/ci.yml` | Push / PR sur toutes les branches | Tests, build, linting, SonarCloud |
-| `.github/workflows/cd.yml` | CI verte sur `main` | Publish images GHCR, mise à jour GitOps |
-| `.github/workflows/security.yml` | Push / PR + schedule | CodeQL, OWASP Dependency-Check, Trivy |
+| Fichier                               | Déclencheur                          | Rôle                                                                                   |
+| ------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------- |
+| `.github/workflows/ci.yml`            | Push / PR sur branches projet        | Tests, build, linting, SonarCloud                                                      |
+| `.github/workflows/pr-validation.yml` | PR vers `main`                       | Validation légère YAML / manifests pour required check et auto-merge gouverné          |
+| `.github/workflows/cd.yml`            | Push sur `main` avec garde explicite | Publish images GHCR, création d'une PR GitOps uniquement après `CI` + `Security` verts |
+| `.github/workflows/security.yml`      | Push / PR + schedule                 | CodeQL, OWASP Dependency-Check, Trivy                                                  |
 
 ## Flux global
 
 ```
-feature/**  → push → CI (tests + qualité)
+feature/**  → push → CI
                     ↓ PR vers main
-main        → merge → CI verte
-                          ↓
-                      CD déclenché
-                          ↓
+                    CI + Security + PR Validation
+                    ↓
+                    auto-merge GitHub si ruleset OK
+                    ↓ merge
+main        → push → CI + Security + CD
+                           ↓
+                    CD attend explicitement CI + Security
+                           ↓
                     Détection des changements
                     (backend? / frontend?)
-                          ↓
+                           ↓
                     Build + push GHCR
-                          ↓
-                    Bump kustomization.yaml
-                          ↓
-                    Commit sur main [skip ci]
-                          ↓
+                           ↓
+                    Branche GitOps + PR GitOps
+                           ↓
+                    auto-merge squash GitHub
+                           ↓
                     ArgoCD sync automatique
 ```
+
+## Cas `main` a connaitre
+
+| Cas                                         | CI                                                                       | Security                                                                 | CD                                                                                                    |
+| ------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Push direct administrateur sur `main`       | déclenché sur le commit poussé                                           | déclenché sur le commit poussé                                           | déclenché sur le même commit mais bloqué tant que `CI` et `Security` ne sont pas tous les deux verts  |
+| PR contributeur vers `main`                 | déclenché sur la PR puis à nouveau après le merge sur `main`             | déclenché sur la PR puis à nouveau après le merge sur `main`             | déclenché seulement après le merge sur `main`, jamais sur la PR                                       |
+| PR GitOps `github-actions[bot]` vers `main` | ignoré sur la PR GitOps, puis déclenché sur le commit squash merge final | ignoré sur la PR GitOps, puis déclenché sur le commit squash merge final | la PR est créée par `cd.yml`, puis le commit squash final n'est pas republié grâce à `chore(gitops):` |
+
+## Auto-merge contributeur
+
+Pour les PR contributeurs vers `main`, l'auto-merge doit rester pilote par GitHub :
+
+- checks obligatoires du ruleset / branch protection : `CI`, `Security`, `PR Validation`
+- revue requise selon la politique du dépôt
+- aucune logique de merge automatique n'est implémentée dans les workflows
+
+Le rôle des workflows est uniquement de produire des statuts fiables. La décision de merge automatique reste une responsabilité de configuration GitHub.
+
+## Protection de branche significative
+
+Le modèle cible reste le suivant :
+
+- les PR contributeurs vers `main` sont le chemin nominal de merge
+- les PR GitOps bot vers `main` sont aussi gouvernées par des checks requis
+- `cd.yml` ne pousse jamais `k8s/overlays/gitops/kustomization.yaml` directement sur `main`
+- un administrateur peut toujours bypasser la protection GitHub, mais pas la gouvernance de déploiement: `CD` attend toujours `CI` et `Security` sur le commit `main`
+
+L'auto-merge ne remplace donc pas la protection de branche. Il l'exécute plus vite quand les conditions sont déjà satisfaites.
+
+## Guide manuel
+
+Les réglages GitHub UI qui ne peuvent pas être codés dans le dépôt sont documentés dans [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).

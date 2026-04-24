@@ -7,19 +7,20 @@
 #       kubectl create secret generic stockpro-secrets \
 #         --from-env-file=.env -n stockpro
 #     ArgoCD ne gère pas ce Secret — il reste stable entre les synchros.
-#   - Images publiées sur GHCR avec un tag SHA unique (ex : sha-a1b2c3d).
-#     Le champ newTag ci-dessous est mis à jour automatiquement par le workflow
-#     .github/workflows/cd.yml à chaque fusion sur main.
-#     Ne pas modifier newTag manuellement — le pipeline le gère.
+#   - Images publiees sur GHCR avec un tag SHA unique (ex : sha-a1b2c3d).
+#     Le champ newTag ci-dessous est mis a jour automatiquement par le workflow
+#     .github/workflows/cd.yml apres ouverture puis merge d'une PR GitOps.
+#     Ne pas modifier newTag manuellement - le pipeline le gere.
 #   - NodePort 30080/30085 conservés via le même patch que l'overlay local.
 #
-# Flux de mise à jour automatique (Phase 18) :
+# Flux de mise a jour automatique (Phase 22.3) :
 #   merge sur main
-#   → CI verte
-#   → cd.yml construit les images et les pousse sur GHCR
-#   → cd.yml exécute `kustomize edit set image` et met à jour newTag ici
-#   → ArgoCD détecte le changement Git et synchronise le cluster
-#   → les pods sont recréés avec la nouvelle image GHCR
+#   -> CI + Security vertes
+#   -> cd.yml construit les images et les pousse sur GHCR
+#   -> cd.yml ouvre une PR GitOps avec la mise a jour de newTag ici
+#   -> la PR GitOps est mergee dans main apres validations GitHub
+#   -> ArgoCD detecte le changement Git merge et synchronise le cluster
+#   -> les pods sont recrees avec la nouvelle image GHCR
 #
 # ArgoCD lit ce fichier depuis le dépôt Git et applique le résultat dans le cluster.
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -28,8 +29,8 @@ kind: Kustomization
 namespace: stockpro
 
 resources:
-- ../../base
-- ../../base/monitoring
+  - ../../base
+  - ../../base/monitoring
 
 # Pas de secretGenerator ici.
 # Le Secret stockpro-secrets est un "bootstrap secret" créé manuellement.
@@ -45,12 +46,12 @@ resources:
 # Champ "newTag"  : tag SHA calculé par le pipeline (ex : sha-a1b2c3d).
 #                   Valeur initiale "sha-placeholder" avant le premier run CD.
 images:
-- name: stockpro-backend
-  newName: ghcr.io/wassimhaoues/stockpro-backend
-  newTag: sha-01259c7
-- name: stockpro-frontend
-  newName: ghcr.io/wassimhaoues/stockpro-frontend
-  newTag: sha-3b5c023
+  - name: stockpro-backend
+    newName: ghcr.io/wassimhaoues/stockpro-backend
+    newTag: sha-01259c7
+  - name: stockpro-frontend
+    newName: ghcr.io/wassimhaoues/stockpro-frontend
+    newTag: sha-3b5c023
 
 patches:
-- path: patches/expose-services.yaml
+  - path: patches/expose-services.yaml

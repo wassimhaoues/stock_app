@@ -13,11 +13,31 @@ on:
     # Weekly on Monday at 03:00 UTC
     - cron: "0 3 * * 1"
 
+# Phase 22.1:
+# Sur main, ce workflow devient une validation bloquante au meme titre que CI.
+# Le CD attend sa conclusion "success" avant toute livraison.
+#
+# Phase 22.2:
+# Sur les PR vers main, ce workflow reste un required check avant merge ou
+# auto-merge, aux cotes de CI et du workflow PR Validation.
+#
+# Phase 22.4:
+# Les PR GitOps creees par github-actions[bot] ne doivent pas relancer les scans
+# lourds CodeQL / OWASP / Trivy. Sur ce type de PR, ce workflow est ignore.
+#
+# Phase 22.5:
+# Pour les PR contributeurs, ce workflow reste un required check du ruleset
+# GitHub. L'auto-merge ne doit jamais permettre de le contourner.
+
 jobs:
   # ── CodeQL — SAST ────────────────────────────────────────────────────────────
   codeql:
     name: CodeQL — ${{ matrix.language }}
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.user.login != 'github-actions[bot]' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
     permissions:
       security-events: write
       actions: read
@@ -65,6 +85,10 @@ jobs:
   dependency-check:
     name: OWASP Dependency-Check — backend
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.user.login != 'github-actions[bot]' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
 
     steps:
       - name: Checkout
@@ -113,6 +137,10 @@ jobs:
   trivy-backend:
     name: Trivy — backend Docker image
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.user.login != 'github-actions[bot]' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
     permissions:
       contents: read
       security-events: write
@@ -150,6 +178,10 @@ jobs:
   trivy-frontend:
     name: Trivy — frontend Docker image
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.user.login != 'github-actions[bot]' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
     permissions:
       contents: read
       security-events: write

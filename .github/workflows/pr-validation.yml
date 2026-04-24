@@ -1,0 +1,58 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Phase 22.2:
+# Ce workflow ajoute un check leger et independant du build applicatif.
+# Il complete CI + Security sur les PR vers main pour servir de required check
+# dans les branch rules / rulesets GitHub avant auto-merge.
+#
+# Phase 22.4:
+# Ce workflow reste dedie aux PR contributeurs. Les PR GitOps bot ont leur
+# propre validation legere dans gitops-validation.yml.
+
+jobs:
+  yaml-manifests:
+    name: YAML & manifests
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.user.login != 'github-actions[bot]' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Validate GitHub Actions, manifests and infrastructure YAML
+        run: |
+          cat <<'EOF' > .yamllint-pr-validation.yml
+          extends: default
+          rules:
+            document-start: disable
+            line-length: disable
+            truthy: disable
+          EOF
+
+          yamllint -c .yamllint-pr-validation.yml \
+            .github/workflows \
+            k8s \
+            infra \
+            docker-compose.yml

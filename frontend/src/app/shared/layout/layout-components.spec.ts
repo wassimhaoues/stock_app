@@ -93,6 +93,21 @@ describe('layout components', () => {
     expect(emissions).toEqual([true]);
   });
 
+  it('shows six entries for admins and five for scoped users', () => {
+    const adminFixture = TestBed.createComponent(SidebarComponent);
+    adminFixture.detectChanges();
+    const adminComponent = adminFixture.componentInstance as any;
+
+    expect(adminComponent.entries()).toHaveLength(6);
+
+    authService.hasRole.mockReturnValue(false);
+    const scopedFixture = TestBed.createComponent(SidebarComponent);
+    scopedFixture.detectChanges();
+    const scopedComponent = scopedFixture.componentInstance as any;
+
+    expect(scopedComponent.entries()).toHaveLength(5);
+  });
+
   it('refreshes the alert badge every minute', () => {
     const alerts$ = new Subject<Array<{ stockId: number }>>();
     alerteService.findAll.mockReturnValue(alerts$.asObservable());

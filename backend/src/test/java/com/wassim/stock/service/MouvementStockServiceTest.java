@@ -57,17 +57,19 @@ class MouvementStockServiceTest {
     @Mock
     private UtilisateurRepository utilisateurRepository;
 
+    private SimpleMeterRegistry meterRegistry;
     private MouvementStockService mouvementStockService;
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
         mouvementStockService = new MouvementStockService(
                 mouvementStockRepository,
                 stockRepository,
                 produitRepository,
                 entrepotRepository,
                 utilisateurRepository,
-                new SimpleMeterRegistry()
+                meterRegistry
         );
     }
 
@@ -99,6 +101,8 @@ class MouvementStockServiceTest {
         assertThatThrownBy(() -> mouvementStockService.create(request))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("Stock insuffisant");
+        assertThat(meterRegistry.counter("stockpro.mouvements.rejets", "raison", "stock_insuffisant").count())
+                .isEqualTo(1.0d);
         verify(stockRepository, never()).save(any());
         verify(mouvementStockRepository, never()).save(any());
     }
@@ -127,6 +131,8 @@ class MouvementStockServiceTest {
         assertThatThrownBy(() -> mouvementStockService.create(request))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("Capacite insuffisante");
+        assertThat(meterRegistry.counter("stockpro.mouvements.rejets", "raison", "capacite_depassee").count())
+                .isEqualTo(1.0d);
         verify(stockRepository, never()).save(any());
         verify(mouvementStockRepository, never()).save(any());
     }
@@ -160,6 +166,8 @@ class MouvementStockServiceTest {
         assertThat(response.id()).isEqualTo(99L);
         assertThat(response.type()).isEqualTo(TypeMouvement.SORTIE);
         assertThat(response.quantite()).isEqualTo(4);
+        assertThat(meterRegistry.counter("stockpro.mouvements.total", "type", "SORTIE").count())
+                .isEqualTo(1.0d);
         verify(stockRepository).save(stock);
     }
 

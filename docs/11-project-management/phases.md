@@ -1223,7 +1223,7 @@ L’agent prépare les deux options et documente le choix recommandé pour la so
 
 ---
 
-## Phase 21 — Améliorations backend & polish frontend [TODO]
+## Phase 21 — Améliorations backend & polish frontend [DONE]
 
 **Objectif :** renforcer la robustesse et la qualité perçue de l'application avant la soutenance — côté backend avec des fonctionnalités de production réelles, côté frontend avec des corrections UX visibles et une couverture de tests solide (>80%).
 
@@ -1364,13 +1364,13 @@ Le titre de l'onglet navigateur reste "StockPro" sur toutes les pages. Cela nuit
 
 ---
 
-### 21.6 — Tests : combler les lacunes et garantir >80% de couverture
+### 21.6 — Tests : combler les lacunes et garantir >80% de couverture [DONE]
 
 Après les phases 19 et 20, des éléments critiques ne sont pas couverts.
 
 **Backend — tests manquants :**
 
-- `RateLimitFilterTest` : vérifier que le 5ème appel consécutif depuis la même IP sur `/api/auth/login` retourne `429`
+- `RateLimitFilterTest` : vérifier que le 6ème appel consécutif depuis la même IP sur `/api/auth/login` retourne `429` (avec 5 appels autorisés conformément à la règle `5 requêtes / minute`)
 - `MouvementStockServiceTest` — compléter avec les cas Micrometer (phase 20) : vérifier que les compteurs `stockpro.mouvements.total` et `stockpro.mouvements.rejets` s'incrémentent après les opérations correspondantes (utiliser `SimpleMeterRegistry` déjà en place)
 - `StockServiceTest` — ajouter les cas de pagination : vérifier que `findAll(Pageable)` transmet correctement le `Pageable` au repository
 - `ProduitServiceTest` / `EntrepotServiceTest` — ajouter les cas cache : vérifier que `@CacheEvict` est déclenché après un `save` ou `delete`
@@ -1400,7 +1400,7 @@ npm run test -- --coverage
 
 **Définition of done :**
 
-- `POST /api/auth/login` retourne `429` après 5 appels consécutifs depuis la même IP en moins d'une minute
+- `POST /api/auth/login` retourne `429` au 6ème appel consécutif depuis la même IP en moins d'une minute (avec 5 appels autorisés)
 - Le compteur `stockpro_rate_limit_rejections_total{endpoint="/api/auth/login"}` s'incrémente dans Prometheus à chaque 429
 - Le panel **Rejets rate limit** est visible dans le dashboard Grafana avec des données réelles
 - Les endpoints `GET /api/mouvements-stock` et `GET /api/stocks` acceptent les paramètres `page`, `size`, `sort` et retournent un objet paginé

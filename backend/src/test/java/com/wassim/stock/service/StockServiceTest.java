@@ -85,6 +85,25 @@ class StockServiceTest {
     }
 
     @Test
+    void findAllForAdminForwardsPageableToRepository() {
+        Utilisateur admin = utilisateur(1L, "admin@stockpro.local", Role.ADMIN, null);
+        Stock existingStock = stock(20L, produit(30L, "Laptop"), entrepot(1L, "Tunis", 100), 12, 5);
+        PageRequest pageable = PageRequest.of(1, 5);
+
+        authenticateAs(admin.getEmail());
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(stockRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(existingStock), pageable, 6));
+
+        PagedResponse<StockResponse> response = stockService.findAll(pageable);
+
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.size()).isEqualTo(5);
+        assertThat(response.totalElements()).isEqualTo(6);
+        verify(stockRepository).findAll(pageable);
+        verify(stockRepository, never()).findByEntrepotId(existingStock.getEntrepot().getId(), pageable);
+    }
+
+    @Test
     void createRejectsQuantityAboveWarehouseAvailableCapacity() {
         Entrepot tunis = entrepot(1L, "Tunis", 100);
         Produit laptop = produit(2L, "Laptop");

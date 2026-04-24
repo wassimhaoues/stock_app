@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { Alerte } from '../../core/models/alerte.model';
 import {
@@ -212,5 +212,40 @@ describe('HomePageComponent', () => {
     expect(component.isLoading()).toBe(false);
     expect(component.feedbackMessage()).toBe('Dashboard HS');
     expect(fixture.nativeElement.textContent).toContain('Dashboard HS');
+  });
+
+  it('shows the loading state before rendering the connected dashboard', () => {
+    const stats$ = new Subject<DashboardStats>();
+    const kpis$ = new Subject<DashboardKpis>();
+    const analytics$ = new Subject<DashboardAnalytics>();
+    const adminAnalytics$ = new Subject<AdminAnalytics>();
+    const alertes$ = new Subject<Alerte[]>();
+    dashboardService.getStats.mockReturnValueOnce(stats$.asObservable());
+    dashboardService.getKpis.mockReturnValueOnce(kpis$.asObservable());
+    dashboardService.getAnalytics.mockReturnValueOnce(analytics$.asObservable());
+    dashboardService.getAdminAnalytics.mockReturnValueOnce(adminAnalytics$.asObservable());
+    alerteService.findAll.mockReturnValueOnce(alertes$.asObservable());
+
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    expect(component.isLoading()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Chargement des indicateurs...');
+
+    stats$.next(stats);
+    stats$.complete();
+    kpis$.next(kpis);
+    kpis$.complete();
+    analytics$.next(analytics);
+    analytics$.complete();
+    adminAnalytics$.next(adminAnalytics);
+    adminAnalytics$.complete();
+    alertes$.next(alertes);
+    alertes$.complete();
+    fixture.detectChanges();
+
+    expect(component.isLoading()).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('Tableau de bord analytique');
+    expect(fixture.nativeElement.textContent).toContain('Performance multi-entrepôts');
   });
 });

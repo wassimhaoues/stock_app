@@ -1418,7 +1418,251 @@ npm run test -- --coverage
 
 ---
 
-## Phase 22 — Finalisation et soutenance [TODO]
+## Phase 22 — Gouvernance CI/CD GitHub Actions & GitOps PR flow [TODO]
+
+**Objectif :** rendre la chaîne GitHub Actions plus sûre, plus propre et plus proche d'un fonctionnement entreprise réel en supprimant les déploiements depuis du code non validé, en imposant des checks cohérents sur `main`, et en remplaçant le push GitOps direct sur `main` par un flux PR contrôlé.
+
+---
+
+### 22.1 — Gouvernance de la branche `main`
+
+**But :** s'assurer qu'un changement qui atteint `main` ne déclenche jamais de CD tant que les validations attendues ne sont pas terminées avec succès.
+
+**Travaux :**
+
+- refactorer la logique GitHub Actions pour que le workflow CD attende explicitement la réussite de **CI** et de **Security** avant toute publication ou toute modification GitOps
+- conserver le cas d'usage où un administrateur peut pousser directement sur `main`, mais faire en sorte que ce push :
+  - déclenche `ci.yml`
+  - déclenche `security.yml`
+  - ne déclenche `cd.yml` que si les deux workflows sont passés au vert
+- supprimer toute possibilité pour le CD de publier des images ou de modifier GitOps à partir d'un commit `main` encore non validé
+- documenter clairement la différence entre :
+  - push direct administrateur sur `main`
+  - PR de contributeur vers `main`
+  - PR GitOps créée par `github-actions[bot]`
+
+**Fichiers à toucher lors de l'implémentation :**
+
+- `.github/workflows/cd.yml`
+- `.github/workflows/ci.yml`
+- `.github/workflows/security.yml`
+- `docs/06-ci-cd/README.md`
+- `docs/06-ci-cd/cd.md`
+- `docs/06-ci-cd/ci.md`
+- `docs/06-ci-cd/quality-gates.md`
+
+---
+
+### 22.2 — PR contributeurs avec auto-merge contrôlé
+
+**But :** faire converger les PR "normales" vers un modèle où les validations tournent avant merge et où GitHub peut auto-merger uniquement après réussite des checks obligatoires.
+
+**Travaux :**
+
+- conserver l'exécution de `ci.yml` sur `pull_request` vers `main`
+- conserver l'exécution de `security.yml` sur `pull_request` vers `main`
+- ajouter un petit job de validation manifests/YAML si possible, léger et indépendant du build applicatif
+- préparer le dépôt pour l'auto-merge GitHub des PR contributeurs autorisés après réussite des checks obligatoires
+- expliciter dans la documentation que l'auto-merge doit rester gouverné par la protection de branche / ruleset GitHub et non par un contournement applicatif
+- décrire le comportement attendu :
+  - PR ouverte
+  - CI + Security + validation légère passent
+  - merge automatique
+  - merge sur `main`
+  - déclenchement du CD ensuite uniquement sur code validé
+
+**Fichiers à toucher lors de l'implémentation :**
+
+- `.github/workflows/ci.yml`
+- `.github/workflows/security.yml`
+- éventuellement un nouveau workflow léger du type `.github/workflows/gitops-validate.yml` ou `.github/workflows/pr-validation.yml`
+- `docs/06-ci-cd/README.md`
+- `docs/06-ci-cd/ci.md`
+- `docs/06-ci-cd/quality-gates.md`
+
+---
+
+### 22.3 — Remplacement du push GitOps direct par une PR GitOps
+
+**But :** supprimer la stratégie actuelle "build images puis push direct sur `main` via clé SSH" et la remplacer par un flux PR GitOps utilisant `GITHUB_TOKEN`.
+
+**Comportement actuel à retirer :**
+
+- le CD met à jour `k8s/overlays/gitops/kustomization.yaml`
+- le CD pousse directement sur `main`
+- le CD dépend d'une clé SSH de déploiement pour contourner la protection de branche
+
+**Nouveau comportement cible :**
+
+- `cd.yml` build et pousse les images backend/frontend vers GHCR
+- `cd.yml` met à jour `k8s/overlays/gitops/kustomization.yaml`
+- `cd.yml` crée une branche GitOps dédiée, par exemple `gitops/bump-images-sha-xxxxxxx`
+- `cd.yml` ouvre une PR vers `main` avec `GITHUB_TOKEN`
+- titre de PR attendu : `chore(gitops): bump images to sha-xxxxxxx`
+- corps de PR attendu :
+  - quelles images ont été mises à jour
+  - quels tags ont été publiés
+  - quel commit applicatif a déclenché le bump
+- la PR GitOps est auto-mergeable uniquement après les checks légers définis pour ce type de changement
+
+**Contraintes à respecter :**
+
+- ne plus dépendre d'une clé SSH de déploiement pour écrire dans `main`
+- utiliser des permissions explicites sur les jobs qui créent / gèrent la PR :
+
+```yaml
+permissions:
+  contents: write
+  pull-requests: write
+```
+
+- éviter toute boucle CI/CD déclenchée par le commit GitOps lui-même
+- faire en sorte qu'ArgoCD ne synchronise qu'après merge de la PR GitOps dans `main`
+
+**Fichiers à toucher lors de l'implémentation :**
+
+- `.github/workflows/cd.yml`
+- `k8s/overlays/gitops/kustomization.yaml`
+- `docs/06-ci-cd/cd.md`
+- `docs/06-ci-cd/secrets.md`
+- `docs/05-gitops/README.md`
+- `docs/05-gitops/troubleshooting.md`
+
+---
+
+### 22.4 — Checks légers pour les PR GitOps
+
+**But :** éviter de relancer les jobs lourds application sur une PR ne modifiant que les manifests GitOps, tout en gardant une validation utile avant merge.
+
+**Travaux :**
+
+- définir une stratégie de détection des PR GitOps créées par `github-actions[bot]`
+- pour ces PR :
+  - ne pas lancer les builds applicatifs lourds
+  - ne pas lancer SonarCloud
+  - ne pas lancer les scans Security lourds (CodeQL / OWASP / Trivy)
+  - lancer uniquement des validations légères
+- validations légères à prévoir si réalisables dans GitHub Actions :
+  - validation YAML
+  - validation de manifests Kubernetes
+  - `kustomize build k8s/overlays/gitops`
+  - éventuellement `kubectl apply --dry-run=client` ou `--dry-run=server` si le contexte d'exécution le permet
+- documenter précisément quelles validations s'appliquent :
+  - aux PR contributeurs
+  - aux pushes directs admin sur `main`
+  - aux PR GitOps bot
+
+**Fichiers à toucher lors de l'implémentation :**
+
+- `.github/workflows/ci.yml`
+- `.github/workflows/security.yml`
+- éventuellement un nouveau workflow léger dédié GitOps
+- `docs/06-ci-cd/ci.md`
+- `docs/06-ci-cd/quality-gates.md`
+- `docs/05-gitops/troubleshooting.md`
+
+---
+
+### 22.5 — Auto-merge et protection de branche significative
+
+**But :** faire de l'auto-merge un accélérateur de flux, pas un contournement de gouvernance.
+
+**Travaux :**
+
+- configurer le dépôt pour que les PR contributeurs puissent être auto-mergées après réussite des checks requis
+- configurer le dépôt pour que les PR GitOps bot puissent être auto-mergées après réussite des checks légers requis
+- garder une protection de branche / ruleset significative :
+  - checks requis sur `main`
+  - absence d'écriture GitOps directe sur `main`
+  - merge par PR comme chemin nominal
+- documenter très explicitement le fait qu'un admin qui bypass la protection peut toujours pousser, mais que le **déploiement** doit rester conditionné par les workflows verts
+- vérifier que la stratégie choisie n'introduit pas de boucle :
+  - le merge d'une PR GitOps dans `main` ne doit pas relancer un cycle complet inutile
+  - le workflow CD ne doit pas republier des images sur la base de son propre bump GitOps
+
+**Fichiers à toucher lors de l'implémentation :**
+
+- `.github/workflows/cd.yml`
+- `.github/workflows/ci.yml`
+- `.github/workflows/security.yml`
+- `docs/06-ci-cd/README.md`
+- `docs/06-ci-cd/cd.md`
+- `docs/06-ci-cd/quality-gates.md`
+
+---
+
+### 22.6 — Documentation et travaux manuels GitHub à prévoir
+
+**But :** compléter le flux par la documentation et les actions GitHub UI qui ne peuvent pas être codées uniquement dans le dépôt.
+
+**Documentation à mettre à jour lors de l'implémentation :**
+
+- `docs/06-ci-cd/README.md`
+  - vue d'ensemble du nouveau flux
+  - différence entre PR contributeur, push admin direct et PR GitOps bot
+- `docs/06-ci-cd/ci.md`
+  - nouveaux déclencheurs / filtres / jobs légers
+- `docs/06-ci-cd/cd.md`
+  - CD conditionné à CI + Security
+  - création de PR GitOps au lieu d'un push direct
+  - moment exact où ArgoCD synchronise
+- `docs/06-ci-cd/quality-gates.md`
+  - séparation des checks lourds et des checks légers
+  - checks requis pour qu'une PR soit mergeable
+- `docs/06-ci-cd/secrets.md`
+  - suppression ou réduction du rôle de la deploy key SSH
+  - rôle de `GITHUB_TOKEN`
+- `docs/05-gitops/README.md`
+  - nouveau flux GitOps PR → merge → sync ArgoCD
+- `docs/05-gitops/troubleshooting.md`
+  - dépannage des boucles GitOps
+  - dépannage d'une PR bot non mergée
+  - dépannage d'un sync ArgoCD qui n'arrive qu'après merge
+
+**Travaux manuels GitHub UI à documenter dans un nouveau guide :**
+
+- créer `docs/13-manual-work/phase-22-github-governance-setup.md`
+- y documenter au minimum :
+  - activation de l'auto-merge sur le dépôt
+  - configuration du ruleset / branch protection de `main`
+  - définition des required status checks pour les PR normales
+  - définition des checks légers requis pour les PR GitOps bot si GitHub rulesets le permet
+  - gestion du bypass admin
+  - vérification des permissions du `GITHUB_TOKEN`
+  - éventuelle suppression de la deploy key SSH devenue inutile
+  - comment vérifier qu'ArgoCD ne sync qu'après merge dans `main`
+
+**Points d'attention / limites à traiter pendant l'implémentation :**
+
+- GitHub ne permet pas toujours d'exprimer finement des règles différentes selon l'auteur de la PR sans rulesets adaptés ; documenter la solution réellement retenue
+- l'auto-merge bot avec `GITHUB_TOKEN` peut nécessiter une combinaison workflow + réglages dépôt
+- selon les permissions du token par défaut, certains appels GitHub API ou actions marketplace peuvent nécessiter des permissions explicites supplémentaires
+
+---
+
+**Définition of done :**
+
+- un push direct administrateur sur `main` déclenche bien `CI` et `Security`, mais `CD` n'exécute la publication et le bump GitOps qu'après réussite des deux
+- une PR contributeur vers `main` exécute `CI`, `Security` et la validation légère prévue
+- une PR contributeur autorisée peut être auto-mergée après réussite des checks requis
+- le workflow CD ne pousse plus jamais `k8s/overlays/gitops/kustomization.yaml` directement sur `main`
+- le workflow CD crée une PR GitOps via `GITHUB_TOKEN`
+- la PR GitOps n'exécute que les checks légers prévus
+- la PR GitOps peut être auto-mergée après réussite de ces checks
+- aucune boucle CI/CD n'est introduite
+- ArgoCD ne synchronise qu'après merge de la PR GitOps dans `main`
+- la documentation CI/CD et GitOps reflète fidèlement le nouveau comportement
+- un guide manuel GitHub UI existe dans `docs/13-manual-work/phase-22-github-governance-setup.md`
+
+**Sortie attendue :**
+
+- gouvernance GitHub Actions / GitOps durcie, avec déploiement uniquement depuis du code validé et flux GitOps piloté par PR
+
+**Branch git :** `feature/devops-phase-22-github-governance`
+
+---
+
+## Phase 23 — Finalisation et soutenance [TODO]
 
 **Objectif :** stabiliser la solution complète et préparer une démonstration finale reproductible et professionnelle.
 
@@ -1445,6 +1689,6 @@ npm run test -- --coverage
 
 - version finale prête pour dépôt et présentation
 
-**Branch git :** `feature/devops-phase-22-finalization`
+**Branch git :** `feature/devops-phase-23-finalization`
 
 ---

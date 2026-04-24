@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
-
+// Configuration de la cache avec Caffeine pour les produits et les entrepôts
 @Configuration
 @EnableCaching
 public class CacheConfig {

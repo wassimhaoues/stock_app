@@ -33,3 +33,5 @@ ArgoCD surveille :
 
 Toute modification dans ce chemin déclenche une synchronisation automatique.
 Avec le flux 22.3, cette modification n'arrive dans `main` qu'après merge de la PR GitOps.
+
+Les réglages GitHub UI associés à ce flux sont détaillés dans [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).

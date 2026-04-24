@@ -44,8 +44,9 @@ permissions:
 
 1. GitHub → Settings → Actions → General
 2. Dans **Workflow permissions**, choisir **Read and write permissions**
-3. Activer l'auto-merge du dépôt si nécessaire
-4. Vérifier que le ruleset / branch protection de `main` autorise le merge uniquement après les checks requis
+3. Activer **Allow GitHub Actions to create and approve pull requests**
+4. Activer l'auto-merge du dépôt si nécessaire
+5. Vérifier que le ruleset / branch protection de `main` autorise le merge uniquement après les checks requis
 
 ### Vérifier la configuration
 
@@ -56,6 +57,8 @@ Après un merge applicatif sur `main`, le workflow CD doit :
 3. Créer une branche `gitops/bump-images-sha-XXXXXXX`
 4. Ouvrir une PR `chore(gitops): bump images to sha-XXXXXXX`
 5. Activer l'auto-merge GitHub sur cette PR
+
+Le guide GitHub UI complet de la phase 22 est disponible dans [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).
 
 ## Configurer NVD_API_KEY (optionnel)
 

@@ -55,31 +55,32 @@
 
 ## Suivi des phases
 
-| Phase | Nom                                              | Statut |
-| ----- | ------------------------------------------------ | ------ |
-| 0     | Planification & décisions                        | DONE   |
-| 1     | Fondations : backend + frontend                  | DONE   |
-| 2     | Authentification & sécurité                      | DONE   |
-| 3     | Administration utilisateurs & permissions        | DONE   |
-| 4     | Gestion des entrepôts (end-to-end)               | DONE   |
-| 5     | Gestion des produits (end-to-end)                | DONE   |
-| 6     | Stocks & mouvements (end-to-end)                 | DONE   |
-| 7     | Gestion de la capacité des entrepôts             | DONE   |
-| 8     | Alertes & dashboard analytique                   | DONE   |
-| 9     | Revue UX/UI frontend professionnelle             | DONE   |
-| 10    | Validation métier, sécurité & données réalistes  | DONE   |
-| 11    | Tests et nettoyage final                         | DONE   |
-| 12    | Socle d’exécution locale et préparation du poste | DONE   |
-| 13    | Conteneurisation complète                        | DONE   |
-| 14    | CI de base sur GitHub Actions                    | DONE   |
-| 15    | Qualité logicielle et sécurité de pipeline       | DONE   |
-| 16    | Déploiement Kubernetes local                     | DONE   |
-| 17    | GitOps et ArgoCD                                 | DONE   |
-| 18    | CD automatisé par image versionnée               | DONE   |
-| 19    | Logging centralisé backend                       | DONE   |
-| 20    | Observabilité et alerting                        | DONE   |
-| 21    | Améliorations backend & polish frontend          | TODO   |
-| 22    | Finalisation et soutenance                       | TODO   |
+| Phase | Nom                                               | Statut |
+| ----- | ------------------------------------------------- | ------ |
+| 0     | Planification & décisions                         | DONE   |
+| 1     | Fondations : backend + frontend                   | DONE   |
+| 2     | Authentification & sécurité                       | DONE   |
+| 3     | Administration utilisateurs & permissions         | DONE   |
+| 4     | Gestion des entrepôts (end-to-end)                | DONE   |
+| 5     | Gestion des produits (end-to-end)                 | DONE   |
+| 6     | Stocks & mouvements (end-to-end)                  | DONE   |
+| 7     | Gestion de la capacité des entrepôts              | DONE   |
+| 8     | Alertes & dashboard analytique                    | DONE   |
+| 9     | Revue UX/UI frontend professionnelle              | DONE   |
+| 10    | Validation métier, sécurité & données réalistes   | DONE   |
+| 11    | Tests et nettoyage final                          | DONE   |
+| 12    | Socle d’exécution locale et préparation du poste  | DONE   |
+| 13    | Conteneurisation complète                         | DONE   |
+| 14    | CI de base sur GitHub Actions                     | DONE   |
+| 15    | Qualité logicielle et sécurité de pipeline        | DONE   |
+| 16    | Déploiement Kubernetes local                      | DONE   |
+| 17    | GitOps et ArgoCD                                  | DONE   |
+| 18    | CD automatisé par image versionnée                | DONE   |
+| 19    | Logging centralisé backend                        | DONE   |
+| 20    | Observabilité et alerting                         | DONE   |
+| 21    | Améliorations backend & polish frontend           | TODO   |
+| 22    | Gouvernance CI/CD GitHub Actions & GitOps PR flow | DONE   |
+| 23    | Finalisation et soutenance                        | TODO   |
 
 ---
 
@@ -1421,7 +1422,7 @@ npm run test -- --coverage
 
 ---
 
-## Phase 22 — Gouvernance CI/CD GitHub Actions & GitOps PR flow [TODO]
+## Phase 22 — Gouvernance CI/CD GitHub Actions & GitOps PR flow [DONE]
 
 **Objectif :** rendre la chaîne GitHub Actions plus sûre, plus propre et plus proche d'un fonctionnement entreprise réel en supprimant les déploiements depuis du code non validé, en imposant des checks cohérents sur `main`, et en remplaçant le push GitOps direct sur `main` par un flux PR contrôlé.
 
@@ -1594,7 +1595,7 @@ permissions:
 
 ---
 
-### 22.6 — Documentation et travaux manuels GitHub à prévoir
+### 22.6 — Documentation et travaux manuels GitHub à prévoir [DONE]
 
 **But :** compléter le flux par la documentation et les actions GitHub UI qui ne peuvent pas être codées uniquement dans le dépôt.
 

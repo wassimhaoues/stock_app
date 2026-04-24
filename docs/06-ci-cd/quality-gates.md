@@ -170,6 +170,8 @@ La solution réellement retenue dans le dépôt est donc :
 - PR GitOps bot auto-mergeable seulement après ses checks légers requis
 - aucun cycle CD complet inutile après le merge d'une PR GitOps
 
+Pour la configuration GitHub UI détaillée des checks requis, voir [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).
+
 ## Gouvernance `main` en phase 22.1
 
 Pour qu'un commit déjà présent sur `main` puisse être livré par `cd.yml`, il faut maintenant deux validations explicites sur ce même SHA :

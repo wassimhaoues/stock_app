@@ -2,13 +2,14 @@
 
 Cette section couvre les trois workflows GitHub Actions du projet.
 
-| Fichier                                 | Contenu                                                        |
-| --------------------------------------- | -------------------------------------------------------------- |
-| [ci.md](ci.md)                          | Pipeline CI : tests, build, SonarCloud                         |
-| [cd.md](cd.md)                          | Pipeline CD : détection des changements, build GHCR, PR GitOps |
-| [pr-validation.md](ci.md#pr-validation) | Validation légère PR : YAML et manifests                       |
-| [quality-gates.md](quality-gates.md)    | Quality gates, seuils, scans de sécurité                       |
-| [secrets.md](secrets.md)                | Secrets GitHub requis et procédure de configuration            |
+| Fichier                                                                                      | Contenu                                                        |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| [ci.md](ci.md)                                                                               | Pipeline CI : tests, build, SonarCloud                         |
+| [cd.md](cd.md)                                                                               | Pipeline CD : détection des changements, build GHCR, PR GitOps |
+| [pr-validation.md](ci.md#pr-validation)                                                      | Validation légère PR : YAML et manifests                       |
+| [quality-gates.md](quality-gates.md)                                                         | Quality gates, seuils, scans de sécurité                       |
+| [secrets.md](secrets.md)                                                                     | Secrets GitHub requis et procédure de configuration            |
+| [phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md) | Réglages GitHub UI manuels pour la phase 22                    |
 
 ## Workflows disponibles
 
@@ -72,3 +73,7 @@ Le modèle cible reste le suivant :
 - un administrateur peut toujours bypasser la protection GitHub, mais pas la gouvernance de déploiement: `CD` attend toujours `CI` et `Security` sur le commit `main`
 
 L'auto-merge ne remplace donc pas la protection de branche. Il l'exécute plus vite quand les conditions sont déjà satisfaites.
+
+## Guide manuel
+
+Les réglages GitHub UI qui ne peuvent pas être codés dans le dépôt sont documentés dans [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).

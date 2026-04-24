@@ -155,3 +155,5 @@ kubectl get deployment stock-backend -n stockpro \
 # Comparer avec le kustomization.yaml
 grep newTag k8s/overlays/gitops/kustomization.yaml
 ```
+
+Pour les réglages GitHub UI liés à la phase 22, voir aussi [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).

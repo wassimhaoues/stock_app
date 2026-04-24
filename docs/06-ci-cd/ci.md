@@ -134,3 +134,5 @@ Pour une PR GitOps bot vers `main`, le dépôt est maintenant préparé pour un 
 - `GitOps Validation`
 
 Les checks lourds `CI` et `Security` sont volontairement ignorés sur ce type de PR.
+
+La configuration GitHub UI à appliquer pour ces checks requis est documentée dans [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).

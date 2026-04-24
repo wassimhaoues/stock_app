@@ -154,10 +154,10 @@ jobs:
               `Timeout atteint en attendant CI et Security sur ${headSha}.`
             );
 
-      - name: Checkout — commit validé avec parent pour git diff
+      - name: Checkout — commit validé pour git diff sur la plage du push
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Calculer le tag d'image (sha-<7 chars>)
         id: version
@@ -169,7 +169,7 @@ jobs:
       - name: Détecter les chemins modifiés (backend/ et frontend/)
         id: paths
         run: |
-          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          CHANGED=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
 
           echo "Fichiers modifies dans ce commit :"
           echo "${CHANGED}"

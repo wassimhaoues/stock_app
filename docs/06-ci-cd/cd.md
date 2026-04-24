@@ -196,3 +196,5 @@ Le depot doit etre configure pour que :
 - les PR GitOps bot ne deviennent auto-mergeables qu'apres `GitOps Validation`
 
 Les workflows n'essaient jamais de contourner ces regles. Ils produisent des statuts et demandent l'auto-merge, mais GitHub reste l'autorite finale de fusion.
+
+Les réglages GitHub UI nécessaires pour ce comportement sont documentés dans [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).

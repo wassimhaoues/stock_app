@@ -45,6 +45,20 @@ class ProduitServiceTest {
     }
 
     @Test
+    void createTrimsAndPersistsProductFields() {
+        when(produitRepository.findByNomIgnoreCase("Phone")).thenReturn(Optional.empty());
+        when(produitRepository.save(any(Produit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ProduitResponse response = produitService.create(
+                new ProduitRequest(" Phone ", " Informatique ", BigDecimal.valueOf(999), " Fournisseur ", 5)
+        );
+
+        assertThat(response.nom()).isEqualTo("Phone");
+        assertThat(response.categorie()).isEqualTo("Informatique");
+        assertThat(response.fournisseur()).isEqualTo("Fournisseur");
+    }
+
+    @Test
     void findByIdThrowsWhenNotFound() {
         when(produitRepository.findById(99L)).thenReturn(Optional.empty());
 

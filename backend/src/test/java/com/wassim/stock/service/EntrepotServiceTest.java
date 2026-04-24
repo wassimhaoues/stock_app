@@ -74,6 +74,22 @@ class EntrepotServiceTest {
     }
 
     @Test
+    void createTrimsAndPersistsWarehouseFields() {
+        when(entrepotRepository.findByNomIgnoreCase("Sfax")).thenReturn(Optional.empty());
+        when(entrepotRepository.save(any(Entrepot.class))).thenAnswer(invocation -> {
+            Entrepot entrepot = invocation.getArgument(0);
+            entrepot.setId(5L);
+            return entrepot;
+        });
+        when(stockRepository.sumQuantiteByEntrepotId(5L)).thenReturn(0L);
+
+        EntrepotResponse response = entrepotService.create(new EntrepotRequest(" Sfax ", " Route sud ", 200));
+
+        assertThat(response.nom()).isEqualTo("Sfax");
+        assertThat(response.adresse()).isEqualTo("Route sud");
+    }
+
+    @Test
     void findByIdThrowsForNonAdminAccessingOtherEntrepot() {
         Entrepot tunis = entrepot(1L, "Tunis", 100);
         Entrepot sfax = entrepot(2L, "Sfax", 100);

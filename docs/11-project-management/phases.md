@@ -1282,7 +1282,7 @@ Les endpoints de liste peuvent retourner des centaines de lignes. Ajouter la pag
 
 ---
 
-### 21.3 — Cache applicatif Spring (backend)
+### 21.3 — Cache applicatif Spring (backend) [DONE]
 
 Les listes de produits et d'entrepôts changent rarement. Mettre en cache leurs réponses pour réduire la charge DB.
 
@@ -1295,6 +1295,7 @@ Les listes de produits et d'entrepôts changent rarement. Mettre en cache leurs 
 - Configurer deux caches nommés :
   - `produits` : TTL 5 minutes, max 500 entrées
   - `entrepots` : TTL 5 minutes, max 200 entrées
+  - `entrepots` doit utiliser une clé de cache dépendante du contexte utilisateur (au minimum rôle / portée d'entrepôt) car `findAll()` retourne des données différentes pour `ADMIN` et pour les comptes affectés à un entrepôt
 - Annoter `ProduitService.findAll()` avec `@Cacheable("produits")`
 - Annoter `EntrepotService.findAll()` avec `@Cacheable("entrepots")`
 - Annoter les méthodes d'écriture (`save`, `update`, `delete`) avec `@CacheEvict` sur le cache correspondant pour invalider l'entrée après modification

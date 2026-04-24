@@ -13,10 +13,14 @@ import com.wassim.stock.repository.MouvementStockRepository;
 import com.wassim.stock.repository.StockRepository;
 import com.wassim.stock.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static com.wassim.stock.config.CacheConfig.ENTREPOTS_CACHE;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +31,7 @@ public class EntrepotService {
     private final StockRepository stockRepository;
     private final MouvementStockRepository mouvementStockRepository;
 
+    @Cacheable(value = ENTREPOTS_CACHE, key = "@cacheKeyService.entrepotsKey()")
     public List<EntrepotResponse> findAll() {
         Utilisateur currentUser = getCurrentUser();
         if (currentUser.getRole() == Role.ADMIN) {
@@ -50,6 +55,7 @@ public class EntrepotService {
         return toResponse(entrepot);
     }
 
+    @CacheEvict(value = ENTREPOTS_CACHE, allEntries = true)
     public EntrepotResponse create(EntrepotRequest request) {
         validateUniqueName(request.nom(), null);
 
@@ -58,6 +64,7 @@ public class EntrepotService {
         return toResponse(entrepotRepository.save(entrepot));
     }
 
+    @CacheEvict(value = ENTREPOTS_CACHE, allEntries = true)
     public EntrepotResponse update(Long id, EntrepotRequest request) {
         Entrepot entrepot = findEntityById(id);
         validateUniqueName(request.nom(), id);
@@ -66,6 +73,7 @@ public class EntrepotService {
         return toResponse(entrepotRepository.save(entrepot));
     }
 
+    @CacheEvict(value = ENTREPOTS_CACHE, allEntries = true)
     public void delete(Long id) {
         Entrepot entrepot = findEntityById(id);
         if (utilisateurRepository.existsByEntrepotId(id)) {

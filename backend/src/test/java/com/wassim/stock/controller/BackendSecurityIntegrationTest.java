@@ -97,6 +97,19 @@ class BackendSecurityIntegrationTest {
     }
 
     @Test
+    void actuatorCachesEndpointIsExposedForAuthenticatedAdmin() throws Exception {
+        mockMvc.perform(get("/api/produits")
+                        .with(user("admin@stockpro.local").roles("ADMIN")))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/actuator/caches")
+                        .with(user("admin@stockpro.local").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cacheManagers.cacheManager.caches.produits").exists())
+                .andExpect(jsonPath("$.cacheManagers.cacheManager.caches.entrepots").exists());
+    }
+
+    @Test
     void unsafeRequestWithAuthCookieRequiresCsrfToken() throws Exception {
         Cookie authCookie = loginAsAdmin();
         StockRequest request = new StockRequest(1L, 1L, 1, 1);

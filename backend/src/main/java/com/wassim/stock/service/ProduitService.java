@@ -9,9 +9,13 @@ import com.wassim.stock.repository.MouvementStockRepository;
 import com.wassim.stock.repository.ProduitRepository;
 import com.wassim.stock.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static com.wassim.stock.config.CacheConfig.PRODUITS_CACHE;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +25,7 @@ public class ProduitService {
     private final StockRepository stockRepository;
     private final MouvementStockRepository mouvementStockRepository;
 
+    @Cacheable(PRODUITS_CACHE)
     public List<ProduitResponse> findAll() {
         return produitRepository.findAll()
                 .stream()
@@ -32,6 +37,7 @@ public class ProduitService {
         return toResponse(findEntityById(id));
     }
 
+    @CacheEvict(value = PRODUITS_CACHE, allEntries = true)
     public ProduitResponse create(ProduitRequest request) {
         validateUniqueName(request.nom(), null);
         Produit produit = new Produit();
@@ -39,6 +45,7 @@ public class ProduitService {
         return toResponse(produitRepository.save(produit));
     }
 
+    @CacheEvict(value = PRODUITS_CACHE, allEntries = true)
     public ProduitResponse update(Long id, ProduitRequest request) {
         Produit produit = findEntityById(id);
 
@@ -47,6 +54,7 @@ public class ProduitService {
         return toResponse(produitRepository.save(produit));
     }
 
+    @CacheEvict(value = PRODUITS_CACHE, allEntries = true)
     public void delete(Long id) {
         Produit produit = findEntityById(id);
         if (stockRepository.existsByProduitId(id) || mouvementStockRepository.existsByProduitId(id)) {

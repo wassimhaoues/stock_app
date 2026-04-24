@@ -25,7 +25,7 @@ data:
         metrics_path: /actuator/prometheus
         static_configs:
           - targets:
-              - stockpro-backend.stockpro.svc.cluster.local:8085
+              - stock-backend.stockpro.svc.cluster.local:8085
 
   stockpro_alerts.yml: |
     groups:

@@ -26,9 +26,13 @@ Règles :
 
 ## Protection anti-boucle
 
-Le job `detect-changes` vérifie que le message du commit ne commence pas par `chore(gitops):`. Cela empêche le commit GitOps d'être repris par le CD.
+Le job `wait-for-main-validations` ne démarre pas pour un commit `main` dont le message commence par `chore(gitops):`.
 
-De plus, le commit GitOps contient `[skip ci]` dans son message, ce qui empêche GitHub de déclencher la CI sur ce commit.
+Le flux 22.3 repose sur une PR GitOps mergee en **squash** :
+
+- le commit final sur `main` reprend donc le titre `chore(gitops): bump images to sha-xxxxxxx`
+- ce push ne relance pas une nouvelle publication CD
+- ArgoCD ne synchronise qu'apres le merge de la PR GitOps
 
 ## Jobs
 
@@ -91,28 +95,30 @@ L'utilisation de `always()` est nécessaire car un job "skipped" (build non déc
 
 **Étapes :**
 
-1. Checkout avec `fetch-depth: 0` (nécessaire pour le push)
-2. Configurer l'agent SSH avec le secret `SSH_PRIVATE_KEY`
-3. Installer `kustomize v5.4.3`
-4. Mettre à jour `k8s/overlays/gitops/kustomization.yaml` :
+1. Checkout avec `fetch-depth: 0`
+2. Installer `kustomize v5.4.3`
+3. Mettre à jour `k8s/overlays/gitops/kustomization.yaml`
+4. Créer une branche GitOps dédiée, par exemple `gitops/bump-images-sha-xxxxxxx`
+5. Committer le changement avec le titre `chore(gitops): bump images to sha-xxxxxxx`
+6. Pousser cette branche avec `GITHUB_TOKEN`
+7. Ouvrir ou mettre à jour une PR vers `main`
+8. Activer l'auto-merge GitHub en `squash`
 
 ```bash
-git remote set-url origin git@github.com:${{ github.repository }}.git
 git fetch origin main
 git checkout main
 git pull --rebase origin main
+git switch -C gitops/bump-images-sha-xxxxxxx
 
 cd k8s/overlays/gitops
-# Met à jour uniquement les images qui ont été buildées
+# Met a jour uniquement les images qui ont ete buildées
 kustomize edit set image \
   "stockpro-backend=ghcr.io/wassimhaoues/stockpro-backend:sha-XXXXXXX"
-```
 
-5. Créer et pousser le commit GitOps :
-
-```bash
-git commit -m "chore(gitops): bump images to sha-XXXXXXX [skip ci]"
-git push origin main
+git commit -m "chore(gitops): bump images to sha-XXXXXXX"
+git push origin gitops/bump-images-sha-XXXXXXX
+gh pr create --base main --head gitops/bump-images-sha-XXXXXXX ...
+gh pr merge --auto --squash --delete-branch <numero-ou-url-pr>
 ```
 
 ## Stratégie de tags d'image
@@ -137,14 +143,16 @@ Seules les images correspondant aux changements de code sont buildées. Si seul 
 
 Cela réduit le temps d'exécution et évite de publier une image identique avec un nouveau tag.
 
-## Authentification GHCR vs SSH
+## Authentification GHCR vs GitHub API
 
-| Opération                      | Mécanisme                                     |
-| ------------------------------ | --------------------------------------------- |
-| Push images vers GHCR          | `GITHUB_TOKEN` (permission `packages: write`) |
-| Push commit GitOps vers `main` | SSH deploy key (secret `SSH_PRIVATE_KEY`)     |
+| Opération                  | Mécanisme                                          |
+| -------------------------- | -------------------------------------------------- |
+| Push images vers GHCR      | `GITHUB_TOKEN` (permission `packages: write`)      |
+| Push branche GitOps        | `GITHUB_TOKEN` (permission `contents: write`)      |
+| Créer / gérer la PR GitOps | `GITHUB_TOKEN` (permission `pull-requests: write`) |
+| Auto-merge de la PR GitOps | GitHub auto-merge + ruleset / branch protection    |
 
-La deploy key SSH est nécessaire car la branche `main` est protégée. La règle "allow deploy keys" dans les branch rulesets permet à la clé SSH de bypasser la protection.
+La branche `main` n'est plus ecrite directement par le workflow CD. Le pipeline ne depend donc plus d'une deploy key SSH pour contourner la protection de branche.
 
 ## Différence entre les trois flux `main`
 
@@ -160,8 +168,9 @@ La deploy key SSH est nécessaire car la branche `main` est protégée. La règl
 - après merge, le commit arrive sur `main`
 - ce push sur `main` relance `CI`, `Security` puis `CD` attend leurs résultats avant de publier
 
-### Commit GitOps `github-actions[bot]`
+### PR GitOps `github-actions[bot]`
 
-- le commit utilise `[skip ci]`
-- les workflows `CI`, `Security` et `CD` sont ignorés
-- la garde complémentaire `chore(gitops):` évite une boucle si un retrigger manuel survient
+- `CD` cree une branche GitOps puis une PR vers `main`
+- cette PR peut etre auto-mergee par GitHub une fois les checks requis au vert
+- le merge en squash cree un commit `chore(gitops): ...` sur `main`
+- ce commit ne republie pas les images et evite une boucle CD

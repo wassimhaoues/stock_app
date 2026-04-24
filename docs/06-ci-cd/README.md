@@ -2,22 +2,22 @@
 
 Cette section couvre les trois workflows GitHub Actions du projet.
 
-| Fichier                                 | Contenu                                                          |
-| --------------------------------------- | ---------------------------------------------------------------- |
-| [ci.md](ci.md)                          | Pipeline CI : tests, build, SonarCloud                           |
-| [cd.md](cd.md)                          | Pipeline CD : détection des changements, build GHCR, bump GitOps |
-| [pr-validation.md](ci.md#pr-validation) | Validation légère PR : YAML et manifests                         |
-| [quality-gates.md](quality-gates.md)    | Quality gates, seuils, scans de sécurité                         |
-| [secrets.md](secrets.md)                | Secrets GitHub requis et procédure de configuration              |
+| Fichier                                 | Contenu                                                        |
+| --------------------------------------- | -------------------------------------------------------------- |
+| [ci.md](ci.md)                          | Pipeline CI : tests, build, SonarCloud                         |
+| [cd.md](cd.md)                          | Pipeline CD : détection des changements, build GHCR, PR GitOps |
+| [pr-validation.md](ci.md#pr-validation) | Validation légère PR : YAML et manifests                       |
+| [quality-gates.md](quality-gates.md)    | Quality gates, seuils, scans de sécurité                       |
+| [secrets.md](secrets.md)                | Secrets GitHub requis et procédure de configuration            |
 
 ## Workflows disponibles
 
-| Fichier                               | Déclencheur                          | Rôle                                                                             |
-| ------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------- |
-| `.github/workflows/ci.yml`            | Push / PR sur branches projet        | Tests, build, linting, SonarCloud                                                |
-| `.github/workflows/pr-validation.yml` | PR vers `main`                       | Validation légère YAML / manifests pour required check et auto-merge gouverné    |
-| `.github/workflows/cd.yml`            | Push sur `main` avec garde explicite | Publish images GHCR, mise à jour GitOps uniquement après `CI` + `Security` verts |
-| `.github/workflows/security.yml`      | Push / PR + schedule                 | CodeQL, OWASP Dependency-Check, Trivy                                            |
+| Fichier                               | Déclencheur                          | Rôle                                                                                   |
+| ------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------- |
+| `.github/workflows/ci.yml`            | Push / PR sur branches projet        | Tests, build, linting, SonarCloud                                                      |
+| `.github/workflows/pr-validation.yml` | PR vers `main`                       | Validation légère YAML / manifests pour required check et auto-merge gouverné          |
+| `.github/workflows/cd.yml`            | Push sur `main` avec garde explicite | Publish images GHCR, création d'une PR GitOps uniquement après `CI` + `Security` verts |
+| `.github/workflows/security.yml`      | Push / PR + schedule                 | CodeQL, OWASP Dependency-Check, Trivy                                                  |
 
 ## Flux global
 
@@ -37,20 +37,20 @@ main        → push → CI + Security + CD
                            ↓
                     Build + push GHCR
                            ↓
-                    Bump kustomization.yaml
+                    Branche GitOps + PR GitOps
                            ↓
-                    Commit sur main [skip ci]
+                    auto-merge squash GitHub
                            ↓
                     ArgoCD sync automatique
 ```
 
 ## Cas `main` a connaitre
 
-| Cas                                            | CI                                                           | Security                                                     | CD                                                                                                   |
-| ---------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| Push direct administrateur sur `main`          | déclenché sur le commit poussé                               | déclenché sur le commit poussé                               | déclenché sur le même commit mais bloqué tant que `CI` et `Security` ne sont pas tous les deux verts |
-| PR contributeur vers `main`                    | déclenché sur la PR puis à nouveau après le merge sur `main` | déclenché sur la PR puis à nouveau après le merge sur `main` | déclenché seulement après le merge sur `main`, jamais sur la PR                                      |
-| Commit GitOps `github-actions[bot]` sur `main` | ignoré via `[skip ci]`                                       | ignoré via `[skip ci]`                                       | ignoré via `[skip ci]` et garde `chore(gitops):` pour éviter la boucle                               |
+| Cas                                         | CI                                                           | Security                                                     | CD                                                                                                    |
+| ------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Push direct administrateur sur `main`       | déclenché sur le commit poussé                               | déclenché sur le commit poussé                               | déclenché sur le même commit mais bloqué tant que `CI` et `Security` ne sont pas tous les deux verts  |
+| PR contributeur vers `main`                 | déclenché sur la PR puis à nouveau après le merge sur `main` | déclenché sur la PR puis à nouveau après le merge sur `main` | déclenché seulement après le merge sur `main`, jamais sur la PR                                       |
+| PR GitOps `github-actions[bot]` vers `main` | déclenché sur la PR puis sur le commit squash merge final    | déclenché sur la PR puis sur le commit squash merge final    | la PR est créée par `cd.yml`, puis le commit squash final n'est pas republié grâce à `chore(gitops):` |
 
 ## Auto-merge contributeur
 

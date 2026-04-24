@@ -4,12 +4,11 @@ Les secrets sont configurés dans : **GitHub → dépôt → Settings → Secret
 
 ## Liste des secrets
 
-| Secret | Workflow | Obligatoire | Description |
-|--------|----------|-------------|-------------|
-| `SONAR_TOKEN` | `ci.yml` | Oui | Token d'authentification SonarCloud |
-| `JWT_SECRET` | `ci.yml` | Oui | Clé JWT pour les tests d'intégration backend |
-| `SSH_PRIVATE_KEY` | `cd.yml` | Oui | Clé privée SSH pour pousser le commit GitOps |
-| `NVD_API_KEY` | `security.yml` | Non | Accélère OWASP Dependency-Check (optionnel) |
+| Secret        | Workflow       | Obligatoire | Description                                  |
+| ------------- | -------------- | ----------- | -------------------------------------------- |
+| `SONAR_TOKEN` | `ci.yml`       | Oui         | Token d'authentification SonarCloud          |
+| `JWT_SECRET`  | `ci.yml`       | Oui         | Clé JWT pour les tests d'intégration backend |
+| `NVD_API_KEY` | `security.yml` | Non         | Accélère OWASP Dependency-Check (optionnel)  |
 
 ## Configurer SONAR_TOKEN
 
@@ -30,49 +29,33 @@ openssl rand -base64 32
 
 GitHub → Settings → Secrets → New secret : `JWT_SECRET`
 
-## Configurer SSH_PRIVATE_KEY (deploy key)
+## Permissions GitHub Actions pour la PR GitOps
 
-Cette clé permet au pipeline CD de pousser le commit GitOps sur la branche `main` protégée.
+Le workflow `cd.yml` n'utilise plus de deploy key SSH.
+Il s'appuie sur `GITHUB_TOKEN` avec des permissions de job explicites :
 
-### Générer la paire de clés
-
-```bash
-ssh-keygen -t ed25519 -C "stockpro-cd-deploy" -f ~/.ssh/stockpro_deploy -N ""
+```yaml
+permissions:
+  contents: write
+  pull-requests: write
 ```
 
-Cela crée :
-- `~/.ssh/stockpro_deploy` — clé privée
-- `~/.ssh/stockpro_deploy.pub` — clé publique
+À vérifier côté dépôt :
 
-### Ajouter la clé publique comme Deploy Key
-
-1. GitHub → dépôt → Settings → Deploy keys → Add deploy key
-2. Titre : `CD GitOps Deploy Key`
-3. Coller le contenu de `~/.ssh/stockpro_deploy.pub`
-4. Cocher **Allow write access**
-5. Cliquer **Add key**
-
-### Ajouter la clé privée comme Secret GitHub
-
-1. GitHub → dépôt → Settings → Secrets → New secret
-2. Nom : `SSH_PRIVATE_KEY`
-3. Valeur : contenu complet de `~/.ssh/stockpro_deploy` (incluant `-----BEGIN...` et `-----END...`)
-
-### Configurer le ruleset pour bypasser la protection de branche
-
-La branche `main` est protégée. La deploy key doit être autorisée à bypasser cette protection :
-
-1. GitHub → dépôt → Settings → Rules → Rulesets
-2. Sélectionner ou créer un ruleset pour `main`
-3. Dans "Bypass list" → Add bypass → **Deploy keys**
-4. Sauvegarder
+1. GitHub → Settings → Actions → General
+2. Dans **Workflow permissions**, choisir **Read and write permissions**
+3. Activer l'auto-merge du dépôt si nécessaire
+4. Vérifier que le ruleset / branch protection de `main` autorise le merge uniquement après les checks requis
 
 ### Vérifier la configuration
 
-Après un merge sur `main`, le workflow CD doit :
+Après un merge applicatif sur `main`, le workflow CD doit :
+
 1. Détecter les changements (backend et/ou frontend)
 2. Builder et pousser les images vers GHCR
-3. Créer un commit `chore(gitops): bump images to sha-XXXXXXX [skip ci]` sur `main`
+3. Créer une branche `gitops/bump-images-sha-XXXXXXX`
+4. Ouvrir une PR `chore(gitops): bump images to sha-XXXXXXX`
+5. Activer l'auto-merge GitHub sur cette PR
 
 ## Configurer NVD_API_KEY (optionnel)
 

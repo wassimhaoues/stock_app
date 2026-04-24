@@ -1485,7 +1485,7 @@ npm run test -- --coverage
 
 ---
 
-### 22.3 — Remplacement du push GitOps direct par une PR GitOps
+### 22.3 — Remplacement du push GitOps direct par une PR GitOps [DONE]
 
 **But :** supprimer la stratégie actuelle "build images puis push direct sur `main` via clé SSH" et la remplacer par un flux PR GitOps utilisant `GITHUB_TOKEN`.
 

@@ -218,6 +218,28 @@
           "color": { "mode": "palette-classic" }
         }
       }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Rejets rate limit",
+      "description": "Requêtes rejetées par le filtre de rate limiting, regroupées par endpoint logique",
+      "gridPos": { "x": 0, "y": 22, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by(endpoint) (increase(stockpro_rate_limit_rejections_total{job=\"stockpro-backend\"}[5m]))",
+          "legendFormat": "{{ endpoint }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 2, "fillOpacity": 20 },
+          "color": { "mode": "palette-classic" }
+        }
+      }
     }
   ]
 }

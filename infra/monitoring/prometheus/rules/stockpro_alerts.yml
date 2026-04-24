@@ -36,3 +36,14 @@ groups:
         annotations:
           summary: "Pic de rejets de mouvements de stock"
           description: "Plus de 10 mouvements refusés en 5 minutes (stock insuffisant ou capacité dépassée)."
+
+      # Pic de rejets du rate limiting (> 20 en 1 minute)
+      - alert: RateLimitSpike
+        expr: |
+          sum(increase(stockpro_rate_limit_rejections_total{job="stockpro-backend"}[1m])) > 20
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pic de rejets rate limit"
+          description: "Plus de 20 requêtes ont été rejetées par le rate limiting en 1 minute."

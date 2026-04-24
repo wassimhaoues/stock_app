@@ -2,6 +2,7 @@ package com.wassim.stock.config;
 
 import com.wassim.stock.logging.RequestCorrelationFilter;
 import com.wassim.stock.security.JwtAuthFilter;
+import com.wassim.stock.security.RateLimitFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ import java.util.function.Supplier;
 public class SecurityConfig {
 
     private final RequestCorrelationFilter requestCorrelationFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
 
@@ -97,7 +99,8 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(requestCorrelationFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterAfter(jwtAuthFilter, RequestCorrelationFilter.class);
+            .addFilterAfter(rateLimitFilter, RequestCorrelationFilter.class)
+            .addFilterAfter(jwtAuthFilter, RateLimitFilter.class);
 
         return configureSecurity(http::build, "Unable to build Spring Security filter chain");
     }

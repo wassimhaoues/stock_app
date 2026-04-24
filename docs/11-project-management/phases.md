@@ -1229,7 +1229,7 @@ L’agent prépare les deux options et documente le choix recommandé pour la so
 
 ---
 
-### 21.1 — Rate limiting API (backend)
+### 21.1 — Rate limiting API (backend) [DONE]
 
 Protéger l'API contre les abus et les attaques par force brute.
 

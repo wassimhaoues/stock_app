@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -67,6 +68,7 @@ class BackendSecurityIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Correlation-Id", notNullValue()))
+                .andExpect(header().string("X-RateLimit-Remaining", notNullValue()))
                 .andExpect(header().string("Set-Cookie", containsString("STOCKPRO_AUTH=")))
                 .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
                 .andExpect(header().string("Set-Cookie", containsString("SameSite=Lax")))
@@ -132,7 +134,52 @@ class BackendSecurityIntegrationTest {
         mockMvc.perform(get("/api/health"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Correlation-Id", notNullValue()))
+                .andExpect(header().string("X-RateLimit-Remaining", notNullValue()))
                 .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
+    void loginIsRateLimitedAfterFiveRequestsFromSameIp() throws Exception {
+        String ipAddress = "10.0.21.1";
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .with(remoteAddr(ipAddress))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    new LoginRequest("admin@stockpro.local", "Admin123!")
+                            )))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(post("/api/auth/login")
+                        .with(remoteAddr(ipAddress))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new LoginRequest("admin@stockpro.local", "Admin123!")
+                        )))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("X-RateLimit-Remaining", "0"))
+                .andExpect(jsonPath("$.status").value(429))
+                .andExpect(jsonPath("$.message").value("Trop de requêtes. Réessayez dans quelques secondes."));
+    }
+
+    @Test
+    void genericApiRequestsAreRateLimitedAfterOneHundredTwentyRequestsFromSameIp() throws Exception {
+        String ipAddress = "10.0.21.2";
+
+        for (int attempt = 0; attempt < 120; attempt++) {
+            mockMvc.perform(get("/api/health").with(remoteAddr(ipAddress)))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(get("/api/health").with(remoteAddr(ipAddress)))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("X-RateLimit-Remaining", "0"))
+                .andExpect(jsonPath("$.status").value(429))
+                .andExpect(jsonPath("$.message").value("Trop de requêtes. Réessayez dans quelques secondes."));
     }
 
     @Test
@@ -265,10 +312,14 @@ class BackendSecurityIntegrationTest {
                 .getResponse()
                 .getCookie("STOCKPRO_AUTH");
 
-        if (authCookie == null) {
-            throw new IllegalStateException("Login did not return STOCKPRO_AUTH cookie");
-        }
-
+        assertNotNull(authCookie, "Login did not return STOCKPRO_AUTH cookie");
         return authCookie;
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor remoteAddr(String ipAddress) {
+        return request -> {
+            request.setRemoteAddr(ipAddress);
+            return request;
+        };
     }
 }

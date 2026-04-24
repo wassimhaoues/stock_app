@@ -45,7 +45,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
   `,
   styles: `
     .shell {
-      min-height: 100dvh;
+      height: 100dvh;
       background: transparent;
     }
 
@@ -62,8 +62,9 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 
     .shell__main {
       display: flex;
-      min-height: 100dvh;
+      height: 100%;
       flex-direction: column;
+      overflow: hidden;
       transition: margin 180ms ease;
     }
 
@@ -73,6 +74,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
       min-width: 0;
       flex: 1;
       padding: 1.25rem;
+      overflow-y: auto;
     }
 
     :host ::ng-deep .shell__content > :not(router-outlet) {

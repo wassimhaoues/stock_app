@@ -8,11 +8,13 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { interval, startWith, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { AlerteService } from '../../../core/services/alerte.service';
@@ -329,10 +331,16 @@ export class SidebarComponent {
   });
 
   constructor() {
-    this.alerteService.findAll().subscribe({
-      next: (alertes) => this.alertCount.set(alertes.length),
-      error: () => this.alertCount.set(0),
-    });
+    interval(60_000)
+      .pipe(
+        startWith(0),
+        switchMap(() => this.alerteService.findAll()),
+        takeUntilDestroyed(),
+      )
+      .subscribe({
+        next: (alertes) => this.alertCount.set(alertes.length),
+        error: () => this.alertCount.set(0),
+      });
   }
 
   protected toggleCollapsed(): void {

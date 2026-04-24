@@ -1324,7 +1324,7 @@ Des en-têtes HTTP de sécurité standard manquent actuellement. Les ajouter via
 
 ---
 
-### 21.5 — Corrections UX frontend
+### 21.5 — Corrections UX frontend [DONE]
 
 **Problème 1 — Sidebar qui défile avec le contenu de la page**
 

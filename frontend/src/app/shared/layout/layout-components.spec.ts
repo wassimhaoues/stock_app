@@ -2,7 +2,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { AlerteService } from '../../core/services/alerte.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -11,6 +11,14 @@ import { MainLayoutComponent } from './main-layout/main-layout.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 
 describe('layout components', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   let authService: {
     currentUser: ReturnType<typeof vi.fn>;
     hasRole: ReturnType<typeof vi.fn>;
@@ -83,6 +91,28 @@ describe('layout components', () => {
 
     component.toggleCollapsed();
     expect(emissions).toEqual([true]);
+  });
+
+  it('refreshes the alert badge every minute', () => {
+    const alerts$ = new Subject<Array<{ stockId: number }>>();
+    alerteService.findAll.mockReturnValue(alerts$.asObservable());
+
+    const fixture = TestBed.createComponent(SidebarComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance as any;
+
+    alerts$.next([{ stockId: 1 }]);
+    expect(
+      component.entries().find((entry: { label: string }) => entry.label === 'Alertes').badge,
+    ).toBe(1);
+
+    vi.advanceTimersByTime(60_000);
+    expect(alerteService.findAll).toHaveBeenCalledTimes(2);
+
+    alerts$.next([{ stockId: 1 }, { stockId: 2 }, { stockId: 3 }]);
+    expect(
+      component.entries().find((entry: { label: string }) => entry.label === 'Alertes').badge,
+    ).toBe(3);
   });
 
   it('omits admin sidebar entries for scoped users and tolerates alert loading errors', () => {

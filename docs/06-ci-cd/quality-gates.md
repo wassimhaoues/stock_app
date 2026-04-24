@@ -105,6 +105,8 @@ Checks exécutés :
 - `Security`
 - `PR Validation`
 
+Auto-merge autorisé seulement si le ruleset / branch protection exige ces checks comme statuts requis.
+
 ### Push direct administrateur sur `main`
 
 Checks exécutés :
@@ -113,11 +115,15 @@ Checks exécutés :
 - `Security`
 - `CD` attend explicitement que `CI` et `Security` soient verts
 
+Même en cas de bypass administrateur, le déploiement reste donc conditionné aux workflows verts.
+
 ### PR GitOps bot vers `main`
 
 Checks exécutés :
 
 - `GitOps Validation`
+
+Auto-merge autorisé seulement si le ruleset / branch protection retient ce check léger pour les PR GitOps.
 
 Checks explicitement ignorés :
 
@@ -146,6 +152,23 @@ Pour une PR GitOps bot, le comportement attendu est différent :
 2. `GitOps Validation` s'exécute seule
 3. si les checks légers passent, GitHub peut auto-merger la PR selon le ruleset
 4. le commit squash sur `main` n'entraîne pas de rebuild applicatif complet
+
+## Protection de branche significative en phase 22.5
+
+Le modèle retenu est volontairement strict :
+
+- `main` reste protégée par ruleset / branch protection
+- les checks requis doivent être configurés pour les PR contributeurs
+- les checks légers doivent être configurés pour les PR GitOps bot si le ruleset GitHub le permet
+- l'absence d'écriture GitOps directe sur `main` reste une règle structurelle
+- l'auto-merge est un accélérateur, jamais un contournement
+
+La solution réellement retenue dans le dépôt est donc :
+
+- push admin direct possible mais publication bloquée tant que `CI` et `Security` ne sont pas verts
+- PR contributeur auto-mergeable seulement après ses checks requis
+- PR GitOps bot auto-mergeable seulement après ses checks légers requis
+- aucun cycle CD complet inutile après le merge d'une PR GitOps
 
 ## Gouvernance `main` en phase 22.1
 

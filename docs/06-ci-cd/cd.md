@@ -24,6 +24,12 @@ Règles :
 - si l'un des deux workflows échoue, CD échoue sans publier d'image ni modifier GitOps
 - si les deux workflows sont `success`, CD continue
 
+Conséquence importante :
+
+- un administrateur peut pousser directement sur `main`
+- ce push déclenche bien `CI`, `Security` et `CD`
+- mais `CD` ne publie rien tant que `CI` et `Security` ne sont pas verts
+
 ## Protection anti-boucle
 
 Le job `wait-for-main-validations` ne démarre pas pour un commit `main` dont le message commence par `chore(gitops):`.
@@ -33,6 +39,12 @@ Le flux 22.3 repose sur une PR GitOps mergee en **squash** :
 - le commit final sur `main` reprend donc le titre `chore(gitops): bump images to sha-xxxxxxx`
 - ce push ne relance pas une nouvelle publication CD
 - ArgoCD ne synchronise qu'apres le merge de la PR GitOps
+
+Cette strategie garde une protection significative :
+
+- aucune ecriture GitOps directe sur `main`
+- merge par PR comme chemin nominal
+- auto-merge GitHub seulement apres checks requis
 
 ## Jobs
 
@@ -165,12 +177,22 @@ La branche `main` n'est plus ecrite directement par le workflow CD. Le pipeline 
 ### PR contributeur vers `main`
 
 - la PR exécute `CI` et `Security` pour valider le changement avant merge
+- la PR doit aussi satisfaire les checks légers définis pour les PR contributeurs
 - après merge, le commit arrive sur `main`
 - ce push sur `main` relance `CI`, `Security` puis `CD` attend leurs résultats avant de publier
 
 ### PR GitOps `github-actions[bot]`
 
 - `CD` cree une branche GitOps puis une PR vers `main`
-- cette PR peut etre auto-mergee par GitHub une fois les checks requis au vert
+- cette PR peut etre auto-mergee par GitHub uniquement apres les checks legers GitOps requis
 - le merge en squash cree un commit `chore(gitops): ...` sur `main`
 - ce commit ne republie pas les images et evite une boucle CD
+
+## Auto-merge et ruleset
+
+Le depot doit etre configure pour que :
+
+- les PR contributeurs ne deviennent auto-mergeables qu'apres `CI`, `Security` et `PR Validation`
+- les PR GitOps bot ne deviennent auto-mergeables qu'apres `GitOps Validation`
+
+Les workflows n'essaient jamais de contourner ces regles. Ils produisent des statuts et demandent l'auto-merge, mais GitHub reste l'autorite finale de fusion.

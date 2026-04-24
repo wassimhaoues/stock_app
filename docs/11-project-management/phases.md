@@ -1566,7 +1566,7 @@ permissions:
 
 ---
 
-### 22.5 — Auto-merge et protection de branche significative
+### 22.5 — Auto-merge et protection de branche significative [DONE]
 
 **But :** faire de l'auto-merge un accélérateur de flux, pas un contournement de gouvernance.
 

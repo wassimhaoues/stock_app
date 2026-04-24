@@ -24,6 +24,10 @@ on:
 # Phase 22.4:
 # Les PR GitOps creees par github-actions[bot] ne doivent pas relancer les scans
 # lourds CodeQL / OWASP / Trivy. Sur ce type de PR, ce workflow est ignore.
+#
+# Phase 22.5:
+# Pour les PR contributeurs, ce workflow reste un required check du ruleset
+# GitHub. L'auto-merge ne doit jamais permettre de le contourner.
 
 jobs:
   # ── CodeQL — SAST ────────────────────────────────────────────────────────────

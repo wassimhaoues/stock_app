@@ -14,6 +14,11 @@
 #
 # Phase 22.3 remplace ensuite le push GitOps direct sur main par une PR GitOps
 # creee avec GITHUB_TOKEN. ArgoCD ne synchronise donc qu'apres merge de cette PR.
+#
+# Phase 22.5:
+# L'auto-merge reste un accelerateur de flux uniquement.
+# Le workflow cree la PR GitOps et peut demander son auto-merge, mais la
+# decision finale reste gouvernee par les checks requis du ruleset GitHub.
 # ══════════════════════════════════════════════════════════════════════════════
 
 name: CD — Publish & GitOps update
@@ -38,6 +43,8 @@ concurrency:
 #
 # Cette attente explicite supprime le trou de gouvernance où un CD pourrait
 # partir sur un commit main encore non validé.
+# Meme un administrateur qui pousse directement sur main ne peut donc pas
+# contourner la condition de deploiement: CI et Security doivent etre verts.
 # ──────────────────────────────────────────────────────────────────────────────
 jobs:
   wait-for-main-validations:
@@ -345,6 +352,8 @@ jobs:
        needs.build-frontend.result == 'success')
 
     permissions:
+      # Permissions minimales necessaires pour publier la branche GitOps puis
+      # creer la PR. L'ecriture directe dans main reste interdite par design.
       contents: write
       pull-requests: write
 
@@ -477,4 +486,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Cette commande n'outrepasse pas la protection de branche.
+          # GitHub ne merge la PR que lorsque les checks requis du ruleset
+          # correspondant sont tous au vert.
           gh pr merge "${PR_NUMBER}" --auto --squash --delete-branch

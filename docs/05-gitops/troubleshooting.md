@@ -95,10 +95,24 @@ Si aucun code applicatif n'a change dans `backend/` ou `frontend/`, le job GitOp
 Verifier :
 
 1. que l'auto-merge est active au niveau du depot GitHub
-2. que les checks requis du ruleset sont bien ceux attendus pour ce type de PR
+2. que les checks requis du ruleset pour une PR GitOps correspondent bien aux checks legers attendus
 3. que `github-actions[bot]` n'est pas bloque par la politique du depot
 
 Dans ce cas, la PR GitOps reste ouverte jusqu'a correction de la configuration ou merge manuel.
+
+## Une PR GitOps lance encore CI ou Security
+
+Verifier :
+
+1. que la PR est bien creee par `github-actions[bot]`
+2. que la branche source commence bien par `gitops/bump-images-`
+3. que les conditions `if` de `ci.yml` et `security.yml` n'ont pas ete modifiees
+
+Le comportement attendu en phase 22.4 est :
+
+- `CI` ignore les PR GitOps bot
+- `Security` ignore les PR GitOps bot
+- seul `GitOps Validation` doit tourner
 
 ## Rollback à une version précédente
 

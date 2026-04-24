@@ -1533,7 +1533,7 @@ permissions:
 
 ---
 
-### 22.4 — Checks légers pour les PR GitOps
+### 22.4 — Checks légers pour les PR GitOps [DONE]
 
 **But :** éviter de relancer les jobs lourds application sur une PR ne modifiant que les manifests GitOps, tout en gardant une validation utile avant merge.
 

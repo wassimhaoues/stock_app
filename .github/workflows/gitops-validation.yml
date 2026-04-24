@@ -1,0 +1,74 @@
+name: GitOps Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: gitops-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Phase 22.4:
+# Les PR GitOps creees par github-actions[bot] ne doivent lancer que des checks
+# legers, sans rebuild applicatif ni scans de securite lourds.
+
+jobs:
+  gitops-light-checks:
+    name: GitOps light checks
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.user.login == 'github-actions[bot]' &&
+      startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Install kustomize
+        run: |
+          KUSTOMIZE_VERSION="v5.4.3"
+          curl -sLo /tmp/kustomize.tar.gz \
+            "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+          tar -xzf /tmp/kustomize.tar.gz -C /tmp
+          sudo mv /tmp/kustomize /usr/local/bin/kustomize
+          kustomize version
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.31.0"
+
+      - name: Validate YAML syntax
+        run: |
+          cat <<'EOF' > .yamllint-gitops-validation.yml
+          extends: default
+          rules:
+            document-start: disable
+            line-length: disable
+            truthy: disable
+          EOF
+
+          yamllint -c .yamllint-gitops-validation.yml \
+            .github/workflows \
+            k8s \
+            infra \
+            docker-compose.yml
+
+      - name: Validate kustomize build
+        run: kustomize build k8s/overlays/gitops > /tmp/gitops-rendered.yaml
+
+      - name: Validate manifests with kubectl dry-run
+        run: kubectl apply --dry-run=client -f /tmp/gitops-rendered.yaml

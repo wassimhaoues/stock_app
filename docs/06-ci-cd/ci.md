@@ -13,6 +13,7 @@ on:
 ```
 
 Pour la phase 22.2, les PR vers `main` continuent donc bien à exécuter `CI`.
+En phase 22.4, les PR GitOps créées par `github-actions[bot]` sont explicitement exclues de ce workflow lourd.
 
 ## Rôle sur `main`
 
@@ -72,6 +73,24 @@ Il vérifie rapidement :
 
 Ce check reste volontairement indépendant du build applicatif pour fournir un signal rapide avant merge ou auto-merge.
 
+## GitOps Validation
+
+Le workflow `.github/workflows/gitops-validation.yml` est réservé aux PR GitOps créées par `github-actions[bot]` avec une branche `gitops/bump-images-*`.
+
+Il exécute uniquement des validations légères :
+
+- validation YAML
+- `kustomize build k8s/overlays/gitops`
+- `kubectl apply --dry-run=client` sur le rendu GitOps
+
+Il remplace les jobs lourds sur ces PR :
+
+- pas de tests backend
+- pas de tests frontend
+- pas de build applicatif
+- pas de SonarCloud
+- pas de scans Security lourds
+
 ## Conditions de succès
 
 La CI est verte si :
@@ -109,3 +128,9 @@ En phase 22.2, pour une PR contributeur vers `main`, les checks obligatoires att
 - `PR Validation`
 
 L'auto-merge GitHub peut alors être activé pour les contributeurs autorisés, sans contourner la protection de branche.
+
+Pour une PR GitOps bot vers `main`, le dépôt est maintenant préparé pour un autre jeu de checks :
+
+- `GitOps Validation`
+
+Les checks lourds `CI` et `Security` sont volontairement ignorés sur ce type de PR.

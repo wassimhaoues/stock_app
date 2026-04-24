@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 
 import { Entrepot } from '../../core/models/entrepot.model';
 import { MouvementStock } from '../../core/models/mouvement-stock.model';
+import { PagedResponse } from '../../core/models/paged-response.model';
 import { Produit } from '../../core/models/produit.model';
 import { Stock } from '../../core/models/stock.model';
 import { AuthService } from '../../core/services/auth.service';
@@ -53,6 +54,20 @@ describe('StocksPageComponent', () => {
     quantite: 4,
     date: '2026-04-22T12:00:00',
   };
+  const stockPage: PagedResponse<Stock> = {
+    content: [stock],
+    page: 0,
+    size: 20,
+    totalElements: 1,
+    totalPages: 1,
+  };
+  const mouvementPage: PagedResponse<MouvementStock> = {
+    content: [mouvement],
+    page: 0,
+    size: 20,
+    totalElements: 1,
+    totalPages: 1,
+  };
 
   let currentRole: 'ADMIN' | 'GESTIONNAIRE' | 'OBSERVATEUR';
   let authService: {
@@ -90,13 +105,13 @@ describe('StocksPageComponent', () => {
       findAll: vi.fn(() => of([entrepot])),
     };
     stockService = {
-      findAll: vi.fn(() => of([stock])),
+      findAll: vi.fn(() => of(stockPage)),
       create: vi.fn(() => of(stock)),
       update: vi.fn(() => of(stock)),
       delete: vi.fn(() => of(undefined)),
     };
     mouvementStockService = {
-      findAll: vi.fn(() => of([mouvement])),
+      findAll: vi.fn(() => of(mouvementPage)),
       create: vi.fn(() => of(mouvement)),
     };
     dialog = {
@@ -133,6 +148,8 @@ describe('StocksPageComponent', () => {
     expect(component.stockCapacitySummary(stock)).toBe('30 disponible');
     expect(component.movementLabel('ENTREE')).toBe('Entrée');
     expect(component.movementLabel('SORTIE')).toBe('Sortie');
+    expect(component.stockTotalElements()).toBe(1);
+    expect(component.mouvementTotalElements()).toBe(1);
     expect(fixture.nativeElement.textContent).toContain('Ajouter une ligne de stock');
     expect(fixture.nativeElement.textContent).toContain('Laptop');
   });
@@ -252,5 +269,21 @@ describe('StocksPageComponent', () => {
     expect(mouvementStockService.create).not.toHaveBeenCalled();
     expect(component.stockFeedbackMessage()).toBe('Stocks indisponibles');
     expect(fixture.nativeElement.textContent).toContain('Consultez les stocks');
+  });
+
+  it('reloads the requested page when paginators change', () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    component.onStocksPageChange({ pageIndex: 1, pageSize: 5, length: 1, previousPageIndex: 0 });
+    component.onMouvementsPageChange({
+      pageIndex: 2,
+      pageSize: 10,
+      length: 1,
+      previousPageIndex: 0,
+    });
+
+    expect(stockService.findAll).toHaveBeenLastCalledWith(1, 5);
+    expect(mouvementStockService.findAll).toHaveBeenLastCalledWith(2, 10);
   });
 });

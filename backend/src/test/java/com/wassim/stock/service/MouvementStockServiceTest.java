@@ -2,6 +2,7 @@ package com.wassim.stock.service;
 
 import com.wassim.stock.dto.request.MouvementStockRequest;
 import com.wassim.stock.dto.response.MouvementStockResponse;
+import com.wassim.stock.dto.response.PagedResponse;
 import com.wassim.stock.entity.Entrepot;
 import com.wassim.stock.entity.MouvementStock;
 import com.wassim.stock.entity.Produit;
@@ -22,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -158,6 +161,33 @@ class MouvementStockServiceTest {
         assertThat(response.type()).isEqualTo(TypeMouvement.SORTIE);
         assertThat(response.quantite()).isEqualTo(4);
         verify(stockRepository).save(stock);
+    }
+
+    @Test
+    void findAllForAdminReturnsPagedMovementsSortedPage() {
+        Entrepot tunis = entrepot(1L, "Tunis", 100);
+        Produit laptop = produit(2L, "Laptop");
+        Utilisateur admin = utilisateur("admin@stockpro.local", Role.ADMIN, null);
+        MouvementStock mouvement = new MouvementStock();
+        mouvement.setId(11L);
+        mouvement.setProduit(laptop);
+        mouvement.setEntrepot(tunis);
+        mouvement.setType(TypeMouvement.ENTREE);
+        mouvement.setQuantite(3);
+        mouvement.setDate(java.time.LocalDateTime.parse("2026-04-24T09:15:00"));
+        PageRequest pageable = PageRequest.of(0, 20);
+
+        authenticateAs(admin.getEmail());
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(mouvementStockRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(mouvement), pageable, 1));
+
+        PagedResponse<MouvementStockResponse> response = mouvementStockService.findAll(pageable);
+
+        assertThat(response.content()).hasSize(1);
+        assertThat(response.content().get(0).id()).isEqualTo(11L);
+        assertThat(response.totalPages()).isEqualTo(1);
+        verify(mouvementStockRepository).findAll(pageable);
     }
 
     private void authenticateAs(String email) {

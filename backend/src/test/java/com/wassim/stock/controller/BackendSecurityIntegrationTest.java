@@ -256,7 +256,7 @@ class BackendSecurityIntegrationTest {
         mockMvc.perform(get("/api/stocks")
                         .with(user("gestionnaire@stockpro.local").roles("GESTIONNAIRE")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].entrepotNom", not(hasItem("Autre depot"))));
+                .andExpect(jsonPath("$.content[*].entrepotNom", not(hasItem("Autre depot"))));
     }
 
     @Test
@@ -264,14 +264,14 @@ class BackendSecurityIntegrationTest {
         mockMvc.perform(get("/api/stocks")
                         .with(user("admin@stockpro.local").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].produitNom").isNotEmpty())
-                .andExpect(jsonPath("$[0].entrepotNom").isNotEmpty());
+                .andExpect(jsonPath("$.content[0].produitNom").isNotEmpty())
+                .andExpect(jsonPath("$.content[0].entrepotNom").isNotEmpty());
 
         mockMvc.perform(get("/api/mouvements-stock")
                         .with(user("admin@stockpro.local").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].produitNom").isNotEmpty())
-                .andExpect(jsonPath("$[0].entrepotNom").isNotEmpty());
+                .andExpect(jsonPath("$.content[0].produitNom").isNotEmpty())
+                .andExpect(jsonPath("$.content[0].entrepotNom").isNotEmpty());
     }
 
     private Entrepot entrepot(String nom, String adresse, int capacite) {

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 
+import { PagedResponse } from '../models/paged-response.model';
 import { StockRequest } from '../models/stock-request.model';
 import { Stock } from '../models/stock.model';
 
@@ -8,8 +9,14 @@ import { Stock } from '../models/stock.model';
 export class StockService {
   private readonly http = inject(HttpClient);
 
-  findAll() {
-    return this.http.get<Stock[]>('/api/stocks');
+  findAll(page = 0, size = 20) {
+    return this.http.get<PagedResponse<Stock>>('/api/stocks', {
+      params: {
+        page,
+        size,
+        sort: 'id,asc',
+      },
+    });
   }
 
   create(payload: StockRequest) {

@@ -1,6 +1,7 @@
 package com.wassim.stock.service;
 
 import com.wassim.stock.dto.request.StockRequest;
+import com.wassim.stock.dto.response.PagedResponse;
 import com.wassim.stock.dto.response.StockResponse;
 import com.wassim.stock.entity.Entrepot;
 import com.wassim.stock.entity.Produit;
@@ -17,6 +18,7 @@ import com.wassim.stock.repository.StockRepository;
 import com.wassim.stock.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -34,19 +36,16 @@ public class StockService {
     private final UtilisateurRepository utilisateurRepository;
     private final MouvementStockRepository mouvementStockRepository;
 
-    public List<StockResponse> findAll() {
+    public PagedResponse<StockResponse> findAll(Pageable pageable) {
         Utilisateur currentUser = getCurrentUser();
         if (currentUser.getRole() == Role.ADMIN) {
-            return stockRepository.findAll()
-                    .stream()
-                    .map(this::toResponse)
-                    .toList();
+            return PagedResponse.from(stockRepository.findAll(pageable).map(this::toResponse));
         }
 
-        return stockRepository.findByEntrepotId(getAssignedEntrepot(currentUser).getId())
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return PagedResponse.from(
+                stockRepository.findByEntrepotId(getAssignedEntrepot(currentUser).getId(), pageable)
+                        .map(this::toResponse)
+        );
     }
 
     public StockResponse findById(Long id) {

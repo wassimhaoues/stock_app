@@ -2,6 +2,7 @@ package com.wassim.stock.service;
 
 import com.wassim.stock.dto.request.MouvementStockRequest;
 import com.wassim.stock.dto.response.MouvementStockResponse;
+import com.wassim.stock.dto.response.PagedResponse;
 import com.wassim.stock.entity.Entrepot;
 import com.wassim.stock.entity.MouvementStock;
 import com.wassim.stock.entity.Produit;
@@ -20,6 +21,7 @@ import com.wassim.stock.repository.UtilisateurRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -40,19 +42,16 @@ public class MouvementStockService {
     private final UtilisateurRepository utilisateurRepository;
     private final MeterRegistry meterRegistry;
 
-    public List<MouvementStockResponse> findAll() {
+    public PagedResponse<MouvementStockResponse> findAll(Pageable pageable) {
         Utilisateur currentUser = getCurrentUser();
         if (currentUser.getRole() == Role.ADMIN) {
-            return mouvementStockRepository.findAllByOrderByDateDesc()
-                    .stream()
-                    .map(this::toResponse)
-                    .toList();
+            return PagedResponse.from(mouvementStockRepository.findAll(pageable).map(this::toResponse));
         }
 
-        return mouvementStockRepository.findByEntrepotIdOrderByDateDesc(getAssignedEntrepot(currentUser).getId())
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return PagedResponse.from(
+                mouvementStockRepository.findByEntrepotId(getAssignedEntrepot(currentUser).getId(), pageable)
+                        .map(this::toResponse)
+        );
     }
 
     public MouvementStockResponse findById(Long id) {

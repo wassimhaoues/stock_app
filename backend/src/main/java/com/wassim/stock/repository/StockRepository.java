@@ -1,6 +1,8 @@
 package com.wassim.stock.repository;
 
 import com.wassim.stock.entity.Stock;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,8 +16,15 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     @EntityGraph(attributePaths = {"produit", "entrepot"})
     List<Stock> findAll();
 
+    @Override
+    @EntityGraph(attributePaths = {"produit", "entrepot"})
+    Page<Stock> findAll(Pageable pageable);
+
     @EntityGraph(attributePaths = {"produit", "entrepot"})
     List<Stock> findByEntrepotId(Long entrepotId);
+
+    @EntityGraph(attributePaths = {"produit", "entrepot"})
+    Page<Stock> findByEntrepotId(Long entrepotId, Pageable pageable);
 
     Optional<Stock> findByProduitIdAndEntrepotId(Long produitId, Long entrepotId);
 

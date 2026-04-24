@@ -1,6 +1,7 @@
 package com.wassim.stock.service;
 
 import com.wassim.stock.dto.request.StockRequest;
+import com.wassim.stock.dto.response.PagedResponse;
 import com.wassim.stock.dto.response.StockResponse;
 import com.wassim.stock.entity.Entrepot;
 import com.wassim.stock.entity.Produit;
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -65,16 +68,20 @@ class StockServiceTest {
         Entrepot tunis = entrepot(1L, "Tunis", 100);
         Utilisateur gestionnaire = utilisateur(10L, "gestionnaire@stockpro.local", Role.GESTIONNAIRE, tunis);
         Stock assignedStock = stock(20L, produit(30L, "Laptop"), tunis, 12, 5);
+        PageRequest pageable = PageRequest.of(0, 20);
 
         authenticateAs(gestionnaire.getEmail());
         when(utilisateurRepository.findByEmailIgnoreCase(gestionnaire.getEmail())).thenReturn(Optional.of(gestionnaire));
-        when(stockRepository.findByEntrepotId(tunis.getId())).thenReturn(List.of(assignedStock));
+        when(stockRepository.findByEntrepotId(tunis.getId(), pageable))
+                .thenReturn(new PageImpl<>(List.of(assignedStock), pageable, 1));
 
-        List<StockResponse> responses = stockService.findAll();
+        PagedResponse<StockResponse> response = stockService.findAll(pageable);
 
-        assertThat(responses).hasSize(1);
-        assertThat(responses.get(0).entrepotId()).isEqualTo(tunis.getId());
-        verify(stockRepository, never()).findAll();
+        assertThat(response.content()).hasSize(1);
+        assertThat(response.content().get(0).entrepotId()).isEqualTo(tunis.getId());
+        assertThat(response.page()).isEqualTo(0);
+        assertThat(response.totalElements()).isEqualTo(1);
+        verify(stockRepository, never()).findAll(pageable);
     }
 
     @Test

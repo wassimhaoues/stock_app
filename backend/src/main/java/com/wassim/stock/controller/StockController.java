@@ -1,10 +1,13 @@
 package com.wassim.stock.controller;
 
 import com.wassim.stock.dto.request.StockRequest;
+import com.wassim.stock.dto.response.PagedResponse;
 import com.wassim.stock.dto.response.StockResponse;
 import com.wassim.stock.service.StockService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,9 +18,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/stocks")
 @RequiredArgsConstructor
@@ -26,8 +26,10 @@ public class StockController {
     private final StockService stockService;
 
     @GetMapping
-    public ResponseEntity<List<StockResponse>> findAll() {
-        return ResponseEntity.ok(stockService.findAll());
+    public ResponseEntity<PagedResponse<StockResponse>> findAll(
+            @PageableDefault(page = 0, size = 20, sort = "id") Pageable pageable
+    ) {
+        return ResponseEntity.ok(stockService.findAll(pageable));
     }
 
     @GetMapping("/{id}")

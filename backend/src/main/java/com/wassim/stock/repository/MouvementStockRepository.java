@@ -1,6 +1,8 @@
 package com.wassim.stock.repository;
 
 import com.wassim.stock.entity.MouvementStock;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,7 +14,13 @@ public interface MouvementStockRepository extends JpaRepository<MouvementStock, 
     List<MouvementStock> findAllByOrderByDateDesc();
 
     @EntityGraph(attributePaths = {"produit", "entrepot"})
+    Page<MouvementStock> findAll(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"produit", "entrepot"})
     List<MouvementStock> findByEntrepotIdOrderByDateDesc(Long entrepotId);
+
+    @EntityGraph(attributePaths = {"produit", "entrepot"})
+    Page<MouvementStock> findByEntrepotId(Long entrepotId, Pageable pageable);
 
     @Override
     @EntityGraph(attributePaths = {"produit", "entrepot"})

@@ -48,6 +48,10 @@ describe('API services', () => {
   });
 
   it('uses the expected product, stock, movement, and user endpoints', () => {
+    TestBed.inject(StockService).findAll(1, 10).subscribe();
+    const stockListRequest = httpController.expectOne('/api/stocks?page=1&size=10&sort=id,asc');
+    expect(stockListRequest.request.method).toBe('GET');
+
     TestBed.inject(ProduitService)
       .create({
         nom: 'Laptop',
@@ -95,6 +99,12 @@ describe('API services', () => {
 
     TestBed.inject(StockService).delete(9).subscribe();
     expect(httpController.expectOne('/api/stocks/9').request.method).toBe('DELETE');
+
+    TestBed.inject(MouvementStockService).findAll(2, 5).subscribe();
+    const mouvementListRequest = httpController.expectOne(
+      '/api/mouvements-stock?page=2&size=5&sort=date,desc',
+    );
+    expect(mouvementListRequest.request.method).toBe('GET');
 
     TestBed.inject(MouvementStockService)
       .create({

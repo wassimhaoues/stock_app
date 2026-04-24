@@ -1265,7 +1265,7 @@ Protéger l'API contre les abus et les attaques par force brute.
 
 ---
 
-### 21.2 — Pagination des listes (backend)
+### 21.2 — Pagination des listes (backend) [DONE]
 
 Les endpoints de liste peuvent retourner des centaines de lignes. Ajouter la pagination Spring Data.
 

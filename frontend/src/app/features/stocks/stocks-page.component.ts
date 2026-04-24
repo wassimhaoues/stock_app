@@ -8,6 +8,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { finalize } from 'rxjs';
@@ -35,6 +36,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
     ReactiveFormsModule,
@@ -247,12 +249,12 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 
     <section class="content-grid">
       <mat-card class="list-card">
-        <div class="card-header">
-          <div>
-            <p class="card-header__eyebrow">Stocks</p>
-            <h3>Lignes disponibles</h3>
-          </div>
-          <span class="count">{{ stocks().length }}</span>
+          <div class="card-header">
+            <div>
+              <p class="card-header__eyebrow">Stocks</p>
+              <h3>Lignes disponibles</h3>
+            </div>
+          <span class="count">{{ stockTotalElements() }}</span>
         </div>
 
         @if (!canWrite() && stockFeedbackMessage()) {
@@ -310,6 +312,15 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
               </article>
             }
           </div>
+
+          <mat-paginator
+            [length]="stockTotalElements()"
+            [pageIndex]="stockPageIndex()"
+            [pageSize]="stockPageSize()"
+            [pageSizeOptions]="pageSizeOptions"
+            [hidePageSize]="true"
+            (page)="onStocksPageChange($event)"
+          />
         }
       </mat-card>
 
@@ -319,7 +330,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
             <p class="card-header__eyebrow">Historique</p>
             <h3>Mouvements de stock</h3>
           </div>
-          <span class="count">{{ mouvements().length }}</span>
+          <span class="count">{{ mouvementTotalElements() }}</span>
         </div>
 
         @if (!canWrite() && mouvementFeedbackMessage()) {
@@ -364,6 +375,15 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
               </article>
             }
           </div>
+
+          <mat-paginator
+            [length]="mouvementTotalElements()"
+            [pageIndex]="mouvementPageIndex()"
+            [pageSize]="mouvementPageSize()"
+            [pageSizeOptions]="pageSizeOptions"
+            [hidePageSize]="true"
+            (page)="onMouvementsPageChange($event)"
+          />
         }
       </mat-card>
     </section>
@@ -562,6 +582,12 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
       color: var(--stockpro-muted);
     }
 
+    mat-paginator {
+      margin-top: 1rem;
+      border-top: 1px solid var(--stockpro-line);
+      background: transparent;
+    }
+
     @media (max-width: 1320px) {
       .content-grid,
       .form-grid {
@@ -599,11 +625,20 @@ export class StocksPageComponent {
   private readonly produitService = inject(ProduitService);
   private readonly stockService = inject(StockService);
 
+  protected readonly pageSizeOptions = [5, 10, 20];
   protected readonly mouvementTypes: TypeMouvement[] = ['ENTREE', 'SORTIE'];
   protected readonly entrepots = signal<Entrepot[]>([]);
   protected readonly mouvements = signal<MouvementStock[]>([]);
   protected readonly produits = signal<Produit[]>([]);
   protected readonly stocks = signal<Stock[]>([]);
+  protected readonly stockPageIndex = signal(0);
+  protected readonly stockPageSize = signal(20);
+  protected readonly stockTotalElements = signal(0);
+  protected readonly stockTotalPages = signal(0);
+  protected readonly mouvementPageIndex = signal(0);
+  protected readonly mouvementPageSize = signal(20);
+  protected readonly mouvementTotalElements = signal(0);
+  protected readonly mouvementTotalPages = signal(0);
   protected readonly selectedStockId = signal<number | null>(null);
   protected readonly isLoadingStocks = signal(true);
   protected readonly isLoadingMouvements = signal(true);
@@ -855,6 +890,18 @@ export class StocksPageComponent {
     return type === 'ENTREE' ? 'Entrée' : 'Sortie';
   }
 
+  protected onStocksPageChange(event: PageEvent): void {
+    this.stockPageIndex.set(event.pageIndex);
+    this.stockPageSize.set(event.pageSize);
+    this.loadStocks();
+  }
+
+  protected onMouvementsPageChange(event: PageEvent): void {
+    this.mouvementPageIndex.set(event.pageIndex);
+    this.mouvementPageSize.set(event.pageSize);
+    this.loadMouvements();
+  }
+
   private resetMouvementForm(): void {
     this.mouvementForm.reset({
       produitId: null,
@@ -898,10 +945,18 @@ export class StocksPageComponent {
   private loadStocks(): void {
     this.isLoadingStocks.set(true);
     this.stockService
-      .findAll()
+      .findAll(this.stockPageIndex(), this.stockPageSize())
       .pipe(finalize(() => this.isLoadingStocks.set(false)))
       .subscribe({
-        next: (stocks) => this.stocks.set(stocks),
+        next: (response) => {
+          this.stocks.set(response.content);
+          this.stockTotalElements.set(response.totalElements);
+          this.stockTotalPages.set(response.totalPages);
+          if (response.totalPages > 0 && response.page >= response.totalPages) {
+            this.stockPageIndex.set(response.totalPages - 1);
+            this.loadStocks();
+          }
+        },
         error: (error: unknown) => {
           this.stockFeedbackState.set('error');
           this.stockFeedbackMessage.set(this.extractErrorMessage(error));
@@ -912,10 +967,18 @@ export class StocksPageComponent {
   private loadMouvements(): void {
     this.isLoadingMouvements.set(true);
     this.mouvementStockService
-      .findAll()
+      .findAll(this.mouvementPageIndex(), this.mouvementPageSize())
       .pipe(finalize(() => this.isLoadingMouvements.set(false)))
       .subscribe({
-        next: (mouvements) => this.mouvements.set(mouvements),
+        next: (response) => {
+          this.mouvements.set(response.content);
+          this.mouvementTotalElements.set(response.totalElements);
+          this.mouvementTotalPages.set(response.totalPages);
+          if (response.totalPages > 0 && response.page >= response.totalPages) {
+            this.mouvementPageIndex.set(response.totalPages - 1);
+            this.loadMouvements();
+          }
+        },
         error: (error: unknown) => {
           this.mouvementFeedbackState.set('error');
           this.mouvementFeedbackMessage.set(this.extractErrorMessage(error));

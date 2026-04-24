@@ -1333,6 +1333,7 @@ La sidebar doit rester fixe à gauche pendant que seul le contenu principal déf
 La cause : `.shell` et `.shell__main` utilisent `min-height: 100dvh`. Avec `min-height`, le conteneur `mat-sidenav-container` peut grandir au-delà de la hauteur du viewport pour suivre le contenu. La sidebar fait alors partie d'un bloc plus grand que l'écran et défile avec lui.
 
 **Fix :**
+
 - Dans `main-layout.component.ts`, remplacer `min-height: 100dvh` par `height: 100dvh` sur `.shell`
 - Remplacer `min-height: 100dvh` par `height: 100%` sur `.shell__main`
 - Ajouter `overflow-y: auto` sur `.shell__content` pour que le scroll se produise uniquement dans la zone de contenu
@@ -1385,12 +1386,14 @@ Après les phases 19 et 20, des éléments critiques ne sont pas couverts.
 - Ajouter dans `api-services.spec.ts` les cas pour `AlerteService` et `MouvementStockService` si non couverts
 
 **Commande de vérification couverture backend :**
+
 ```bash
 mvn test jacoco:report
 # Rapport dans target/site/jacoco/index.html
 ```
 
 **Commande de vérification couverture frontend :**
+
 ```bash
 npm run test -- --coverage
 # Seuil minimal à configurer dans vitest.config.ts : lines: 80, functions: 80
@@ -1424,7 +1427,7 @@ npm run test -- --coverage
 
 ---
 
-### 22.1 — Gouvernance de la branche `main`
+### 22.1 — Gouvernance de la branche `main` [DONE]
 
 **But :** s'assurer qu'un changement qui atteint `main` ne déclenche jamais de CD tant que les validations attendues ne sont pas terminées avec succès.
 

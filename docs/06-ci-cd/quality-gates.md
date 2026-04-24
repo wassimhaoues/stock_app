@@ -2,29 +2,29 @@
 
 ## Vue d'ensemble
 
-| Contrôle | Workflow | Seuil de blocage |
-|----------|----------|-----------------|
-| Tests backend | `ci.yml` | Tout test en échec bloque |
-| Tests frontend | `ci.yml` | Tout test en échec bloque |
-| Formatage Prettier | `ci.yml` | Tout écart bloque |
-| Audit npm | `ci.yml` | Vulnérabilité `high` ou `critical` bloque |
-| SonarCloud Quality Gate | `ci.yml` | Voir métriques ci-dessous |
-| CodeQL SAST | `security.yml` | Résultat dans Security → Code scanning |
-| OWASP Dependency-Check | `security.yml` | CVSS ≥ 9 bloque |
-| Trivy images Docker | `security.yml` | `HIGH` ou `CRITICAL` avec fix disponible bloque |
+| Contrôle                | Workflow       | Seuil de blocage                                |
+| ----------------------- | -------------- | ----------------------------------------------- |
+| Tests backend           | `ci.yml`       | Tout test en échec bloque                       |
+| Tests frontend          | `ci.yml`       | Tout test en échec bloque                       |
+| Formatage Prettier      | `ci.yml`       | Tout écart bloque                               |
+| Audit npm               | `ci.yml`       | Vulnérabilité `high` ou `critical` bloque       |
+| SonarCloud Quality Gate | `ci.yml`       | Voir métriques ci-dessous                       |
+| CodeQL SAST             | `security.yml` | Résultat dans Security → Code scanning          |
+| OWASP Dependency-Check  | `security.yml` | CVSS ≥ 9 bloque                                 |
+| Trivy images Docker     | `security.yml` | `HIGH` ou `CRITICAL` avec fix disponible bloque |
 
 ## SonarCloud
 
 ### Métriques du Quality Gate
 
-| Métrique | Seuil |
-|----------|-------|
-| Bugs | 0 nouveaux |
-| Vulnérabilités | 0 nouvelles |
-| Security Hotspots | 0 non examinés |
-| Coverage (nouveau code) | ≥ 80% |
-| Duplications (nouveau code) | < 3% |
-| Maintenability Rating | A |
+| Métrique                    | Seuil          |
+| --------------------------- | -------------- |
+| Bugs                        | 0 nouveaux     |
+| Vulnérabilités              | 0 nouvelles    |
+| Security Hotspots           | 0 non examinés |
+| Coverage (nouveau code)     | ≥ 80%          |
+| Duplications (nouveau code) | < 3%           |
+| Maintenability Rating       | A              |
 
 ### Configuration
 
@@ -36,6 +36,7 @@ Le projet SonarCloud est configuré dans `sonar-project.properties` :
 ### Exclusions de couverture
 
 Les fichiers exclus du calcul de couverture (`sonar.coverage.exclusions`) :
+
 - DTOs
 - Entités JPA
 - Repositories
@@ -90,3 +91,16 @@ Pour qu'une PR soit mergeable dans `main` :
 7. La CI est verte globalement
 
 Les scans CodeQL, OWASP et Trivy tournent en parallèle dans `security.yml` et génèrent des alertes mais ne bloquent pas directement la PR (sauf configuration explicite des required checks).
+
+## Gouvernance `main` en phase 22.1
+
+Pour qu'un commit déjà présent sur `main` puisse être livré par `cd.yml`, il faut maintenant deux validations explicites sur ce même SHA :
+
+- `CI` doit finir avec `success`
+- `Security` doit finir avec `success`
+
+Conséquences :
+
+- un push direct administrateur sur `main` ne peut pas publier tant que ces deux workflows ne sont pas verts
+- un merge de PR vers `main` ne peut pas publier tant que ces deux workflows post-merge ne sont pas verts
+- un commit GitOps `github-actions[bot]` avec `[skip ci]` ne relance pas la chaîne

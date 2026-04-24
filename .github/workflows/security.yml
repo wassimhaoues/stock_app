@@ -13,6 +13,10 @@ on:
     # Weekly on Monday at 03:00 UTC
     - cron: "0 3 * * 1"
 
+# Phase 22.1:
+# Sur main, ce workflow devient une validation bloquante au meme titre que CI.
+# Le CD attend sa conclusion "success" avant toute livraison.
+
 jobs:
   # ── CodeQL — SAST ────────────────────────────────────────────────────────────
   codeql:

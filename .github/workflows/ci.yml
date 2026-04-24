@@ -11,6 +11,10 @@ on:
       - main
       - dev
 
+# Phase 22.1:
+# Sur main, ce workflow fait partie des validations obligatoires que le CD
+# attend explicitement avant toute publication ou toute modification GitOps.
+
 jobs:
   backend:
     name: Backend — test & build

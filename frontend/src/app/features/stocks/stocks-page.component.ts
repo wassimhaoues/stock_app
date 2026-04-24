@@ -250,11 +250,11 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 
     <section class="content-grid">
       <mat-card class="list-card">
-          <div class="card-header">
-            <div>
-              <p class="card-header__eyebrow">Stocks</p>
-              <h3>Lignes disponibles</h3>
-            </div>
+        <div class="card-header">
+          <div>
+            <p class="card-header__eyebrow">Stocks</p>
+            <h3>Lignes disponibles</h3>
+          </div>
           <span class="count">{{ stockTotalElements() }}</span>
         </div>
 

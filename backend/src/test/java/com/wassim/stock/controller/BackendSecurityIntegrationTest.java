@@ -69,6 +69,10 @@ class BackendSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Correlation-Id", notNullValue()))
                 .andExpect(header().string("X-RateLimit-Remaining", notNullValue()))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("X-Frame-Options", "DENY"))
+                .andExpect(header().string("Referrer-Policy", "strict-origin-when-cross-origin"))
+                .andExpect(header().string("Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
                 .andExpect(header().string("Set-Cookie", containsString("STOCKPRO_AUTH=")))
                 .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
                 .andExpect(header().string("Set-Cookie", containsString("SameSite=Lax")))
@@ -148,6 +152,10 @@ class BackendSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Correlation-Id", notNullValue()))
                 .andExpect(header().string("X-RateLimit-Remaining", notNullValue()))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("X-Frame-Options", "DENY"))
+                .andExpect(header().string("Referrer-Policy", "strict-origin-when-cross-origin"))
+                .andExpect(header().string("Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
                 .andExpect(jsonPath("$.status").value("UP"));
     }
 

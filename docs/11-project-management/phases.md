@@ -1303,7 +1303,7 @@ Les listes de produits et d'entrepôts changent rarement. Mettre en cache leurs 
 
 ---
 
-### 21.4 — Renforcement des en-têtes de sécurité HTTP (backend)
+### 21.4 — Renforcement des en-têtes de sécurité HTTP (backend) [DONE]
 
 Des en-têtes HTTP de sécurité standard manquent actuellement. Les ajouter via Spring Security.
 

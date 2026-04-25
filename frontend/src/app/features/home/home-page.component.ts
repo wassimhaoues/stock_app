@@ -60,9 +60,10 @@ import { DashboardService } from '../../core/services/dashboard.service';
                 <p class="section-eyebrow">Analyse globale</p>
                 <h3>Performance multi-entrepôts</h3>
                 <p>
-                  last Les indicateurs consolident la valeur du stock, la pression capacité, les
-                  alertes et l'activité récente pour prioriser les décisions. keep the finger on the
-                  pulse of your inventory across all warehouses.
+                  Les indicateurs consolident la valeur du stock, la pression capacité, les alertes
+                  et l'activité récente pour prioriser les décisions. keep the finger on the pulse
+                  of your inventory across all warehouses. you can quickly identify high-value
+                  stock, capacity risks, and operational hotspots to
                 </p>
                 <div class="hero-metrics">
                   <span>

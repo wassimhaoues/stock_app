@@ -381,6 +381,7 @@ jobs:
         id: prepare-gitops-pr
         env:
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          REPO_ROOT: ${{ github.workspace }}
         run: |
           git config user.name  "${APP_SLUG}[bot]"
           git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
@@ -394,8 +395,6 @@ jobs:
           git checkout main
           git pull --rebase origin main
           git switch -C "${BRANCH_NAME}"
-
-          cd k8s/overlays/gitops
 
           UPDATED_IMAGES_FILE="/tmp/gitops-updated-images.txt"
           : > "${UPDATED_IMAGES_FILE}"
@@ -424,15 +423,13 @@ jobs:
           fi
 
           if [ -n "${BACKEND_ARGS}" ] || [ -n "${FRONTEND_ARGS}" ]; then
-            python3 .github/scripts/update_gitops_kustomization.py \
-              --file k8s/overlays/gitops/kustomization.yaml \
+            python3 "${REPO_ROOT}/.github/scripts/update_gitops_kustomization.py" \
+              --file "${REPO_ROOT}/k8s/overlays/gitops/kustomization.yaml" \
               --backend-name ghcr.io/${{ github.repository_owner }}/stockpro-backend \
               --frontend-name ghcr.io/${{ github.repository_owner }}/stockpro-frontend \
               ${BACKEND_ARGS} \
               ${FRONTEND_ARGS}
           fi
-
-          cd ../../..
 
           git add k8s/overlays/gitops/kustomization.yaml
 
@@ -444,7 +441,7 @@ jobs:
 
           PR_TITLE="chore(gitops): bump images to ${TAG}"
 
-          python3 .github/scripts/render_gitops_pr_body.py \
+          python3 "${REPO_ROOT}/.github/scripts/render_gitops_pr_body.py" \
             --output /tmp/gitops-pr-body.md \
             --tag "${TAG}" \
             --app-commit-sha "${APP_COMMIT_SHA}" \

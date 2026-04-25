@@ -31,19 +31,26 @@ jobs:
   backend:
     name: Backend — test & build
     runs-on: ubuntu-latest
-    if: >-
-      github.event.pull_request.user.type != 'Bot' ||
-      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') ||
-      !startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
+    env:
+      IS_GITOPS_BOT_PR: >-
+        ${{ github.event_name == 'pull_request' && github.event.pull_request.user.type == 'Bot' && startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') && startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-') }}
     defaults:
       run:
         working-directory: backend
 
     steps:
+      - name: GitOps bot PR detected
+        if: env.IS_GITOPS_BOT_PR == 'true'
+        run: |
+          echo "GitOps bot PR detected."
+          echo "Backend source not changed. Heavy backend CI skipped intentionally."
+
       - name: Checkout
+        if: env.IS_GITOPS_BOT_PR != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Java 17
+        if: env.IS_GITOPS_BOT_PR != 'true'
         uses: actions/setup-java@v4
         with:
           java-version: "17"
@@ -51,24 +58,32 @@ jobs:
           cache: maven
 
       - name: Run tests, build and enforce coverage
+        if: env.IS_GITOPS_BOT_PR != 'true'
         run: ./mvnw --batch-mode verify
 
   frontend:
     name: Frontend — lint, test & build
     runs-on: ubuntu-latest
-    if: >-
-      github.event.pull_request.user.type != 'Bot' ||
-      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') ||
-      !startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
+    env:
+      IS_GITOPS_BOT_PR: >-
+        ${{ github.event_name == 'pull_request' && github.event.pull_request.user.type == 'Bot' && startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') && startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-') }}
     defaults:
       run:
         working-directory: frontend
 
     steps:
+      - name: GitOps bot PR detected
+        if: env.IS_GITOPS_BOT_PR == 'true'
+        run: |
+          echo "GitOps bot PR detected."
+          echo "Frontend source not changed. Heavy frontend CI skipped intentionally."
+
       - name: Checkout
+        if: env.IS_GITOPS_BOT_PR != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Node.js 20
+        if: env.IS_GITOPS_BOT_PR != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -76,20 +91,25 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        if: env.IS_GITOPS_BOT_PR != 'true'
         run: npm ci
 
       - name: Check format
+        if: env.IS_GITOPS_BOT_PR != 'true'
         run: npm run format:check
 
       - name: Run tests and enforce coverage
+        if: env.IS_GITOPS_BOT_PR != 'true'
         run: npm run test:coverage
         env:
           CI: true
 
       - name: Audit production dependencies
+        if: env.IS_GITOPS_BOT_PR != 'true'
         run: npm audit --audit-level=high --omit=dev
 
       - name: Build
+        if: env.IS_GITOPS_BOT_PR != 'true'
         run: npm run build
 
   sonarcloud:

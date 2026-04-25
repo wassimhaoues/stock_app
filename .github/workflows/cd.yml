@@ -410,8 +410,22 @@ jobs:
           : > "${UPDATED_IMAGES_FILE}"
 
           if [ "${{ needs.build-backend.result }}" == "success" ]; then
-            kustomize edit set image \
-              "stockpro-backend=ghcr.io/${{ github.repository_owner }}/stockpro-backend:${TAG}"
+            python3 - <<'PY'
+            from pathlib import Path
+
+            file_path = Path("kustomization.yaml")
+            lines = file_path.read_text(encoding="utf-8").splitlines()
+
+            for index, line in enumerate(lines):
+                if line.strip() == "- name: stockpro-backend":
+                    lines[index + 1] = "    newName: ghcr.io/${{ github.repository_owner }}/stockpro-backend"
+                    lines[index + 2] = "    newTag: ${{ needs.detect-changes.outputs.tag }}"
+                    break
+            else:
+                raise SystemExit("stockpro-backend image block not found in kustomization.yaml")
+
+            file_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            PY
             printf '%s\n' \
               "- backend -> ghcr.io/${{ github.repository_owner }}/stockpro-backend:${TAG}" \
               >> "${UPDATED_IMAGES_FILE}"
@@ -421,8 +435,22 @@ jobs:
           fi
 
           if [ "${{ needs.build-frontend.result }}" == "success" ]; then
-            kustomize edit set image \
-              "stockpro-frontend=ghcr.io/${{ github.repository_owner }}/stockpro-frontend:${TAG}"
+            python3 - <<'PY'
+            from pathlib import Path
+
+            file_path = Path("kustomization.yaml")
+            lines = file_path.read_text(encoding="utf-8").splitlines()
+
+            for index, line in enumerate(lines):
+                if line.strip() == "- name: stockpro-frontend":
+                    lines[index + 1] = "    newName: ghcr.io/${{ github.repository_owner }}/stockpro-frontend"
+                    lines[index + 2] = "    newTag: ${{ needs.detect-changes.outputs.tag }}"
+                    break
+            else:
+                raise SystemExit("stockpro-frontend image block not found in kustomization.yaml")
+
+            file_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            PY
             printf '%s\n' \
               "- frontend -> ghcr.io/${{ github.repository_owner }}/stockpro-frontend:${TAG}" \
               >> "${UPDATED_IMAGES_FILE}"

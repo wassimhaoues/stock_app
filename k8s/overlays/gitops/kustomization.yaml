@@ -29,8 +29,8 @@ kind: Kustomization
 namespace: stockpro
 
 resources:
-  - ../../base
-  - ../../base/monitoring
+- ../../base
+- ../../base/monitoring
 
 # Pas de secretGenerator ici.
 # Le Secret stockpro-secrets est un "bootstrap secret" créé manuellement.
@@ -46,12 +46,12 @@ resources:
 # Champ "newTag"  : tag SHA calculé par le pipeline (ex : sha-a1b2c3d).
 #                   Valeur initiale "sha-placeholder" avant le premier run CD.
 images:
-  - name: stockpro-backend
-    newName: ghcr.io/wassimhaoues/stockpro-backend
-    newTag: sha-01259c7
-  - name: stockpro-frontend
-    newName: ghcr.io/wassimhaoues/stockpro-frontend
-    newTag: sha-3b5c023
+- name: stockpro-backend
+  newName: ghcr.io/wassimhaoues/stockpro-backend
+  newTag: sha-01259c7
+- name: stockpro-frontend
+  newName: ghcr.io/wassimhaoues/stockpro-frontend
+  newTag: sha-7a4b7c7
 
 patches:
-  - path: patches/expose-services.yaml
+- path: patches/expose-services.yaml

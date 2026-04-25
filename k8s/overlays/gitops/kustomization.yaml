@@ -21,16 +21,16 @@ kind: Kustomization
 namespace: stockpro
 
 resources:
-- ../../base
-- ../../base/monitoring
+  - ../../base
+  - ../../base/monitoring
 
 images:
-- name: stockpro-backend
-  newName: ghcr.io/wassimhaoues/stockpro-backend
-  newTag: sha-7d3d6df
-- name: stockpro-frontend
-  newName: ghcr.io/wassimhaoues/stockpro-frontend
-  newTag: sha-74f7aeb
+  - name: stockpro-backend
+    newName: ghcr.io/wassimhaoues/stockpro-backend
+    newTag: sha-7d3d6df
+  - name: stockpro-frontend
+    newName: ghcr.io/wassimhaoues/stockpro-frontend
+    newTag: sha-74f7aeb
 
 patches:
-- path: patches/expose-services.yaml
+  - path: patches/expose-services.yaml

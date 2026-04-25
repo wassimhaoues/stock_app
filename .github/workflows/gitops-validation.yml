@@ -53,10 +53,13 @@ jobs:
           sudo mv /tmp/kustomize /usr/local/bin/kustomize
           kustomize version
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: "v1.31.0"
+      - name: Install kubeconform
+        run: |
+          curl -L \
+            https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /tmp
+          sudo mv /tmp/kubeconform /usr/local/bin/kubeconform
+          kubeconform -v
 
       - name: Validate YAML syntax
         run: |
@@ -69,5 +72,11 @@ jobs:
       - name: Validate kustomize build
         run: kustomize build k8s/overlays/gitops > /tmp/gitops-rendered.yaml
 
-      - name: Validate manifests with kubectl dry-run
-        run: kubectl apply --dry-run=client --validate=false -f /tmp/gitops-rendered.yaml
+      - name: Validate manifests with kubeconform
+        run: |
+          kubeconform \
+            -summary \
+            -strict \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.31.0 \
+            /tmp/gitops-rendered.yaml

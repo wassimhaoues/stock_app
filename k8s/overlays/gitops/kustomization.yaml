@@ -48,7 +48,7 @@ resources:
 images:
   - name: stockpro-backend
     newName: ghcr.io/wassimhaoues/stockpro-backend
-    newTag: sha-01259c7
+    newTag: sha-8a09ad2
   - name: stockpro-frontend
     newName: ghcr.io/wassimhaoues/stockpro-frontend
     newTag: sha-7a4b7c7

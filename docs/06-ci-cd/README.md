@@ -47,11 +47,11 @@ main        → push → CI + Security + CD
 
 ## Cas `main` a connaitre
 
-| Cas                                         | CI                                                                       | Security                                                                 | CD                                                                                                    |
-| ------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| Push direct administrateur sur `main`       | déclenché sur le commit poussé                                           | déclenché sur le commit poussé                                           | déclenché sur le même commit mais bloqué tant que `CI` et `Security` ne sont pas tous les deux verts  |
-| PR contributeur vers `main`                 | déclenché sur la PR puis à nouveau après le merge sur `main`             | déclenché sur la PR puis à nouveau après le merge sur `main`             | déclenché seulement après le merge sur `main`, jamais sur la PR                                       |
-| PR GitOps `github-actions[bot]` vers `main` | ignoré sur la PR GitOps, puis déclenché sur le commit squash merge final | ignoré sur la PR GitOps, puis déclenché sur le commit squash merge final | la PR est créée par `cd.yml`, puis le commit squash final n'est pas republié grâce à `chore(gitops):` |
+| Cas                                   | CI                                                                       | Security                                                                 | CD                                                                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Push direct administrateur sur `main` | déclenché sur le commit poussé                                           | déclenché sur le commit poussé                                           | déclenché sur le même commit mais bloqué tant que `CI` et `Security` ne sont pas tous les deux verts                 |
+| PR contributeur vers `main`           | déclenché sur la PR puis à nouveau après le merge sur `main`             | déclenché sur la PR puis à nouveau après le merge sur `main`             | déclenché seulement après le merge sur `main`, jamais sur la PR                                                      |
+| PR GitOps bot vers `main`             | ignoré sur la PR GitOps, puis déclenché sur le commit squash merge final | ignoré sur la PR GitOps, puis déclenché sur le commit squash merge final | la PR est créée par `cd.yml` via GitHub App, puis le commit squash final n'est pas republié grâce à `chore(gitops):` |
 
 ## Auto-merge contributeur
 

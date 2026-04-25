@@ -148,7 +148,7 @@ L'auto-merge doit rester gouverné par le ruleset / branch protection GitHub, pa
 
 Pour une PR GitOps bot, le comportement attendu est différent :
 
-1. `cd.yml` ouvre une PR GitOps
+1. `cd.yml` ouvre une PR GitOps via la GitHub App
 2. `GitOps Validation` s'exécute seule
 3. si les checks légers passent, GitHub peut auto-merger la PR selon le ruleset
 4. le commit squash sur `main` n'entraîne pas de rebuild applicatif complet
@@ -183,4 +183,4 @@ Conséquences :
 
 - un push direct administrateur sur `main` ne peut pas publier tant que ces deux workflows ne sont pas verts
 - un merge de PR vers `main` ne peut pas publier tant que ces deux workflows post-merge ne sont pas verts
-- un commit GitOps `github-actions[bot]` avec `[skip ci]` ne relance pas la chaîne
+- un commit GitOps merge avec `chore(gitops):` ne relance pas la chaîne

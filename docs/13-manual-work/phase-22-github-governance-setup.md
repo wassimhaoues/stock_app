@@ -7,7 +7,7 @@ Le dépôt contient déjà :
 - le gating de `cd.yml` sur `CI` + `Security` pour les pushes sur `main`
 - les checks lourds pour les PR contributeurs
 - les checks légers dédiés aux PR GitOps bot
-- la création d'une PR GitOps via `GITHUB_TOKEN`
+- la création d'une PR GitOps via une GitHub App
 - la demande d'auto-merge GitHub sur la PR GitOps
 
 Il te reste à aligner les réglages GitHub avec ce comportement.
@@ -44,6 +44,21 @@ Dans **Settings → Actions → General** :
 - `cd.yml` demande l'auto-merge GitHub
 
 Sans ces options, le workflow pourra publier les images GHCR mais échouera au moment de créer ou gérer la PR GitOps.
+
+### Secrets requis
+
+Dans **Settings → Secrets and variables → Actions → Repository secrets**, vérifier :
+
+- `GH_APP_ID`
+- `GH_APP_PRIVATE_KEY`
+
+Ces deux secrets sont ceux utilisés par `cd.yml` pour créer le token d'installation GitHub App.
+
+Tu n'as pas besoin d'ajouter :
+
+- client ID
+- client secret
+- installation ID
 
 ---
 
@@ -131,8 +146,9 @@ Si GitHub propose aussi des checks au niveau workflow, garde la logique suivante
 
 Une PR GitOps bot :
 
-- est créée par `github-actions[bot]`
+- est créée par la GitHub App
 - utilise une branche `gitops/bump-images-sha-xxxxxxx`
+- utilise un titre `chore(gitops): bump images to sha-xxxxxxx`
 - ne doit lancer que `GitOps Validation`
 
 Le check léger attendu est :
@@ -163,7 +179,7 @@ Dans les deux cas, la sécurité reste préservée parce que :
 
 ---
 
-## Étape 6 — Vérifier les permissions de `GITHUB_TOKEN`
+## Étape 6 — Vérifier les permissions GitHub App et GitHub Actions
 
 Dans le dépôt, `cd.yml` utilise :
 
@@ -175,9 +191,12 @@ permissions:
 
 Vérifications à faire :
 
-1. le réglage dépôt autorise bien le token à écrire
-2. aucune politique d'organisation ne force un token read-only
-3. aucun ruleset ne bloque la création de branche GitOps ou la gestion de PR par GitHub Actions
+1. la GitHub App est bien installée sur le dépôt
+2. la GitHub App a `Contents: Read and write`
+3. la GitHub App a `Pull requests: Read and write`
+4. le réglage dépôt autorise bien GitHub Actions à écrire
+5. aucune politique d'organisation ne force un token read-only
+6. aucun ruleset ne bloque la création de branche GitOps ou la gestion de PR par la GitHub App
 
 Si une politique d'organisation remplace les permissions définies dans le workflow, la PR GitOps pourra échouer même si le YAML du dépôt est correct.
 
@@ -196,7 +215,7 @@ La phase 22 retire le besoin de pousser GitOps directement sur `main` via SSH.
 **Avant suppression :**
 
 - vérifier qu'aucun autre workflow du dépôt n'utilise encore cette clé
-- vérifier qu'au moins une PR GitOps a déjà été créée avec succès via `GITHUB_TOKEN`
+- vérifier qu'au moins une PR GitOps a déjà été créée avec succès via la GitHub App
 
 ---
 
@@ -262,6 +281,8 @@ grep newTag k8s/overlays/gitops/kustomization.yaml
 
 - `Allow auto-merge` activé
 - `GITHUB_TOKEN` en `Read and write permissions`
+- `GH_APP_ID` présent
+- `GH_APP_PRIVATE_KEY` présent
 - `Allow GitHub Actions to create and approve pull requests` activé
 - protection / ruleset de `main` configuré
 - checks requis contributeur définis

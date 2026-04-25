@@ -16,7 +16,7 @@ merge sur main
     → cd.yml détecte les changements (backend / frontend)
     → Build et push des images vers GHCR avec tag sha-XXXXXXX
     → cd.yml met à jour k8s/overlays/gitops/kustomization.yaml (newTag) sur une branche GitOps
-    → cd.yml ouvre une PR GitOps vers main avec GITHUB_TOKEN
+    → cd.yml ouvre une PR GitOps vers main avec la GitHub App
     → GitHub merge la PR GitOps après validations requises
     → ArgoCD détecte le changement Git merge (auto-sync activé)
     → ArgoCD applique le kustomization.yaml mis à jour

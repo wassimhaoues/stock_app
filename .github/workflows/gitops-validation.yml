@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 # Phase 22.4:
-# Les PR GitOps creees par github-actions[bot] ne doivent lancer que des checks
+# Les PR GitOps creees par la GitHub App ne doivent lancer que des checks
 # legers, sans rebuild applicatif ni scans de securite lourds.
 
 jobs:
@@ -21,8 +21,9 @@ jobs:
     name: GitOps light checks
     runs-on: ubuntu-latest
     if: >-
-      github.event.pull_request.user.login == 'github-actions[bot]' &&
-      startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+      github.event.pull_request.user.type == 'Bot' &&
+      startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') &&
+      startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
 
     steps:
       - name: Checkout

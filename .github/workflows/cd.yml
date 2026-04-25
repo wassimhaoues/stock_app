@@ -13,7 +13,8 @@
 #   2. merge d'une PR vers main
 #
 # Phase 22.3 remplace ensuite le push GitOps direct sur main par une PR GitOps
-# creee avec GITHUB_TOKEN. ArgoCD ne synchronise donc qu'apres merge de cette PR.
+# creee par une GitHub App dediee. ArgoCD ne synchronise donc qu'apres merge
+# de cette PR.
 #
 # Phase 22.5:
 # L'auto-merge reste un accelerateur de flux uniquement.
@@ -169,7 +170,11 @@ jobs:
       - name: Détecter les chemins modifiés (backend/ et frontend/)
         id: paths
         run: |
-          CHANGED=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
+          BEFORE="${{ github.event.before }}"
+          if [ "${BEFORE}" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE="HEAD~1"
+          fi
+          CHANGED=$(git diff --name-only "${BEFORE}" "${{ github.sha }}")
 
           echo "Fichiers modifies dans ce commit :"
           echo "${CHANGED}"
@@ -358,11 +363,19 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Créer un token GitHub App pour la PR GitOps
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
       - name: Checkout — historique complet pour la branche GitOps
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Installer kustomize
         run: |
@@ -375,9 +388,11 @@ jobs:
 
       - name: Mettre à jour kustomization.yaml sur une branche GitOps
         id: prepare-gitops-pr
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
 
           TAG="${{ needs.detect-changes.outputs.tag }}"
           APP_COMMIT_SHA="${{ github.sha }}"
@@ -454,7 +469,7 @@ jobs:
       - name: Créer ou mettre à jour la PR GitOps
         if: steps.prepare-gitops-pr.outputs.has_changes == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           BRANCH_NAME: ${{ steps.prepare-gitops-pr.outputs.branch_name }}
           PR_TITLE: ${{ steps.prepare-gitops-pr.outputs.pr_title }}
           PR_BODY_PATH: ${{ steps.prepare-gitops-pr.outputs.pr_body_path }}
@@ -484,7 +499,7 @@ jobs:
       - name: Activer l'auto-merge GitHub sur la PR GitOps
         if: steps.prepare-gitops-pr.outputs.has_changes == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           # Cette commande n'outrepasse pas la protection de branche.
           # GitHub ne merge la PR que lorsque les checks requis du ruleset

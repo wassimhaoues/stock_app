@@ -96,7 +96,7 @@ Verifier :
 
 1. que l'auto-merge est active au niveau du depot GitHub
 2. que les checks requis du ruleset pour une PR GitOps correspondent bien aux checks legers attendus
-3. que `github-actions[bot]` n'est pas bloque par la politique du depot
+3. que la GitHub App a bien les permissions `Contents` et `Pull requests` en ecriture
 
 Dans ce cas, la PR GitOps reste ouverte jusqu'a correction de la configuration ou merge manuel.
 
@@ -104,9 +104,10 @@ Dans ce cas, la PR GitOps reste ouverte jusqu'a correction de la configuration o
 
 Verifier :
 
-1. que la PR est bien creee par `github-actions[bot]`
+1. que la PR est bien creee par la GitHub App
 2. que la branche source commence bien par `gitops/bump-images-`
-3. que les conditions `if` de `ci.yml` et `security.yml` n'ont pas ete modifiees
+3. que le titre commence bien par `chore(gitops): bump images to sha-`
+4. que les conditions `if` de `ci.yml` et `security.yml` n'ont pas ete modifiees
 
 Le comportement attendu en phase 22.4 est :
 

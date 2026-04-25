@@ -13,7 +13,7 @@ on:
 ```
 
 Pour la phase 22.2, les PR vers `main` continuent donc bien à exécuter `CI`.
-En phase 22.4, les PR GitOps créées par `github-actions[bot]` sont explicitement exclues de ce workflow lourd.
+En phase 22.4, les PR GitOps créées par la GitHub App sont explicitement exclues de ce workflow lourd.
 
 ## Rôle sur `main`
 
@@ -75,7 +75,13 @@ Ce check reste volontairement indépendant du build applicatif pour fournir un s
 
 ## GitOps Validation
 
-Le workflow `.github/workflows/gitops-validation.yml` est réservé aux PR GitOps créées par `github-actions[bot]` avec une branche `gitops/bump-images-*`.
+Le workflow `.github/workflows/gitops-validation.yml` est réservé aux PR GitOps créées par la GitHub App.
+
+La détection repose sur la forme de la PR :
+
+- auteur de type `Bot`
+- branche source `gitops/bump-images-*`
+- titre `chore(gitops): bump images to sha-*`
 
 Il exécute uniquement des validations légères :
 

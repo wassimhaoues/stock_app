@@ -62,8 +62,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
                 <p>
                   Les indicateurs consolident la valeur du stock, la pression capacité, les alertes
                   et l'activité récente pour prioriser les décisions. keep the finger on the pulse
-                  of your inventory across all warehouses. you can quickly identify high-value
-                  stock, capacity risks, and operational hotspots to
+                  of your inventory across all warehouses.
                 </p>
                 <div class="hero-metrics">
                   <span>

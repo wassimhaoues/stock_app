@@ -120,7 +120,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' ||
       (
-        github.event_name != 'pull_request' &&
+        github.event_name == 'pull_request' &&
         github.base_ref == 'main' &&
         (
           github.event.pull_request.user.type != 'Bot' ||

@@ -37,6 +37,13 @@ jobs:
       - name: Install yamllint
         run: pip install yamllint
 
+      - name: Validate workflow helper scripts
+        run: |
+          if compgen -G ".github/scripts/*.sh" > /dev/null; then
+            bash -n .github/scripts/*.sh
+          fi
+          python3 -m py_compile .github/scripts/*.py
+
       - name: Install kustomize
         run: |
           KUSTOMIZE_VERSION="v5.4.3"
@@ -53,16 +60,7 @@ jobs:
 
       - name: Validate YAML syntax
         run: |
-          cat <<'EOF' > .yamllint-gitops-validation.yml
-          extends: default
-          rules:
-            comments: disable
-            document-start: disable
-            line-length: disable
-            truthy: disable
-          EOF
-
-          yamllint -c .yamllint-gitops-validation.yml \
+          yamllint -c .github/yamllint.yml \
             .github/workflows \
             k8s \
             infra \

@@ -157,7 +157,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
             <div class="table__row table__row--head" role="row">
               <span role="columnheader">Nom</span>
               <span role="columnheader">Adresse</span>
-              <span role="columnheader">Capaacité</span>
+              <span role="columnheader">Cappacité</span>
               <span role="columnheader">Occupation</span>
               @if (canManage()) {
                 <span role="columnheader">Actions</span>

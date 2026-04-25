@@ -1,50 +1,29 @@
-# Overlay GitOps — utilisé par ArgoCD comme source de vérité.
+# Overlay GitOps utilise par ArgoCD comme source de verite.
 #
-# Différences par rapport à l'overlay local :
-#   - PAS de secretGenerator : le fichier .env est gitignore et ArgoCD ne peut pas le lire.
-#     Le Secret "stockpro-secrets" doit être créé manuellement UNE FOIS avant la première sync.
-#     Commande de bootstrap (depuis la racine du dépôt) :
-#       kubectl create secret generic stockpro-secrets \
-#         --from-env-file=.env -n stockpro
-#     ArgoCD ne gère pas ce Secret — il reste stable entre les synchros.
-#   - Images publiees sur GHCR avec un tag SHA unique (ex : sha-a1b2c3d).
-#     Le champ newTag ci-dessous est mis a jour automatiquement par le workflow
-#     .github/workflows/cd.yml apres ouverture puis merge d'une PR GitOps.
-#     Ne pas modifier newTag manuellement - le pipeline le gere.
-#   - NodePort 30080/30085 conservés via le même patch que l'overlay local.
+# Differences par rapport a l'overlay local :
+# - pas de secretGenerator : le fichier .env est gitignore et ArgoCD ne peut pas le lire
+# - le Secret "stockpro-secrets" doit etre cree manuellement une fois avant la premiere sync
+# - les tags GHCR sont mis a jour automatiquement par .github/workflows/cd.yml via une PR GitOps
 #
-# Flux de mise a jour automatique (Phase 22.3) :
-#   merge sur main
-#   -> CI + Security vertes
-#   -> cd.yml construit les images et les pousse sur GHCR
-#   -> cd.yml ouvre une PR GitOps avec la mise a jour de newTag ici
-#   -> la PR GitOps est mergee dans main apres validations GitHub
-#   -> ArgoCD detecte le changement Git merge et synchronise le cluster
-#   -> les pods sont recrees avec la nouvelle image GHCR
+# Commande de bootstrap du secret :
+# kubectl create secret generic stockpro-secrets \
+#   --from-env-file=.env -n stockpro
 #
-# ArgoCD lit ce fichier depuis le dépôt Git et applique le résultat dans le cluster.
+# Flux de mise a jour automatique :
+# merge sur main
+# -> CI + Security vertes
+# -> cd.yml construit et pousse les images sur GHCR
+# -> cd.yml ouvre une PR GitOps avec la mise a jour des newTag
+# -> la PR GitOps est mergee dans main apres validations GitHub
+# -> ArgoCD detecte le changement Git et synchronise le cluster
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: stockpro
 
 resources:
   - ../../base
   - ../../base/monitoring
 
-# Pas de secretGenerator ici.
-# Le Secret stockpro-secrets est un "bootstrap secret" créé manuellement.
-# Voir la commande dans le commentaire d'en-tête et dans docs/phase-17-manual-steps.md.
-
-# ── Tags d'image gérés par le pipeline CD ──────────────────────────────────────
-# Ces entrées sont mises à jour automatiquement par .github/workflows/cd.yml.
-# Champ "name"    : correspond à la valeur "image:" dans les manifests de base
-#                   (k8s/base/backend/deployment.yaml et frontend/deployment.yaml).
-# Champ "newName" : URL GHCR complète où l'image est publiée.
-#                   Si vous forkez le dépôt, remplacez "wassimhaoues" par votre
-#                   nom d'utilisateur GitHub (github.repository_owner).
-# Champ "newTag"  : tag SHA calculé par le pipeline (ex : sha-a1b2c3d).
-#                   Valeur initiale "sha-placeholder" avant le premier run CD.
 images:
   - name: stockpro-backend
     newName: ghcr.io/wassimhaoues/stockpro-backend

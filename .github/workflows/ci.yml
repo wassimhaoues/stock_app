@@ -32,9 +32,9 @@ jobs:
     name: Backend — test & build
     runs-on: ubuntu-latest
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.user.login != 'github-actions[bot]' ||
-      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+      github.event.pull_request.user.type != 'Bot' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') ||
+      !startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
     defaults:
       run:
         working-directory: backend
@@ -57,9 +57,9 @@ jobs:
     name: Frontend — lint, test & build
     runs-on: ubuntu-latest
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.user.login != 'github-actions[bot]' ||
-      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+      github.event.pull_request.user.type != 'Bot' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') ||
+      !startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
     defaults:
       run:
         working-directory: frontend

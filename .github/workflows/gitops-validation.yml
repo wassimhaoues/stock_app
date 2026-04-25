@@ -37,6 +37,13 @@ jobs:
       - name: Install yamllint
         run: pip install yamllint
 
+      - name: Validate workflow helper scripts
+        run: |
+          if compgen -G ".github/scripts/*.sh" > /dev/null; then
+            bash -n .github/scripts/*.sh
+          fi
+          python3 -m py_compile .github/scripts/*.py
+
       - name: Install kustomize
         run: |
           KUSTOMIZE_VERSION="v5.4.3"
@@ -46,23 +53,17 @@ jobs:
           sudo mv /tmp/kustomize /usr/local/bin/kustomize
           kustomize version
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: "v1.31.0"
+      - name: Install kubeconform
+        run: |
+          curl -L \
+            https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /tmp
+          sudo mv /tmp/kubeconform /usr/local/bin/kubeconform
+          kubeconform -v
 
       - name: Validate YAML syntax
         run: |
-          cat <<'EOF' > .yamllint-gitops-validation.yml
-          extends: default
-          rules:
-            comments: disable
-            document-start: disable
-            line-length: disable
-            truthy: disable
-          EOF
-
-          yamllint -c .yamllint-gitops-validation.yml \
+          yamllint -c .github/yamllint.yml \
             .github/workflows \
             k8s \
             infra \
@@ -71,5 +72,11 @@ jobs:
       - name: Validate kustomize build
         run: kustomize build k8s/overlays/gitops > /tmp/gitops-rendered.yaml
 
-      - name: Validate manifests with kubectl dry-run
-        run: kubectl apply --dry-run=client -f /tmp/gitops-rendered.yaml
+      - name: Validate manifests with kubeconform
+        run: |
+          kubeconform \
+            -summary \
+            -strict \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.31.0 \
+            /tmp/gitops-rendered.yaml

@@ -61,7 +61,9 @@ import { DashboardService } from '../../core/services/dashboard.service';
                 <h3>Performance multi-entrepôts</h3>
                 <p>
                   Les indicateurs consolident la valeur du stock, la pression capacité, les alertes
-                  et l'activité récente pour prioriser les décisions.
+                  et l'activité récente pour prioriser les décisions. keep the finger on the pulse
+                  of your inventory across all warehouses. if you see a red flag, dive into the
+                  details and take action to optimize your stock levels
                 </p>
                 <div class="hero-metrics">
                   <span>

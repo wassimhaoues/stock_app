@@ -377,19 +377,11 @@ jobs:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
-      - name: Installer kustomize
-        run: |
-          KUSTOMIZE_VERSION="v5.4.3"
-          curl -sLo /tmp/kustomize.tar.gz \
-            "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
-          tar -xzf /tmp/kustomize.tar.gz -C /tmp
-          sudo mv /tmp/kustomize /usr/local/bin/kustomize
-          kustomize version
-
       - name: Mettre à jour kustomization.yaml sur une branche GitOps
         id: prepare-gitops-pr
         env:
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          REPO_ROOT: ${{ github.workspace }}
         run: |
           git config user.name  "${APP_SLUG}[bot]"
           git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
@@ -404,28 +396,14 @@ jobs:
           git pull --rebase origin main
           git switch -C "${BRANCH_NAME}"
 
-          cd k8s/overlays/gitops
-
           UPDATED_IMAGES_FILE="/tmp/gitops-updated-images.txt"
           : > "${UPDATED_IMAGES_FILE}"
 
+          BACKEND_ARGS=""
+          FRONTEND_ARGS=""
+
           if [ "${{ needs.build-backend.result }}" == "success" ]; then
-            python3 - <<'PY'
-            from pathlib import Path
-
-            file_path = Path("kustomization.yaml")
-            lines = file_path.read_text(encoding="utf-8").splitlines()
-
-            for index, line in enumerate(lines):
-                if line.strip() == "- name: stockpro-backend":
-                    lines[index + 1] = "    newName: ghcr.io/${{ github.repository_owner }}/stockpro-backend"
-                    lines[index + 2] = "    newTag: ${{ needs.detect-changes.outputs.tag }}"
-                    break
-            else:
-                raise SystemExit("stockpro-backend image block not found in kustomization.yaml")
-
-            file_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-            PY
+            BACKEND_ARGS="--backend-tag ${TAG}"
             printf '%s\n' \
               "- backend -> ghcr.io/${{ github.repository_owner }}/stockpro-backend:${TAG}" \
               >> "${UPDATED_IMAGES_FILE}"
@@ -435,22 +413,7 @@ jobs:
           fi
 
           if [ "${{ needs.build-frontend.result }}" == "success" ]; then
-            python3 - <<'PY'
-            from pathlib import Path
-
-            file_path = Path("kustomization.yaml")
-            lines = file_path.read_text(encoding="utf-8").splitlines()
-
-            for index, line in enumerate(lines):
-                if line.strip() == "- name: stockpro-frontend":
-                    lines[index + 1] = "    newName: ghcr.io/${{ github.repository_owner }}/stockpro-frontend"
-                    lines[index + 2] = "    newTag: ${{ needs.detect-changes.outputs.tag }}"
-                    break
-            else:
-                raise SystemExit("stockpro-frontend image block not found in kustomization.yaml")
-
-            file_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-            PY
+            FRONTEND_ARGS="--frontend-tag ${TAG}"
             printf '%s\n' \
               "- frontend -> ghcr.io/${{ github.repository_owner }}/stockpro-frontend:${TAG}" \
               >> "${UPDATED_IMAGES_FILE}"
@@ -459,7 +422,14 @@ jobs:
             echo "Build frontend ignore ou echoue - tag frontend inchange."
           fi
 
-          cd ../../..
+          if [ -n "${BACKEND_ARGS}" ] || [ -n "${FRONTEND_ARGS}" ]; then
+            python3 "${REPO_ROOT}/.github/scripts/update_gitops_kustomization.py" \
+              --file "${REPO_ROOT}/k8s/overlays/gitops/kustomization.yaml" \
+              --backend-name ghcr.io/${{ github.repository_owner }}/stockpro-backend \
+              --frontend-name ghcr.io/${{ github.repository_owner }}/stockpro-frontend \
+              ${BACKEND_ARGS} \
+              ${FRONTEND_ARGS}
+          fi
 
           git add k8s/overlays/gitops/kustomization.yaml
 
@@ -471,18 +441,12 @@ jobs:
 
           PR_TITLE="chore(gitops): bump images to ${TAG}"
 
-          cat <<EOF > /tmp/gitops-pr-body.md
-          ## GitOps image bump
-
-          Images mises a jour :
-          $(cat "${UPDATED_IMAGES_FILE}")
-          Tags publies :
-          - ${TAG}
-
-          Commit applicatif declencheur :
-          - ${APP_COMMIT_SHA}
-          - commit court : ${APP_COMMIT_SHORT}
-          EOF
+          python3 "${REPO_ROOT}/.github/scripts/render_gitops_pr_body.py" \
+            --output /tmp/gitops-pr-body.md \
+            --tag "${TAG}" \
+            --app-commit-sha "${APP_COMMIT_SHA}" \
+            --app-commit-short "${APP_COMMIT_SHORT}" \
+            --updated-images-file "${UPDATED_IMAGES_FILE}"
 
           git commit -m "${PR_TITLE}"
           git push --force-with-lease origin "${BRANCH_NAME}"

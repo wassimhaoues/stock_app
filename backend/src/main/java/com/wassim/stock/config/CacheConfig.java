@@ -1,5 +1,5 @@
 package com.wassim.stock.config;
-
+// Configuration de la cache avec Caffeine pour les produits et les entrepôts
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;

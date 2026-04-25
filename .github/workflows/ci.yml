@@ -11,10 +11,30 @@ on:
       - main
       - dev
 
+# Phase 22.1:
+# Sur main, ce workflow fait partie des validations obligatoires que le CD
+# attend explicitement avant toute publication ou toute modification GitOps.
+#
+# Phase 22.2:
+# Sur les PR vers main, ce workflow reste un required check avant merge ou
+# auto-merge, aux cotes de Security et du workflow PR Validation.
+#
+# Phase 22.4:
+# Les PR GitOps creees par github-actions[bot] ne doivent pas relancer les jobs
+# applicatifs lourds. Sur ce type de PR, ce workflow est donc ignore.
+#
+# Phase 22.5:
+# Pour les PR contributeurs, ce workflow reste un required check du ruleset
+# GitHub. L'auto-merge ne doit jamais permettre de le contourner.
+
 jobs:
   backend:
     name: Backend — test & build
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.user.login != 'github-actions[bot]' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
     defaults:
       run:
         working-directory: backend
@@ -36,6 +56,10 @@ jobs:
   frontend:
     name: Frontend — lint, test & build
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.user.login != 'github-actions[bot]' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
     defaults:
       run:
         working-directory: frontend
@@ -73,7 +97,16 @@ jobs:
     needs: [backend, frontend]
     runs-on: ubuntu-latest
     # Free plan: analysis is available on main branch and PRs targeting main only
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main')
+    if: >-
+      github.ref == 'refs/heads/main' ||
+      (
+        github.event_name == 'pull_request' &&
+        github.base_ref == 'main' &&
+        (
+          github.event.pull_request.user.login != 'github-actions[bot]' ||
+          !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+        )
+      )
 
     steps:
       - name: Checkout (full history for blame data)

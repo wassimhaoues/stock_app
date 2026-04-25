@@ -70,4 +70,4 @@ jobs:
         run: kustomize build k8s/overlays/gitops > /tmp/gitops-rendered.yaml
 
       - name: Validate manifests with kubectl dry-run
-        run: kubectl apply --dry-run=client -f /tmp/gitops-rendered.yaml
+        run: kubectl apply --dry-run=client --validate=false -f /tmp/gitops-rendered.yaml

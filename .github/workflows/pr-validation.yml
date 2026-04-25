@@ -12,15 +12,6 @@ concurrency:
 permissions:
   contents: read
 
-# Phase 22.2:
-# Ce workflow ajoute un check leger et independant du build applicatif.
-# Il complete CI + Security sur les PR vers main pour servir de required check
-# dans les branch rules / rulesets GitHub avant auto-merge.
-#
-# Phase 22.4:
-# Ce workflow reste dedie aux PR contributeurs. Les PR GitOps de la GitHub App
-# ont leur propre validation legere dans gitops-validation.yml.
-
 jobs:
   yaml-manifests:
     name: YAML & manifests

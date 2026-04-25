@@ -1,27 +1,3 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# CD — Publish & GitOps update (builds sélectifs)
-#
-# Gouvernance Phase 22.1 :
-#   - un push sur main déclenche CI, Security et CD en parallèle
-#   - CD N'A PAS le droit de publier quoi que ce soit immédiatement
-#   - le premier job de ce workflow attend explicitement la fin de CI ET Security
-#   - publication + modification GitOps ne démarrent que si les deux workflows
-#     sont terminés avec succès pour le MÊME commit de main
-#
-# Cela couvre les deux cas métier visés :
-#   1. push direct administrateur sur main
-#   2. merge d'une PR vers main
-#
-# Phase 22.3 remplace ensuite le push GitOps direct sur main par une PR GitOps
-# creee par une GitHub App dediee. ArgoCD ne synchronise donc qu'apres merge
-# de cette PR.
-#
-# Phase 22.5:
-# L'auto-merge reste un accelerateur de flux uniquement.
-# Le workflow cree la PR GitOps et peut demander son auto-merge, mais la
-# decision finale reste gouvernee par les checks requis du ruleset GitHub.
-# ══════════════════════════════════════════════════════════════════════════════
-
 name: CD — Publish & GitOps update
 
 on:

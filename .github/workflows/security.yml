@@ -22,8 +22,8 @@ on:
 # auto-merge, aux cotes de CI et du workflow PR Validation.
 #
 # Phase 22.4:
-# Les PR GitOps creees par github-actions[bot] ne doivent pas relancer les scans
-# lourds CodeQL / OWASP / Trivy. Sur ce type de PR, ce workflow est ignore.
+# Les PR GitOps creees par la GitHub App ne doivent pas relancer les scans
+# lourds CodeQL / OWASP / Trivy. On les detecte par leur forme (bot + branche + titre).
 #
 # Phase 22.5:
 # Pour les PR contributeurs, ce workflow reste un required check du ruleset
@@ -36,8 +36,9 @@ jobs:
     runs-on: ubuntu-latest
     if: >-
       github.event_name != 'pull_request' ||
-      github.event.pull_request.user.login != 'github-actions[bot]' ||
-      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+      github.event.pull_request.user.type != 'Bot' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') ||
+      !startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
     permissions:
       security-events: write
       actions: read
@@ -87,8 +88,9 @@ jobs:
     runs-on: ubuntu-latest
     if: >-
       github.event_name != 'pull_request' ||
-      github.event.pull_request.user.login != 'github-actions[bot]' ||
-      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+      github.event.pull_request.user.type != 'Bot' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') ||
+      !startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
 
     steps:
       - name: Checkout
@@ -139,8 +141,9 @@ jobs:
     runs-on: ubuntu-latest
     if: >-
       github.event_name != 'pull_request' ||
-      github.event.pull_request.user.login != 'github-actions[bot]' ||
-      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+      github.event.pull_request.user.type != 'Bot' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') ||
+      !startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
     permissions:
       contents: read
       security-events: write
@@ -180,8 +183,9 @@ jobs:
     runs-on: ubuntu-latest
     if: >-
       github.event_name != 'pull_request' ||
-      github.event.pull_request.user.login != 'github-actions[bot]' ||
-      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+      github.event.pull_request.user.type != 'Bot' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') ||
+      !startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
     permissions:
       contents: read
       security-events: write

@@ -4,11 +4,13 @@ Les secrets sont configurés dans : **GitHub → dépôt → Settings → Secret
 
 ## Liste des secrets
 
-| Secret        | Workflow       | Obligatoire | Description                                  |
-| ------------- | -------------- | ----------- | -------------------------------------------- |
-| `SONAR_TOKEN` | `ci.yml`       | Oui         | Token d'authentification SonarCloud          |
-| `JWT_SECRET`  | `ci.yml`       | Oui         | Clé JWT pour les tests d'intégration backend |
-| `NVD_API_KEY` | `security.yml` | Non         | Accélère OWASP Dependency-Check (optionnel)  |
+| Secret               | Workflow       | Obligatoire | Description                                                 |
+| -------------------- | -------------- | ----------- | ----------------------------------------------------------- |
+| `SONAR_TOKEN`        | `ci.yml`       | Oui         | Token d'authentification SonarCloud                         |
+| `JWT_SECRET`         | `ci.yml`       | Oui         | Clé JWT pour les tests d'intégration backend                |
+| `NVD_API_KEY`        | `security.yml` | Non         | Accélère OWASP Dependency-Check (optionnel)                 |
+| `GH_APP_ID`          | `cd.yml`       | Oui         | App ID de la GitHub App utilisée pour les PR GitOps         |
+| `GH_APP_PRIVATE_KEY` | `cd.yml`       | Oui         | Clé privée PEM de la GitHub App utilisée pour les PR GitOps |
 
 ## Configurer SONAR_TOKEN
 
@@ -29,10 +31,36 @@ openssl rand -base64 32
 
 GitHub → Settings → Secrets → New secret : `JWT_SECRET`
 
+## Configurer la GitHub App pour la PR GitOps
+
+Le workflow `cd.yml` crée désormais un token d'installation GitHub App à partir de :
+
+- `GH_APP_ID`
+- `GH_APP_PRIVATE_KEY`
+
+Ces deux secrets suffisent pour le flux Actions serveur-à-serveur.
+
+Tu n'as pas besoin d'ajouter :
+
+- le client ID
+- le client secret
+- l'installation ID
+
+La GitHub App doit être installée sur le dépôt avec au minimum :
+
+- `Contents: Read and write`
+- `Pull requests: Read and write`
+- `Metadata: Read-only`
+
 ## Permissions GitHub Actions pour la PR GitOps
 
 Le workflow `cd.yml` n'utilise plus de deploy key SSH.
-Il s'appuie sur `GITHUB_TOKEN` avec des permissions de job explicites :
+Il s'appuie sur :
+
+- `GITHUB_TOKEN` pour pousser les images vers GHCR
+- un token GitHub App pour pousser la branche GitOps et gérer la PR
+
+Les permissions de job explicites restent :
 
 ```yaml
 permissions:

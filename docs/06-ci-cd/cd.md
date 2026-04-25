@@ -54,7 +54,7 @@ Bloque tout le workflow tant que `CI` et `Security` ne sont pas terminés avec s
 
 ### detect-changes
 
-Analyse le diff entre `HEAD~1` et `HEAD` pour déterminer quelles parties du code ont changé.
+Analyse le diff entre `github.event.before` et `github.sha` pour déterminer quelles parties du code ont changé sur toute la plage du push.
 
 **Outputs :**
 
@@ -64,12 +64,12 @@ Analyse le diff entre `HEAD~1` et `HEAD` pour déterminer quelles parties du cod
 
 ```bash
 # Exemple de logique de détection
-CHANGED=$(git diff --name-only HEAD~1 HEAD)
+CHANGED=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
 if echo "${CHANGED}" | grep -q "^backend/"; then backend=true; fi
 if echo "${CHANGED}" | grep -q "^frontend/"; then frontend=true; fi
 ```
 
-Requiert `fetch-depth: 2` pour accéder au commit parent.
+Requiert `fetch-depth: 0` pour garantir l'accès à toute la plage de commits du push.
 
 ### build-backend
 
@@ -112,7 +112,7 @@ L'utilisation de `always()` est nécessaire car un job "skipped" (build non déc
 3. Mettre à jour `k8s/overlays/gitops/kustomization.yaml`
 4. Créer une branche GitOps dédiée, par exemple `gitops/bump-images-sha-xxxxxxx`
 5. Committer le changement avec le titre `chore(gitops): bump images to sha-xxxxxxx`
-6. Pousser cette branche avec `GITHUB_TOKEN`
+6. Pousser cette branche avec un token d'installation GitHub App
 7. Ouvrir ou mettre à jour une PR vers `main`
 8. Activer l'auto-merge GitHub en `squash`
 
@@ -157,12 +157,12 @@ Cela réduit le temps d'exécution et évite de publier une image identique avec
 
 ## Authentification GHCR vs GitHub API
 
-| Opération                  | Mécanisme                                          |
-| -------------------------- | -------------------------------------------------- |
-| Push images vers GHCR      | `GITHUB_TOKEN` (permission `packages: write`)      |
-| Push branche GitOps        | `GITHUB_TOKEN` (permission `contents: write`)      |
-| Créer / gérer la PR GitOps | `GITHUB_TOKEN` (permission `pull-requests: write`) |
-| Auto-merge de la PR GitOps | GitHub auto-merge + ruleset / branch protection    |
+| Opération                  | Mécanisme                                            |
+| -------------------------- | ---------------------------------------------------- |
+| Push images vers GHCR      | `GITHUB_TOKEN` (permission `packages: write`)        |
+| Push branche GitOps        | token GitHub App (permission `contents: write`)      |
+| Créer / gérer la PR GitOps | token GitHub App (permission `pull-requests: write`) |
+| Auto-merge de la PR GitOps | GitHub auto-merge + ruleset / branch protection      |
 
 La branche `main` n'est plus ecrite directement par le workflow CD. Le pipeline ne depend donc plus d'une deploy key SSH pour contourner la protection de branche.
 
@@ -181,9 +181,9 @@ La branche `main` n'est plus ecrite directement par le workflow CD. Le pipeline 
 - après merge, le commit arrive sur `main`
 - ce push sur `main` relance `CI`, `Security` puis `CD` attend leurs résultats avant de publier
 
-### PR GitOps `github-actions[bot]`
+### PR GitOps bot
 
-- `CD` cree une branche GitOps puis une PR vers `main`
+- `CD` cree une branche GitOps puis une PR vers `main` via la GitHub App
 - cette PR peut etre auto-mergee par GitHub uniquement apres les checks legers GitOps requis
 - le merge en squash cree un commit `chore(gitops): ...` sur `main`
 - ce commit ne republie pas les images et evite une boucle CD

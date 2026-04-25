@@ -18,16 +18,17 @@ permissions:
 # dans les branch rules / rulesets GitHub avant auto-merge.
 #
 # Phase 22.4:
-# Ce workflow reste dedie aux PR contributeurs. Les PR GitOps bot ont leur
-# propre validation legere dans gitops-validation.yml.
+# Ce workflow reste dedie aux PR contributeurs. Les PR GitOps de la GitHub App
+# ont leur propre validation legere dans gitops-validation.yml.
 
 jobs:
   yaml-manifests:
     name: YAML & manifests
     runs-on: ubuntu-latest
     if: >-
-      github.event.pull_request.user.login != 'github-actions[bot]' ||
-      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-')
+      github.event.pull_request.user.type != 'Bot' ||
+      !startsWith(github.event.pull_request.head.ref, 'gitops/bump-images-') ||
+      !startsWith(github.event.pull_request.title, 'chore(gitops): bump images to sha-')
 
     steps:
       - name: Checkout
@@ -46,6 +47,7 @@ jobs:
           cat <<'EOF' > .yamllint-pr-validation.yml
           extends: default
           rules:
+            comments: disable
             document-start: disable
             line-length: disable
             truthy: disable

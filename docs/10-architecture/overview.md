@@ -105,7 +105,7 @@ Push / PR
 │  └────┬──────┘                  │
 │       ▼                          │
 │  gitops-bump                     │
-│  (kustomize + SSH push)          │
+│  (PR GitOps)                     │
 └──────────────────────────────────┘
     │
     ▼

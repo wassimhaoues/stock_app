@@ -2,43 +2,51 @@
 
 ## Tableau de suivi
 
-| Phase | Nom | Statut | Branche |
-|-------|-----|--------|---------|
-| 0 | Planification & décisions | ✅ DONE | — |
-| 1 | Fondations : backend + frontend | ✅ DONE | `feature/phase-1-foundation` |
-| 2 | Authentification & sécurité | ✅ DONE | `feature/phase-2-auth` |
-| 3 | Administration utilisateurs & permissions | ✅ DONE | `feature/phase-3-user-management` |
-| 4 | Gestion des entrepôts | ✅ DONE | `feature/phase-4-entrepots` |
-| 5 | Gestion des produits | ✅ DONE | `feature/phase-5-produits` |
-| 6 | Stocks & mouvements | ✅ DONE | `feature/phase-6-stocks` |
-| 7 | Gestion de la capacité des entrepôts | ✅ DONE | `feature/phase-7-capacite-entrepots` |
-| 8 | Alertes & dashboard analytique | ✅ DONE | `feature/phase-8-analytics-dashboard` |
-| 9 | Revue UX/UI frontend | ✅ DONE | `feature/phase-9-frontend-polish` |
-| 10 | Validation métier, sécurité & données réalistes | ✅ DONE | `feature/phase-10-business-validation-security` |
-| 11 | Tests et nettoyage final | ✅ DONE | `feature/phase-11-tests-cleanup` |
-| 12 | Socle d'exécution locale | ✅ DONE | `feature/devops-phase-12-local-baseline` |
-| 13 | Conteneurisation complète | ✅ DONE | `feature/devops-phase-13-docker` |
-| 14 | CI de base sur GitHub Actions | ✅ DONE | `feature/devops-phase-14-ci-base` |
-| 15 | Qualité logicielle et sécurité de pipeline | ✅ DONE | `feature/devops-phase-15-quality-security` |
-| 16 | Déploiement Kubernetes local | ✅ DONE | `feature/devops-phase-16-k8s` |
-| 17 | GitOps et ArgoCD | ✅ DONE | `feature/devops-phase-17-argocd` |
-| 18 | CD automatisé par image versionnée | ✅ DONE | `feature/devops-phase-18-cd-automation` |
-| 19 | Observabilité et alerting | ⏳ TODO | `feature/devops-phase-19-observability` |
-| 20 | Amélioration continue et finalisation soutenance | ⏳ TODO | `feature/devops-phase-20-finalization` |
+| Phase | Nom                                           | Statut  | Branche                                                 |
+| ----- | --------------------------------------------- | ------- | ------------------------------------------------------- |
+| 0     | Planification et cadrage                      | Terminé | —                                                       |
+| 1     | Fondations backend et frontend                | Terminé | `feature/phase-1-foundation`                            |
+| 2     | Authentification et sécurité                  | Terminé | `feature/phase-2-auth`                                  |
+| 3     | Gestion des utilisateurs et rôles             | Terminé | `feature/phase-3-user-management`                       |
+| 4     | Gestion des entrepôts                         | Terminé | `feature/phase-4-entrepots`                             |
+| 5     | Gestion des produits                          | Terminé | `feature/phase-5-produits`                              |
+| 6     | Gestion des stocks et mouvements              | Terminé | `feature/phase-6-stocks`                                |
+| 7     | Gestion de la capacité des entrepôts          | Terminé | `feature/phase-7-capacite-entrepots`                    |
+| 8     | Alertes et tableau de bord                    | Terminé | `feature/phase-8-analytics-dashboard`                   |
+| 9     | Reprise de l'interface utilisateur            | Terminé | `feature/phase-9-frontend-polish`                       |
+| 10    | Validation métier et données de démonstration | Terminé | `feature/phase-10-business-validation-security`         |
+| 11    | Tests et nettoyage                            | Terminé | `feature/phase-11-tests-cleanup`                        |
+| 12    | Préparation de l'exécution locale             | Terminé | `feature/devops-phase-12-local-baseline`                |
+| 13    | Conteneurisation Docker                       | Terminé | `feature/devops-phase-13-docker`                        |
+| 14    | CI de base avec GitHub Actions                | Terminé | `feature/devops-phase-14-ci-base`                       |
+| 15    | Qualité logicielle et sécurité pipeline       | Terminé | `feature/devops-phase-15-quality-security`              |
+| 16    | Déploiement Kubernetes local                  | Terminé | `feature/devops-phase-16-k8s`                           |
+| 17    | GitOps et ArgoCD                              | Terminé | `feature/devops-phase-17-argocd`                        |
+| 18    | CD automatisé avec publication d'images       | Terminé | `feature/devops-phase-18-cd-automation`                 |
+| 19    | Logging centralisé                            | Terminé | `feature/devops-phase-19-centralized-logging`           |
+| 20    | Observabilité et alerting                     | Terminé | `feature/devops-phase-20-observability`                 |
+| 21    | Améliorations backend et finition frontend    | Terminé | `feature/phase-21-backend-enhancements-frontend-polish` |
+| 22    | Gouvernance CI/CD et flux GitOps par PR       | Terminé | `feature/devops-phase-22-github-governance`             |
+| 23    | Finalisation et préparation de soutenance     | Terminé | `feature/devops-phase-23-finalization`                  |
 
 ## Périmètre par bloc
 
 ### Bloc 1 — Application métier (phases 0–11)
-Fondations Spring Boot et Angular, authentification JWT, RBAC, gestion des entrepôts/produits/stocks/mouvements, alertes, dashboard analytique, UX/UI, tests.
+
+Fondations Spring Boot et Angular, authentification JWT, gestion des rôles, modules métier, interface, validation métier et tests.
 
 ### Bloc 2 — Infrastructure (phases 12–13)
-Configuration locale sans Docker, conteneurisation multi-stage, stack Docker Compose complète.
+
+Préparation du poste local, conteneurisation multi-stage et stack Docker Compose complète.
 
 ### Bloc 3 — CI/CD et qualité (phases 14–15)
-GitHub Actions CI (tests, build, SonarCloud), security workflow (CodeQL, OWASP, Trivy).
+
+GitHub Actions pour la CI, qualité logicielle et scans de sécurité.
 
 ### Bloc 4 — Kubernetes et GitOps (phases 16–18)
-Manifests K8s avec Kustomize, ArgoCD, pipeline CD automatisé avec images GHCR et bump GitOps.
 
-### Bloc 5 — Observabilité et finalisation (phases 19–20)
-Prometheus, Grafana, alertes, finalisation pour la soutenance.
+Déploiement local sur Kubernetes, mise en place d'ArgoCD et automatisation de la publication des images.
+
+### Bloc 5 — Exploitation et finition (phases 19–23)
+
+Logging, observabilité, durcissement CI/CD et préparation de la soutenance.

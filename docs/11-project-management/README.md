@@ -2,9 +2,9 @@
 
 | Fichier | Contenu |
 |---------|---------|
-| [roadmap.md](roadmap.md) | Tableau de suivi des phases (statut actuel) |
-| [phases.md](phases.md) | Description détaillée de chaque phase |
-| [backlog.md](backlog.md) | Product backlog par épic (user stories) |
+| [roadmap.md](roadmap.md) | Tableau de suivi des phases |
+| [phases.md](phases.md) | Résumé des phases du projet |
+| [backlog.md](backlog.md) | Backlog produit par épic |
 
 ## Statut global
 
@@ -16,5 +16,6 @@
 | Kubernetes local (phase 16) | Terminé |
 | GitOps et ArgoCD (phase 17) | Terminé |
 | CD automatisé (phase 18) | Terminé |
-| Observabilité (phase 19) | À faire |
-| Finalisation soutenance (phase 20) | À faire |
+| Logging et observabilité (phases 19–20) | Terminé |
+| Finition technique (phases 21–22) | Terminé |
+| Finalisation soutenance (phase 23) | En cours |

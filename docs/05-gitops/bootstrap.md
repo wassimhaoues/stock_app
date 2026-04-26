@@ -1,10 +1,6 @@
 # Bootstrap du Secret Kubernetes
 
-## Pourquoi un Secret bootstrap ?
-
-L'overlay GitOps (`k8s/overlays/gitops`) ne contient **pas** de `secretGenerator`. Les secrets (mots de passe MySQL, clé JWT) ne doivent jamais être commités dans le dépôt Git.
-
-Le Secret `stockpro-secrets` est créé **une seule fois manuellement** avant la première synchronisation ArgoCD. ArgoCD ne le modifie jamais lors des synchronisations suivantes.
+L'overlay GitOps (`k8s/overlays/gitops`) ne génère pas les secrets. Le Secret `stockpro-secrets` doit donc être créé manuellement avant la première synchronisation ArgoCD.
 
 ## Créer le Secret
 
@@ -24,7 +20,7 @@ kubectl get secret stockpro-secrets -n stockpro
 kubectl describe secret stockpro-secrets -n stockpro
 ```
 
-## Contenu attendu du Secret
+## Clés attendues
 
 Le Secret doit contenir au minimum :
 
@@ -37,7 +33,7 @@ Le Secret doit contenir au minimum :
 | `JWT_SECRET` | Clé de signature JWT |
 | `STOCKPRO_DEMO_DATA` | `true` ou `false` |
 
-## Vérification des valeurs
+## Vérification
 
 ```bash
 # Voir les clés (sans les valeurs)
@@ -49,7 +45,7 @@ kubectl get secret stockpro-secrets -n stockpro \
 echo
 ```
 
-## Modifier le Secret après bootstrap
+## Mise à jour
 
 Si les valeurs doivent être modifiées :
 
@@ -66,8 +62,8 @@ kubectl rollout restart deployment/stock-backend -n stockpro
 kubectl rollout restart deployment/stock-db -n stockpro
 ```
 
-## Important
+## À retenir
 
-- Le fichier `.env` est dans `.gitignore`. Ne jamais le committer.
-- Le Secret n'est pas géré par ArgoCD. Il persiste entre les synchronisations.
-- Si le namespace est supprimé et recréé, le Secret doit être recréé manuellement.
+- `.env` reste hors du dépôt.
+- Le Secret n'est pas géré par ArgoCD.
+- Si le namespace est recréé, le Secret doit l'être aussi.

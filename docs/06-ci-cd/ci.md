@@ -12,13 +12,7 @@ on:
     branches: [main, dev]
 ```
 
-Pour la phase 22.2, les PR vers `main` continuent donc bien à exécuter `CI`.
-En phase 22.4, les PR GitOps créées par la GitHub App sont explicitement exclues de ce workflow lourd.
-
-## Rôle sur `main`
-
-Sur `main`, `CI` fait partie des validations obligatoires du flux de livraison.
-Le workflow `cd.yml` peut démarrer sur le push vers `main`, mais il attend explicitement la conclusion `success` de `CI` avant de publier des images GHCR ou de modifier GitOps.
+Les PR vers `main` exécutent bien la CI. Les PR GitOps bot sont traitées à part pour éviter de relancer les jobs lourds.
 
 ## Jobs
 
@@ -49,7 +43,7 @@ Variables d'environnement injectées pendant les tests :
 
 ### sonarcloud
 
-Dépend de `backend` et `frontend`. S'exécute uniquement sur `main` ou les PRs vers `main`.
+Dépend de `backend` et `frontend`. Ce job s'exécute uniquement sur `main` ou sur les PR vers `main`.
 
 | Étape        | Action                                                            |
 | ------------ | ----------------------------------------------------------------- |
@@ -58,9 +52,9 @@ Dépend de `backend` et `frontend`. S'exécute uniquement sur `main` ou les PRs 
 | Node + npm   | Génère le rapport LCOV                                            |
 | Analyse      | `SonarSource/sonarcloud-github-action`                            |
 
-Requiert le secret `SONAR_TOKEN`.
+Secret requis : `SONAR_TOKEN`.
 
-## PR Validation
+## Validation légère sur PR
 
 Le workflow léger `.github/workflows/pr-validation.yml` complète `CI` sur les PR vers `main`.
 
@@ -71,9 +65,9 @@ Il vérifie rapidement :
 - les fichiers YAML d'infrastructure sous `infra/`
 - `docker-compose.yml`
 
-Ce check reste volontairement indépendant du build applicatif pour fournir un signal rapide avant merge ou auto-merge.
+Le but est de donner un retour rapide sur les workflows et les manifests sans attendre toute la CI applicative.
 
-## GitOps Validation
+## Validation des PR GitOps
 
 Le workflow `.github/workflows/gitops-validation.yml` est réservé aux PR GitOps créées par la GitHub App.
 
@@ -87,7 +81,7 @@ Il exécute uniquement des validations légères :
 
 - validation YAML
 - `kustomize build k8s/overlays/gitops`
-- `kubectl apply --dry-run=client` sur le rendu GitOps
+- `kubeconform` sur le rendu GitOps
 
 Il remplace les jobs lourds sur ces PR :
 
@@ -97,7 +91,7 @@ Il remplace les jobs lourds sur ces PR :
 - pas de SonarCloud
 - pas de scans Security lourds
 
-## Conditions de succès
+## Quand la CI est verte
 
 La CI est verte si :
 
@@ -109,36 +103,11 @@ La CI est verte si :
 - Le build frontend compile sans erreur
 - Le Quality Gate SonarCloud est validé (sur `main` et PRs vers `main`)
 
-## Caches
+## Cache
 
 | Cache           | Clé                                  |
 | --------------- | ------------------------------------ |
 | Maven (`~/.m2`) | Hash de `backend/pom.xml`            |
 | npm (`~/.npm`)  | Hash de `frontend/package-lock.json` |
 
-Les caches accélèrent considérablement les exécutions successives.
-
-## Branche protégée
-
-La branche `main` est protégée. Une fusion nécessite :
-
-- La CI verte (`backend`, `frontend`, `sonarcloud`)
-- Au moins une revue de code (selon configuration GitHub)
-
-En phase 22.1, cette protection doit rester cohérente avec les checks GitHub obligatoires configurés sur `main`.
-
-En phase 22.2, pour une PR contributeur vers `main`, les checks obligatoires attendus doivent inclure au minimum :
-
-- `CI`
-- `Security`
-- `PR Validation`
-
-L'auto-merge GitHub peut alors être activé pour les contributeurs autorisés, sans contourner la protection de branche.
-
-Pour une PR GitOps bot vers `main`, le dépôt est maintenant préparé pour un autre jeu de checks :
-
-- `GitOps Validation`
-
-Les checks lourds `CI` et `Security` sont volontairement ignorés sur ce type de PR.
-
-La configuration GitHub UI à appliquer pour ces checks requis est documentée dans [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).
+Les caches accélèrent les exécutions successives. Les réglages GitHub UI associés aux checks requis sont documentés dans [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).

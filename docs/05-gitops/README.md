@@ -1,6 +1,6 @@
 # 05 — GitOps
 
-Cette section couvre ArgoCD, le bootstrap manuel et le dépannage du flux GitOps.
+Cette section regroupe le minimum utile pour comprendre et utiliser le flux GitOps du projet.
 
 | Fichier                                  | Contenu                                             |
 | ---------------------------------------- | --------------------------------------------------- |
@@ -8,19 +8,15 @@ Cette section couvre ArgoCD, le bootstrap manuel et le dépannage du flux GitOps
 | [bootstrap.md](bootstrap.md)             | Créer le Secret bootstrap avant la première sync    |
 | [troubleshooting.md](troubleshooting.md) | Erreurs de sync, rollback, débogage                 |
 
-## Vue d'ensemble du flux GitOps
+## Flux retenu
 
 ```
 merge sur main
-    → CI verte (tests, qualité, sécurité)
-    → cd.yml détecte les changements (backend / frontend)
-    → Build et push des images vers GHCR avec tag sha-XXXXXXX
-    → cd.yml met à jour k8s/overlays/gitops/kustomization.yaml (newTag) sur une branche GitOps
-    → cd.yml ouvre une PR GitOps vers main avec la GitHub App
-    → GitHub merge la PR GitOps après validations requises
-    → ArgoCD détecte le changement Git merge (auto-sync activé)
-    → ArgoCD applique le kustomization.yaml mis à jour
-    → Les pods sont remplacés par les nouvelles images
+    → CI et Security
+    → build et publication des images GHCR
+    → PR GitOps avec mise à jour des tags
+    → merge de la PR GitOps
+    → synchronisation ArgoCD
 ```
 
 ## Source de vérité
@@ -31,7 +27,6 @@ ArgoCD surveille :
 - **Branche :** `main`
 - **Chemin :** `k8s/overlays/gitops`
 
-Toute modification dans ce chemin déclenche une synchronisation automatique.
-Avec le flux 22.3, cette modification n'arrive dans `main` qu'après merge de la PR GitOps.
+Le changement n'arrive dans cet overlay qu'après merge de la PR GitOps, ce qui garde une trace claire de la version déployée.
 
 Les réglages GitHub UI associés à ce flux sont détaillés dans [docs/13-manual-work/phase-22-github-governance-setup.md](../13-manual-work/phase-22-github-governance-setup.md).

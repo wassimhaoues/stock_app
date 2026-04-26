@@ -4,30 +4,12 @@ on:
   push:
     branches:
       - main
-      - dev
   pull_request:
     branches:
       - main
-      - dev
   schedule:
     # Weekly on Monday at 03:00 UTC
     - cron: "0 3 * * 1"
-
-# Phase 22.1:
-# Sur main, ce workflow devient une validation bloquante au meme titre que CI.
-# Le CD attend sa conclusion "success" avant toute livraison.
-#
-# Phase 22.2:
-# Sur les PR vers main, ce workflow reste un required check avant merge ou
-# auto-merge, aux cotes de CI et du workflow PR Validation.
-#
-# Phase 22.4:
-# Les PR GitOps creees par la GitHub App ne doivent pas relancer les scans
-# lourds CodeQL / OWASP / Trivy. On les detecte par leur forme (bot + branche + titre).
-#
-# Phase 22.5:
-# Pour les PR contributeurs, ce workflow reste un required check du ruleset
-# GitHub. L'auto-merge ne doit jamais permettre de le contourner.
 
 jobs:
   # ── CodeQL — SAST ────────────────────────────────────────────────────────────

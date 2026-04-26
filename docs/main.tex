@@ -1,0 +1,340 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=1.7cm]{geometry}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  urlcolor=blue!50!black,
+  pdftitle={Document technique StockPro},
+  pdfauthor={wassim haoues}
+}
+
+\setlist[itemize]{nosep,leftmargin=*}
+\setlist[enumerate]{nosep,leftmargin=*}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\renewcommand{\arraystretch}{1.12}
+
+\titleformat{\section}{\large\bfseries\color{blue!40!black}}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+
+\newcommand{\placeholderfigure}[2]{
+  \begin{figure}[H]
+  \centering
+  \IfFileExists{#1}{
+    \includegraphics[width=0.9\textwidth]{#1}
+  }{
+    \fbox{\parbox[c][4.2cm][c]{0.86\textwidth}{\centering Placeholder image \\ \texttt{#1}}}
+  }
+  \caption{#2}
+  \end{figure}
+}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{2.8cm}
+{\Huge\bfseries Implémentation d'un projet en se basant sur une chaîne DevOps de bout en bout\par}
+\vspace{0.6cm}
+{\Large Projet support : StockPro\par}
+\vspace{2cm}
+\begin{tabular}{rl}
+\textbf{Module :} & Mini Projet DevOps \\
+\textbf{Étudiant :} & wassim haoues \\
+\textbf{Enseignant :} & Mohamed Najeh ISSAOUI \\
+\textbf{Date :} & 26 avril 2026 \\
+\end{tabular}
+\vfill
+{\large Document technique académique basé uniquement sur le Projet\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+\small
+
+\section{Introduction}
+
+Dans ce mini-projet, j'ai étudié et documenté la mise en place d'une chaîne DevOps complète autour de l'application \textbf{StockPro}. Il s'agit d'une application web de gestion de stock multi-entrepôts qui couvre des besoins concrets : authentification, gestion des utilisateurs, produits, mouvements de stock, alertes et tableau de bord.
+
+Dans ce projet, je ne me suis pas limité à développer l'application. J'ai aussi mis en place une vraie chaîne d'industrialisation avec la conteneurisation, Kubernetes, un flux GitOps avec ArgoCD, des pipelines GitHub Actions, la publication des images dans GHCR et une couche d'observabilité. Autrement dit, mon travail couvre bien le cycle \textit{développement $\rightarrow$ validation $\rightarrow$ build $\rightarrow$ déploiement $\rightarrow$ supervision}.
+
+\section{Description du projet}
+
+\subsection{Périmètre réellement présent}
+
+Pour présenter le projet, je commence par résumer les principales briques techniques que j'ai utilisées.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.28\textwidth} >{\raggedright\arraybackslash}p{0.64\textwidth}}
+\toprule
+\textbf{Élément} & \textbf{Implémentation dans mon projet} \\
+\midrule
+Backend & Spring Boot 4.0.5, Java 17, Spring Security, Spring Data JPA, Actuator \\
+Frontend & Angular 21, Angular Material, routing lazy-loaded, interceptors, guards \\
+Base de données & MySQL 8.0 \\
+Authentification & JWT en cookie HttpOnly + endpoint CSRF \\
+Documentation API & SpringDoc OpenAPI / Swagger UI \\
+Exécution locale & \texttt{docker-compose.yml} \\
+Déploiement Kubernetes & \texttt{k8s/} avec \texttt{kind} en local \\
+GitOps & ArgoCD via \texttt{k8s/argocd/stockpro-app.yaml} \\
+Registry & GitHub Container Registry (\texttt{ghcr.io}) \\
+CI/CD & GitHub Actions dans \texttt{.github/workflows/} \\
+Monitoring & Prometheus + Grafana en Docker et en Kubernetes \\
+Logging centralisé & Logs JSON backend + Loki/Promtail dans la stack monitoring Docker \\
+\bottomrule
+\end{longtable}
+
+Mon projet ne se limite donc pas à une simple application web : il intègre aussi les éléments essentiels d'un environnement DevOps cohérent.
+
+\subsection{Modules fonctionnels réellement codés}
+
+Dans l'application, j'ai structuré les modules fonctionnels suivants :
+
+\begin{itemize}
+\item authentification et session utilisateur ;
+\item gestion des utilisateurs et des rôles ;
+\item gestion des entrepôts ;
+\item gestion des produits ;
+\item gestion des stocks ;
+\item mouvements de stock ;
+\item alertes ;
+\item tableau de bord analytique.
+\end{itemize}
+
+Le backend expose 9 contrôleurs REST et 8 services métier. J'ai également mis en place 14 tests backend et 14 fichiers de tests frontend. Les rôles gérés dans l'application sont \texttt{ADMIN}, \texttt{GESTIONNAIRE} et \texttt{OBSERVATEUR}.
+
+\placeholderfigure{images/stockpro-ui.png}{Interface StockPro (page de connexion ou tableau de bord)}
+
+\subsection{Base de données et déploiement}
+
+Pour la base de données, le schéma initial est fourni par \texttt{infra/mysql-init/01-schema.sql}. Les tables que j'ai retrouvées sont \texttt{entrepots}, \texttt{utilisateurs}, \texttt{produits}, \texttt{stocks} et \texttt{mouvement\_stock}. Le backend complète ensuite ce socle avec JPA et la propriété \texttt{spring.jpa.hibernate.ddl-auto=update}. Je n'ai pas trouvé d'outil de migration dédié comme Flyway ou Liquibase.
+
+J'ai également constaté que le projet prévoit deux modes d'exécution locale :
+
+\begin{enumerate}
+\item \textbf{Docker Compose}, pour lancer rapidement MySQL, le backend et le frontend ;
+\item \textbf{Kubernetes local avec kind}, pour simuler un déploiement plus proche d'un environnement réel, avec Kustomize et ArgoCD.
+\end{enumerate}
+
+Je n'ai pas intégré Helm, Terraform, Ingress ni de cible cloud explicite. Mon objectif ici était surtout de construire un environnement local cohérent pour la démonstration et la validation technique.
+
+\placeholderfigure{images/docker-ps.png}{Conteneurs Docker actifs avec backend, frontend et base de données}
+
+\section{Architecture technique}
+
+\subsection{Architecture applicative}
+
+Sur le plan applicatif, le frontend Angular est servi par \textbf{nginx}. Le fichier \texttt{frontend/nginx.conf} reverse-proxy les requêtes \texttt{/api/} vers le service backend \texttt{stock-backend:8085}. Je trouve ce choix logique, parce qu'il évite d'exposer une URL backend différente au navigateur et simplifie la communication entre les deux couches.
+
+Le backend Spring Boot écoute sur le port \texttt{8085}. Il expose notamment \texttt{/api/health}, \texttt{/actuator/prometheus} et \texttt{/swagger-ui.html}, puis s'appuie sur MySQL pour les données persistantes. J'ai aussi prévu l'injection de données de démonstration au démarrage via \texttt{DataInitializer} lorsque \texttt{STOCKPRO\_DEMO\_DATA=true}.
+
+\placeholderfigure{images/swagger-ui.png}{Swagger UI ou endpoint de santé du backend}
+
+\subsection{Flux DevOps réel}
+
+Le flux DevOps que j'ai mis en place peut être résumé ainsi :
+
+\begin{verbatim}
+Développeur
+  -> branche GitHub feature/devops
+  -> push / pull request
+  -> GitHub Actions CI
+  -> GitHub Actions Security
+  -> merge sur main
+  -> CD attend explicitement CI + Security
+  -> build sélectif backend / frontend
+  -> push des images dans GHCR
+  -> pull request GitOps chore(gitops): bump images
+  -> GitOps Validation
+  -> merge
+  -> ArgoCD
+  -> cluster kind
+  -> Prometheus / Grafana
+\end{verbatim}
+
+Ce point est important, parce que le déploiement n'est pas déclenché de manière aveugle. Le pipeline vérifie d'abord que les validations essentielles ont bien réussi sur le même commit.
+
+\placeholderfigure{images/github-actions.png}{Workflows CI, Security et CD validés sur le même SHA}
+\placeholderfigure{images/gitops-pr.png}{Pull request GitOps de mise à jour des images}
+
+\subsection{Vue d'exécution}
+
+En exécution, je peux résumer l'architecture de cette façon :
+
+\begin{verbatim}
+Navigateur
+  -> frontend Angular servi par nginx
+  -> proxy /api/
+  -> backend Spring Boot
+  -> MySQL
+
+Monitoring
+  -> Prometheus scrape /actuator/prometheus
+  -> Grafana lit Prometheus
+  -> Loki/Promtail collectent les logs Docker du backend
+\end{verbatim}
+
+\subsection{Composants d'infrastructure réellement présents}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.38\textwidth} >{\raggedright\arraybackslash}p{0.52\textwidth}}
+\toprule
+\textbf{Composant} & \textbf{Rôle dans le projet} \\
+\midrule
+\texttt{docker-compose.yml} & lance MySQL, le backend et le frontend \\
+\texttt{infra/docker-compose.yml} & ajoute phpMyAdmin pour l'administration locale \\
+\path{infra/monitoring/docker-compose.monitoring.yml} & lance Prometheus, Grafana, Loki et Promtail \\
+\texttt{k8s/base/} & contient les manifests communs backend, frontend et MySQL \\
+\texttt{k8s/overlays/local/} & adapte le déploiement à \texttt{kind} avec secrets et NodePort \\
+\texttt{k8s/overlays/gitops/} & sert de source de vérité pour ArgoCD \\
+\path{k8s/argocd/stockpro-app.yaml} & déclare l'application ArgoCD \\
+\bottomrule
+\end{longtable}
+
+J'ai choisi d'intégrer Loki surtout dans la stack Docker de monitoring. Côté Kubernetes, j'ai surtout versionné Prometheus et Grafana.
+
+\placeholderfigure{images/kubectl-pods-services.png}{Pods Kubernetes du namespace \texttt{stockpro} en état \texttt{Running} et services Kubernetes avec exposition NodePort}
+\placeholderfigure{images/argocd-sync.png}{Application ArgoCD \texttt{stockpro} en état \texttt{Synced} et \texttt{Healthy}}
+
+\section{Choix techniques}
+
+Dans cette partie, j'explique les choix techniques que j'ai faits pour construire ce projet.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}p{0.70\textwidth}}
+\toprule
+\textbf{Choix} & \textbf{Pourquoi ce choix me paraît cohérent} \\
+\midrule
+GitHub Actions & Le projet est déjà hébergé sur GitHub et les workflows exploitent directement les pull requests, les checks, l'API Actions et une GitHub App pour le flux GitOps. \\
+Docker & Les mêmes images servent à l'exécution locale et à la publication dans GHCR, ce qui réduit l'écart entre développement et intégration. \\
+Spring Boot & Le backend regroupe REST, sécurité, JPA, cache, Actuator et exposition Prometheus dans un cadre unique et cohérent. \\
+Angular & Le frontend contient plusieurs écrans métier, des guards de rôles, un interceptor JWT/XSRF et une interface structurée avec Angular Material. \\
+MySQL & J'ai choisi un modèle relationnel simple, initialisé directement dans le projet. La base est réutilisée aussi bien en Docker qu'en Kubernetes. \\
+kind + Kustomize & Le projet vise clairement un Kubernetes local reproductible. Les overlays \texttt{local} et \texttt{gitops} montrent un usage réaliste de Kustomize. \\
+ArgoCD & J'ai mis en place un vrai flux GitOps : ArgoCD pointe vers \texttt{k8s/overlays/gitops} sur \texttt{main}, et le CD met à jour les tags via une pull request dédiée. \\
+GHCR & Les images sont publiées avec des tags immuables du type \texttt{sha-xxxxxxx}, ce qui améliore la traçabilité entre code, image et déploiement. \\
+Prometheus / Grafana & Les métriques Micrometer sont déjà exposées et un dashboard Grafana est provisionné automatiquement. \\
+Loki / Promtail & Le backend émet des logs JSON adaptés à une collecte structurée, même si cette partie est surtout visible dans la stack Docker. \\
+nginx & Il sert à la fois de serveur web statique pour Angular et de reverse proxy vers le backend. \\
+SonarCloud & La présence de \texttt{sonar-project.properties}, JaCoCo, LCOV et \texttt{sonar.qualitygate.wait=true} montre une intégration qualité réelle. \\
+CodeQL / OWASP / Trivy & Le workflow \texttt{security.yml} ajoute une vraie couche de sécurité sur le code, les dépendances et les images. \\
+\bottomrule
+\end{longtable}
+
+\section{Pipelines DevOps réellement présents}
+
+\subsection{Workflows GitHub Actions}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.34\textwidth} >{\raggedright\arraybackslash}p{0.18\textwidth} >{\raggedright\arraybackslash}p{0.38\textwidth}}
+\toprule
+\textbf{Fichier} & \textbf{Déclenchement} & \textbf{Rôle} \\
+\midrule
+\path{.github/workflows/ci.yml} & push et pull request & tests backend, tests frontend, format, audit npm, build et SonarCloud \\
+\path{.github/workflows/security.yml} & push, pull request, hebdomadaire & CodeQL, OWASP Dependency-Check, Trivy backend et frontend \\
+\path{.github/workflows/pr-validation.yml} & pull request vers \texttt{main} & validation rapide YAML et manifests \\
+\path{.github/workflows/gitops-validation.yml} & pull request vers \texttt{main} & validation légère des PR GitOps bot : yamllint, scripts Python, \texttt{kustomize build}, \texttt{kubeconform} \\
+\path{.github/workflows/cd.yml} & push sur \texttt{main} & attente des validations, build sélectif, push GHCR, PR GitOps et auto-merge \\
+\bottomrule
+\end{longtable}
+
+\subsection{Logique des pipelines}
+
+Le workflow \texttt{ci.yml} regroupe trois grands blocs : le backend avec \texttt{./mvnw verify}, le frontend avec \texttt{npm ci}, le formatage, les tests et le build, puis enfin l'analyse SonarCloud. J'ai aussi ajouté une logique spéciale pour détecter les \textbf{PR GitOps bot} afin d'éviter de relancer des jobs lourds inutilement.
+
+Le workflow \texttt{security.yml} complète cette CI avec CodeQL sur \texttt{java-kotlin} et \texttt{javascript-typescript}, OWASP Dependency-Check pour la partie Maven et Trivy pour les images Docker. Il existe en plus un déclenchement hebdomadaire, programmé le lundi à \texttt{03:00 UTC}.
+
+Le workflow \texttt{cd.yml} m'a paru particulièrement intéressant, parce qu'il ne se contente pas de publier automatiquement après un push sur \texttt{main}. Son fonctionnement peut être résumé ainsi :
+
+\begin{enumerate}
+\item \texttt{wait-for-main-validations} vérifie explicitement que \texttt{CI} et \texttt{Security} sont verts sur le même SHA ;
+\item \texttt{detect-changes} calcule un tag immuable \texttt{sha-<7 caractères>} et repère les changements dans \texttt{backend/} ou \texttt{frontend/} ;
+\item \texttt{build-backend} et \texttt{build-frontend} ne reconstruisent que ce qui est nécessaire ;
+\item \texttt{gitops-bump} crée une branche \texttt{gitops/bump-images-sha-*}, met à jour \texttt{k8s/overlays/gitops/kustomization.yaml}, ouvre une pull request GitOps puis active l'auto-merge.
+\end{enumerate}
+
+Deux scripts Python viennent stabiliser ce flux : \texttt{update\_gitops\_kustomization.py} et \texttt{render\_gitops\_pr\_body.py}.
+
+\placeholderfigure{images/sonarcloud.png}{Résultat SonarCloud ou Quality Gate du projet}
+
+\section{Historique Git, stratégie de branches et collaboration}
+
+\subsection{Stratégie observable}
+
+J'ai organisé le travail par phases. Les branches \texttt{feature/phase-*} correspondent surtout au socle applicatif, alors que les branches \texttt{feature/devops-phase-*} concernent l'industrialisation. On retrouve notamment \texttt{main}, \texttt{dev}, les branches de \texttt{feature/phase-0-planning} à \texttt{feature/phase-11-tests-cleanup}, puis celles de \texttt{feature/devops-phase-12-local-baseline} à \texttt{feature/devops-phase-23-finalization}. J'ai aussi utilisé des branches temporaires de stabilisation comme \texttt{testpipeline}, \texttt{feature/testglobal} et \texttt{lasttest}.
+
+Le flux principal que j'ai suivi est de type \texttt{feature -> dev -> main -> GitOps PR}. Les passages directs vers \texttt{main} correspondent surtout à des tests et à des ajustements de validation.
+
+\subsection{Phases majeures observables}
+
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.14\textwidth} >{\raggedright\arraybackslash}p{0.13\textwidth} >{\raggedright\arraybackslash}p{0.63\textwidth}}
+\toprule
+\textbf{Date} & \textbf{Commit} & \textbf{Ce que j'en retiens} \\
+\midrule
+22/04/2026 & \texttt{efc23db} & mise en place de la CI de base \\
+22/04/2026 & \texttt{52b6802} & ajout des quality gates et des scans de sécurité \\
+23/04/2026 & \texttt{7cd25f8} & premiers manifests Kubernetes et exécution locale sur kind \\
+23/04/2026 & \texttt{fc7b21d} puis \texttt{4581737} & introduction d'ArgoCD puis activation de l'auto-sync avec \texttt{selfHeal} \\
+23/04/2026 & \texttt{d9ed468} & premier workflow CD avec build et push d'images \\
+23/04/2026 & \texttt{1dd49de} & centralisation du logging backend \\
+24/04/2026 & \texttt{26dfa66} & ajout de l'observabilité avec Prometheus et Grafana \\
+24/04/2026 & \texttt{4917a35} & blocage du CD tant que \texttt{CI} et \texttt{Security} ne sont pas validés \\
+24/04/2026 & \texttt{14c1f70} & remplacement du push GitOps direct par une pull request GitOps \\
+24/04/2026 & \texttt{033bf26} & validation légère dédiée aux PR GitOps \\
+25/04/2026 & \texttt{08080bf}, \texttt{5af223e}, \texttt{4626bb9} & phase finale de stabilisation du flux GitOps bot \\
+\bottomrule
+\end{tabular}
+
+Dans la fin de l'historique, j'ai aussi vu plusieurs retours de \texttt{main} vers certaines branches de travail. Pour moi, cela montre surtout une phase de correction et de durcissement du pipeline plutôt qu'une évolution fonctionnelle du produit.
+
+\section{Problèmes rencontrés}
+
+En suivant les commits et les workflows, j'ai pu relever plusieurs problèmes concrets rencontrés pendant la mise en place de la chaîne DevOps :
+
+\begin{enumerate}
+\item \textbf{Le CD pouvait partir trop tôt.} Le commit \texttt{4917a35} ajoute une attente explicite de \texttt{CI} et \texttt{Security} avant toute publication d'image.
+\item \textbf{Le flux GitOps était trop direct au départ.} Le commit \texttt{14c1f70} remplace une mise à jour directe de \texttt{main} par une pull request GitOps dédiée.
+\item \textbf{Les checks des PR GitOps bot étaient instables.} Les commits \texttt{08080bf}, \texttt{5af223e} et \texttt{4626bb9} montrent plusieurs correctifs successifs.
+\item \textbf{Le rendu YAML côté GitOps était fragile.} Le commit \texttt{ab1eafd} normalise l'indentation de \texttt{k8s/overlays/gitops/kustomization.yaml}.
+\item \textbf{La validation GitOps dépendait d'un outil peu adapté.} Le commit \texttt{4626bb9} remplace \texttt{kubectl apply --dry-run=client} par \texttt{kubeconform}.
+\item \textbf{Le scraping Prometheus en Kubernetes posait problème.} Le commit \texttt{87ce173} corrige la cible de scraping vers le vrai service backend.
+\item \textbf{Le CORS devait être adapté entre local et Kubernetes.} Le commit \texttt{fd062e7} introduit \texttt{CorsProperties} et l'overlay local impose \texttt{http://localhost:30080}.
+\item \textbf{La validation légère YAML était perturbée par le cache Python.} Le commit \texttt{816f8df} retire le cache \texttt{pip} des workflows concernés.
+\end{enumerate}
+
+\section{Solutions apportées}
+
+Pour répondre à ces problèmes, j'ai mis en place les solutions suivantes :
+
+\begin{enumerate}
+\item \textbf{Renforcement de la gouvernance sur \texttt{main}.} Le CD interroge l'API GitHub Actions, attend les workflows requis et échoue avant publication si un run manque ou est en échec.
+\item \textbf{Mise en place d'un vrai flux GitOps par pull request.} Le projet crée une branche \texttt{gitops/bump-images-sha-*}, ouvre une PR dédiée puis active l'auto-merge.
+\item \textbf{Séparation entre validations lourdes et validations légères.} Les PR GitOps bot passent par \texttt{gitops-validation.yml}, tandis que les workflows applicatifs évitent les rebuilds inutiles.
+\item \textbf{Fiabilisation de la mise à jour de \texttt{kustomization.yaml}.} Deux scripts Python rendent la modification des tags et la génération du corps de PR plus déterministes.
+\item \textbf{Validation des manifests hors cluster.} L'utilisation de \texttt{kubeconform} rend le contrôle plus strict et moins dépendant du contexte d'exécution.
+\item \textbf{Correction du monitoring Kubernetes.} La cible Prometheus a été réalignée sur le bon service backend, et la stratégie \texttt{Recreate} a été ajoutée au déploiement Prometheus.
+\item \textbf{Externalisation de la configuration CORS.} L'origine autorisée est injectée par propriétés selon l'environnement, ce qui facilite le passage entre \texttt{localhost:4200} et \texttt{localhost:30080}.
+\item \textbf{Ajout d'une observabilité métier.} Le backend expose des compteurs comme \texttt{stockpro\_mouvements\_total}, \texttt{stockpro\_mouvements\_rejets\_total} et \texttt{stockpro\_rate\_limit\_rejections\_total}.
+\end{enumerate}
+
+\placeholderfigure{images/grafana-dashboard.png}{Dashboard Grafana \texttt{StockPro -- Observabilité}}
+
+\section{Conclusion}
+
+Au final, je considère que mon projet montre bien une implémentation DevOps de bout en bout, cohérente et complète. La partie applicative est importante, mais le point le plus intéressant reste selon moi la chaîne complète qui relie la CI, les scans de sécurité, la publication d'images, le flux GitOps par pull request, le déploiement local sur \texttt{kind} et la supervision avec Prometheus et Grafana.
+
+Le principal apport de cette organisation est la traçabilité : un même SHA Git peut être relié à une image GHCR, puis à une pull request GitOps, puis à une révision synchronisée par ArgoCD. Si je devais citer des pistes d'amélioration réalistes, je retiendrais surtout une meilleure gestion des secrets, un mécanisme de rollback plus outillé, un vrai système de migration de schéma et une couche d'alerting plus complète côté monitoring.
+
+\normalsize
+\end{document}

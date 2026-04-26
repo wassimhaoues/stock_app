@@ -8,7 +8,7 @@
 
 Voir [04-kubernetes/local-cluster.md](../04-kubernetes/local-cluster.md) pour créer le cluster.
 
-## 1. Installer ArgoCD dans le cluster
+## 1. Installer ArgoCD
 
 ```bash
 # Créer le namespace ArgoCD
@@ -20,10 +20,9 @@ kubectl apply -n argocd \
 
 # Attendre que les pods ArgoCD soient prêts
 kubectl get pods -n argocd -w
-# Attendre que tous les pods soient en Running
 ```
 
-## 2. Accéder à l'interface ArgoCD
+## 2. Accès à l'interface
 
 ```bash
 # Port-forward vers l'interface web
@@ -33,7 +32,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 # https://localhost:8080 (ignorer l'avertissement TLS self-signed)
 ```
 
-### Récupérer le mot de passe admin initial
+### Mot de passe initial
 
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret \
@@ -41,7 +40,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 echo
 ```
 
-### Se connecter via le CLI
+### Connexion CLI
 
 ```bash
 argocd login localhost:8080 \
@@ -52,11 +51,11 @@ argocd login localhost:8080 \
 
 ## 3. Créer le Secret bootstrap
 
-**Avant de déployer l'application ArgoCD**, le Secret `stockpro-secrets` doit exister dans le namespace `stockpro`. ArgoCD ne le crée pas et ne le modifie jamais.
+Le Secret `stockpro-secrets` doit exister dans le namespace `stockpro` avant le premier déploiement applicatif.
 
 Voir [bootstrap.md](bootstrap.md) pour la procédure complète.
 
-## 4. Déployer l'application ArgoCD
+## 4. Déployer l'application
 
 ```bash
 # Créer le namespace stockpro si absent
@@ -66,7 +65,7 @@ kubectl create namespace stockpro --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f k8s/argocd/stockpro-app.yaml
 ```
 
-Le manifest `k8s/argocd/stockpro-app.yaml` configure ArgoCD pour surveiller `k8s/overlays/gitops` sur la branche `main`.
+Le manifest `k8s/argocd/stockpro-app.yaml` pointe vers `k8s/overlays/gitops` sur `main`.
 
 ## 5. Vérifier la synchronisation
 
@@ -81,9 +80,9 @@ argocd app sync stockpro
 argocd app wait stockpro --health
 ```
 
-Ou via l'interface web : https://localhost:8080 → Application `stockpro`.
+Ou via l'interface web : `https://localhost:8080` puis application `stockpro`.
 
-## 6. Vérifier les pods déployés
+## 6. Vérifier le résultat
 
 ```bash
 kubectl get pods -n stockpro
@@ -93,7 +92,7 @@ kubectl get services -n stockpro
 curl http://localhost:30085/api/health
 ```
 
-## Configuration de l'application ArgoCD
+## Rappel de configuration
 
 Le fichier `k8s/argocd/stockpro-app.yaml` contient :
 
@@ -109,9 +108,9 @@ spec:
       selfHeal: true    # Corrige automatiquement les dérives du cluster
 ```
 
-`selfHeal: true` signifie qu'ArgoCD réapplique les manifests si un changement manuel est effectué directement dans le cluster (kubectl edit, kubectl delete, etc.).
+`selfHeal: true` permet à ArgoCD de corriger une dérive si quelqu'un modifie le cluster à la main.
 
-## Commandes ArgoCD utiles
+## Commandes utiles
 
 ```bash
 # Lister les applications

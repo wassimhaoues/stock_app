@@ -1,6 +1,7 @@
 package com.wassim.stock.security;
 
 import com.wassim.stock.config.properties.AuthCookieProperties;
+import com.wassim.stock.logging.LogSanitizer;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -34,13 +35,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = extractToken(request);
         if (token == null) {
-            log.debug("Token JWT absent dans la requete vers {}", request.getRequestURI());
+            log.debug("Token JWT absent dans la requete vers {}", LogSanitizer.sanitize(request.getRequestURI()));
             filterChain.doFilter(request, response);
             return;
         }
 
         if (!jwtUtil.isTokenValid(token)) {
-            log.warn("Token JWT invalide ou expire sur {}", request.getRequestURI());
+            log.warn("Token JWT invalide ou expire sur {}", LogSanitizer.sanitize(request.getRequestURI()));
             filterChain.doFilter(request, response);
             return;
         }

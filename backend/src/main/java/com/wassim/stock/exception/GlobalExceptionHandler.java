@@ -1,5 +1,6 @@
 package com.wassim.stock.exception;
 
+import com.wassim.stock.logging.LogSanitizer;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,19 +24,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex) {
-        log.warn("Ressource non trouvee : {}", ex.getMessage());
+        log.warn("Ressource non trouvee : {}", LogSanitizer.sanitize(ex.getMessage()));
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(BadRequestException ex) {
-        log.warn("Requete invalide : {}", ex.getMessage());
+        log.warn("Requete invalide : {}", LogSanitizer.sanitize(ex.getMessage()));
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Map<String, Object>> handleConflict(ConflictException ex) {
-        log.warn("Requete invalide : {}", ex.getMessage());
+        log.warn("Requete invalide : {}", LogSanitizer.sanitize(ex.getMessage()));
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
@@ -47,7 +48,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
-        log.warn("Acces refuse pour {}", MDC.get("userEmail"));
+        log.warn("Acces refuse pour {}", LogSanitizer.sanitize(MDC.get("userEmail")));
         return buildResponse(HttpStatus.FORBIDDEN, "Acces refuse", null);
     }
 

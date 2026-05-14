@@ -28,13 +28,20 @@ k8s/
 │   │   ├── .env.example            Template des secrets
 │   │   └── patches/
 │   │       └── expose-services.yaml  Patch NodePort pour accès depuis localhost
-│   └── gitops/
-│       ├── kustomization.yaml      Overlay : images GHCR + patch NodePort (pas de secretGenerator)
+│   ├── gitops/
+│   │   ├── kustomization.yaml      Overlay GitOps local : images GHCR + patch NodePort
+│   │   └── patches/
+│   │       └── expose-services.yaml  Patch NodePort pour ArgoCD local/kind
+│   └── gke/
+│       ├── kustomization.yaml      Overlay GKE : images GHCR + Ingress + certificat géré
+│       ├── ingress.yaml            Ingress public GKE
+│       ├── managed-certificate.yaml  Certificat TLS géré par GKE
 │       └── patches/
-│           └── expose-services.yaml  Même patch NodePort que l'overlay local
+│           └── backend-config-cors.yaml  CORS aligné sur le domaine public
 └── argocd/
     ├── namespace.yaml              Namespace "argocd"
-    └── stockpro-app.yaml           Application ArgoCD pointant sur k8s/overlays/gitops
+    ├── stockpro-app.yaml           Application ArgoCD locale pointant sur k8s/overlays/gitops
+    └── stockpro-gke-app.yaml       Application ArgoCD GKE pointant sur k8s/overlays/gke
 ```
 
 ## Fichiers base clés
@@ -46,7 +53,7 @@ Contient les variables d'environnement non sensibles injectées dans le pod back
 ```yaml
 data:
   SPRING_PROFILES_ACTIVE: docker
-  DB_HOST: stock-db          # Nom du service MySQL (résolution DNS interne K8s)
+  DB_HOST: stock-db # Nom du service MySQL (résolution DNS interne K8s)
   DB_PORT: "3306"
   DB_NAME: stock_app_db
   SERVER_PORT: "8085"
@@ -56,6 +63,7 @@ data:
 ### `base/backend/deployment.yaml`
 
 Points importants :
+
 - `initContainer` : attend que MySQL soit prêt sur `stock-db:3306` avant de démarrer
 - `envFrom` : injecte le ConfigMap `backend-config`
 - `env` : référence le Secret `stockpro-secrets` pour `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `STOCKPRO_DEMO_DATA`
@@ -70,25 +78,27 @@ Le service MySQL est nommé `stock-db`. Ce nom correspond à la valeur `DB_HOST`
 - Stratégie `Recreate` (nécessaire avec un PVC `ReadWriteOnce` qui ne peut être monté que par un pod à la fois)
 - Initialisation du schéma via le ConfigMap `mysql-init-sql` monté dans `/docker-entrypoint-initdb.d/`
 
-## Différences overlay local vs gitops
+## Différences entre overlays
 
-| Aspect | Overlay `local` | Overlay `gitops` |
-|--------|-----------------|------------------|
-| Secret | `secretGenerator` depuis `.env` (automatique) | Créé manuellement une seule fois |
-| Images | `stockpro-backend:local` et `stockpro-frontend:local` | `ghcr.io/wassimhaoues/stockpro-backend:sha-XXXXXXX` |
-| Tag d'image | `local` | `sha-XXXXXXX` mis à jour par le pipeline CD |
-| Gestion | Manuel (kubectl apply) | ArgoCD auto-sync |
+| Aspect      | Overlay `local`                                       | Overlay `gitops`                                    | Overlay `gke`                                       |
+| ----------- | ----------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| Secret      | `secretGenerator` depuis `.env` (automatique)         | Créé manuellement une seule fois                    | Créé manuellement une seule fois                    |
+| Images      | `stockpro-backend:local` et `stockpro-frontend:local` | `ghcr.io/wassimhaoues/stockpro-backend:sha-XXXXXXX` | `ghcr.io/wassimhaoues/stockpro-backend:sha-XXXXXXX` |
+| Tag d'image | `local`                                               | `sha-XXXXXXX` mis à jour par le pipeline CD         | `sha-XXXXXXX` mis à jour par le pipeline CD         |
+| Exposition  | `NodePort` local                                      | `NodePort` local                                    | `Ingress` GKE                                       |
+| Gestion     | Manuel (kubectl apply)                                | ArgoCD auto-sync local                              | ArgoCD auto-sync cloud                              |
 
 ## Ressources et limites
 
 | Composant | CPU request | CPU limit | Mémoire request | Mémoire limit |
-|-----------|-------------|-----------|-----------------|---------------|
-| Backend | 250m | 500m | 512Mi | 1Gi |
-| Frontend | 50m | 100m | 64Mi | 128Mi |
-| MySQL | 250m | 500m | 512Mi | 1Gi |
+| --------- | ----------- | --------- | --------------- | ------------- |
+| Backend   | 250m        | 500m      | 512Mi           | 1Gi           |
+| Frontend  | 50m         | 100m      | 64Mi            | 128Mi         |
+| MySQL     | 250m        | 500m      | 512Mi           | 1Gi           |
 
 ## Labels
 
 Tous les pods utilisent des labels cohérents :
+
 - `app: stockpro`
 - `component: backend` / `frontend` / `mysql`

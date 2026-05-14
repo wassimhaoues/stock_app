@@ -1,6 +1,6 @@
-# Overlay GitOps utilise par ArgoCD comme source de verite.
+# Overlay GitOps local/kind utilise par ArgoCD comme source de verite.
 #
-# Differences par rapport a l'overlay local :
+# Differences par rapport a l'overlay local manuel :
 # - pas de secretGenerator : le fichier .env est gitignore et ArgoCD ne peut pas le lire
 # - le Secret "stockpro-secrets" doit etre cree manuellement une fois avant la premiere sync
 # - les tags GHCR sont mis a jour automatiquement par .github/workflows/cd.yml via une PR GitOps
@@ -15,7 +15,7 @@
 # -> cd.yml construit et pousse les images sur GHCR
 # -> cd.yml ouvre une PR GitOps avec la mise a jour des newTag
 # -> la PR GitOps est mergee dans main apres validations GitHub
-# -> ArgoCD detecte le changement Git et synchronise le cluster
+# -> ArgoCD detecte le changement Git et synchronise le cluster local/kind
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: stockpro

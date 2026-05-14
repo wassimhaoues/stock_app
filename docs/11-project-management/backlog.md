@@ -90,3 +90,20 @@ Transformer l'application fonctionnelle en produit présentable.
 | E-03 | En tant qu'utilisateur, je veux des états de chargement, d'erreur et de vide clairs. | P1 | Terminé |
 | E-04 | En tant qu'OBSERVATEUR, je veux voir uniquement une interface de lecture seule. | P0 | Terminé |
 | E-05 | En tant que jury, je veux voir une application finie, cohérente et crédible. | P0 | Terminé |
+
+---
+
+## EPIC F — Déploiement cloud GKE et GitOps multi-environnements
+
+Étendre le déploiement Kubernetes vers GKE sans casser le flux local `kind`.
+
+| ID | User story | Priorité | Statut |
+|----|-----------|----------|--------|
+| F-01 | En tant que démonstrateur, je veux conserver l'overlay `local` sur `kind` afin de ne pas casser le scénario de développement et de test actuel. | P0 | Prévu |
+| F-02 | En tant qu'exploitant, je veux un overlay GKE distinct afin d'appliquer des choix cloud spécifiques sans polluer l'overlay GitOps local existant. | P0 | Prévu |
+| F-03 | En tant qu'exploitant, je veux exposer l'application GKE via `Ingress` plutôt que `NodePort` afin d'utiliser le mécanisme réseau standard de GKE. | P0 | Prévu |
+| F-04 | En tant que système, je veux que le pipeline CD mette à jour les tags d'images dans tous les overlays GitOps cibles afin qu'un même merge puisse déclencher plusieurs synchronisations ArgoCD. | P0 | Prévu |
+| F-05 | En tant qu'opérateur, je veux pouvoir brancher `gcloud` sur le projet `Stock-management` et activer les APIs minimales avec un guide pas à pas. | P0 | Prévu |
+| F-06 | En tant qu'opérateur, je veux créer un cluster GKE Standard à un seul nœud pour faire une démonstration crédible tout en limitant la consommation de crédits. | P0 | Prévu |
+| F-07 | En tant qu'utilisateur GitOps, je veux qu'ArgoCD puisse déployer vers GKE même si le cluster `kind` local n'est pas démarré. | P1 | Prévu |
+| F-08 | En tant qu'utilisateur avancé, je veux qu'un cluster `kind` avec ArgoCD local puisse aussi suivre les tags GHCR si je l'exécute en parallèle du cluster GKE. | P1 | Prévu |

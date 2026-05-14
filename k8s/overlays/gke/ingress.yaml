@@ -1,0 +1,32 @@
+# Ingress GKE — point d'entrée HTTP(S) public pour le frontend et l'API.
+# L'IP globale "stockpro-gke-ip" est créée manuellement côté GCP.
+# Le certificat managé reste en état "Provisioning" tant que le DNS n'est
+# pas pointé vers l'IP publique de cet Ingress.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stockpro-gke
+  namespace: stockpro
+  annotations:
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.global-static-ip-name: stockpro-gke-ip
+    networking.gke.io/managed-certificates: stockpro-managed-cert
+spec:
+  rules:
+    - host: stockpro.coworky.org
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: stock-backend
+                port:
+                  number: 8085
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: stock-frontend
+                port:
+                  number: 80

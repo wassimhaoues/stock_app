@@ -1,0 +1,26 @@
+# Application ArgoCD pour la cible GKE.
+# À appliquer dans le cluster GKE après installation d'ArgoCD et création
+# du secret bootstrap "stockpro-secrets" dans le namespace stockpro.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stockpro-gke
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/wassimhaoues/stock_app.git
+    targetRevision: main
+    path: k8s/overlays/gke
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: stockpro
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    automated:
+      prune: false
+      selfHeal: true

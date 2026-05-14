@@ -18,4 +18,5 @@
 | CD automatisé (phase 18) | Terminé |
 | Logging et observabilité (phases 19–20) | Terminé |
 | Finition technique (phases 21–22) | Terminé |
-| Finalisation soutenance (phase 23) | En cours |
+| Finalisation soutenance (phase 23) | Terminé |
+| Extension cloud GKE et GitOps multi-cluster (phase 24) | Prévu |

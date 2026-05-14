@@ -28,6 +28,7 @@
 | 21    | Améliorations backend et finition frontend    | Terminé | `feature/phase-21-backend-enhancements-frontend-polish` |
 | 22    | Gouvernance CI/CD et flux GitOps par PR       | Terminé | `feature/devops-phase-22-github-governance`             |
 | 23    | Finalisation et préparation de soutenance     | Terminé | `feature/devops-phase-23-finalization`                  |
+| 24    | Extension cloud GKE et GitOps multi-cluster   | Prévu   | `feature/devops-phase-24-gke-gitops`                    |
 
 ## Périmètre par bloc
 
@@ -50,3 +51,7 @@ Déploiement local sur Kubernetes, mise en place d'ArgoCD et automatisation de l
 ### Bloc 5 — Exploitation et finition (phases 19–23)
 
 Logging, observabilité, durcissement CI/CD et préparation de la soutenance.
+
+### Bloc 6 — Extension cloud (phase 24)
+
+Conservation du flux local `kind`, ajout d'un overlay GKE avec `Ingress`, et extension du GitOps pour synchroniser plusieurs clusters à partir du même dépôt.

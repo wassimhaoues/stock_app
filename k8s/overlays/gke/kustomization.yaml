@@ -1,0 +1,26 @@
+# Overlay GKE — cible GitOps cloud pour ArgoCD.
+# Différences principales par rapport à l'overlay gitops local :
+#   - exposition via Ingress GKE au lieu de NodePort
+#   - CORS backend aligné sur le futur domaine public
+#   - mêmes images GHCR taguées en sha-* et mises à jour par le pipeline CD
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: stockpro
+
+resources:
+  - ../../base
+  - ../../base/monitoring
+  - managed-certificate.yaml
+  - ingress.yaml
+
+images:
+  - name: stockpro-backend
+    newName: ghcr.io/wassimhaoues/stockpro-backend
+    newTag: sha-7d3d6df
+  - name: stockpro-frontend
+    newName: ghcr.io/wassimhaoues/stockpro-frontend
+    newTag: sha-d2a84db
+
+patches:
+  - path: patches/backend-config-cors.yaml

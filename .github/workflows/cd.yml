@@ -302,13 +302,13 @@ jobs:
   # ou été ignorés). Il ne s'exécute que si au moins un build a réussi.
   #
   # Il met à jour UNIQUEMENT les tags des images effectivement reconstruites.
-  # Si seul le backend a changé, seul le tag backend est modifié dans
-  # kustomization.yaml ; le tag frontend reste à sa valeur précédente.
+  # Si seul le backend a changé, seul le tag backend est modifié dans les
+  # overlays GitOps cibles ; le tag frontend reste à sa valeur précédente.
   #
   # Le changement GitOps n'est plus pousse directement sur main.
   # Le workflow :
   #   1. cree une branche gitops/bump-images-sha-xxxxxxx
-  #   2. committe la mise a jour de kustomization.yaml sur cette branche
+  #   2. committe la mise a jour des overlays GitOps sur cette branche
   #   3. ouvre (ou met a jour) une PR vers main
   #   4. active l'auto-merge en squash sur cette PR
   #
@@ -353,7 +353,7 @@ jobs:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
-      - name: Mettre à jour kustomization.yaml sur une branche GitOps
+      - name: Mettre à jour les overlays GitOps sur une branche GitOps
         id: prepare-gitops-pr
         env:
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
@@ -375,13 +375,16 @@ jobs:
           UPDATED_IMAGES_FILE="/tmp/gitops-updated-images.txt"
           : > "${UPDATED_IMAGES_FILE}"
 
+          GITOPS_LOCAL_FILE="${REPO_ROOT}/k8s/overlays/gitops/kustomization.yaml"
+          GKE_FILE="${REPO_ROOT}/k8s/overlays/gke/kustomization.yaml"
+
           BACKEND_ARGS=""
           FRONTEND_ARGS=""
 
           if [ "${{ needs.build-backend.result }}" == "success" ]; then
             BACKEND_ARGS="--backend-tag ${TAG}"
             printf '%s\n' \
-              "- backend -> ghcr.io/${{ github.repository_owner }}/stockpro-backend:${TAG}" \
+              "- backend -> ghcr.io/${{ github.repository_owner }}/stockpro-backend:${TAG} (gitops + gke)" \
               >> "${UPDATED_IMAGES_FILE}"
             echo "Tag backend mis a jour : ${TAG}"
           else
@@ -391,7 +394,7 @@ jobs:
           if [ "${{ needs.build-frontend.result }}" == "success" ]; then
             FRONTEND_ARGS="--frontend-tag ${TAG}"
             printf '%s\n' \
-              "- frontend -> ghcr.io/${{ github.repository_owner }}/stockpro-frontend:${TAG}" \
+              "- frontend -> ghcr.io/${{ github.repository_owner }}/stockpro-frontend:${TAG} (gitops + gke)" \
               >> "${UPDATED_IMAGES_FILE}"
             echo "Tag frontend mis a jour : ${TAG}"
           else
@@ -400,14 +403,23 @@ jobs:
 
           if [ -n "${BACKEND_ARGS}" ] || [ -n "${FRONTEND_ARGS}" ]; then
             python3 "${REPO_ROOT}/.github/scripts/update_gitops_kustomization.py" \
-              --file "${REPO_ROOT}/k8s/overlays/gitops/kustomization.yaml" \
+              --file "${GITOPS_LOCAL_FILE}" \
+              --backend-name ghcr.io/${{ github.repository_owner }}/stockpro-backend \
+              --frontend-name ghcr.io/${{ github.repository_owner }}/stockpro-frontend \
+              ${BACKEND_ARGS} \
+              ${FRONTEND_ARGS}
+
+            python3 "${REPO_ROOT}/.github/scripts/update_gitops_kustomization.py" \
+              --file "${GKE_FILE}" \
               --backend-name ghcr.io/${{ github.repository_owner }}/stockpro-backend \
               --frontend-name ghcr.io/${{ github.repository_owner }}/stockpro-frontend \
               ${BACKEND_ARGS} \
               ${FRONTEND_ARGS}
           fi
 
-          git add k8s/overlays/gitops/kustomization.yaml
+          git add \
+            k8s/overlays/gitops/kustomization.yaml \
+            k8s/overlays/gke/kustomization.yaml
 
           if git diff --cached --quiet; then
             echo "Aucun changement de tag detecte. PR GitOps ignoree."

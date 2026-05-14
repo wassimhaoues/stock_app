@@ -14,7 +14,8 @@ k8s/
 ├── base/           Manifests communs à tous les environnements
 ├── overlays/
 │   ├── local/      Overlay pour kind (images locales, NodePort)
-│   └── gitops/     Overlay pour ArgoCD (images GHCR, SHA tag)
+│   ├── gitops/     Overlay ArgoCD local/kind (images GHCR, SHA tag)
+│   └── gke/        Overlay ArgoCD cloud (images GHCR, Ingress)
 └── argocd/         Manifests ArgoCD (Application + namespace)
 ```
 
@@ -23,7 +24,8 @@ k8s/
 | Overlay | Usage | Images | Secret |
 |---------|-------|--------|--------|
 | `local` | Développement sur kind | Chargées manuellement | Généré par Kustomize depuis `.env` |
-| `gitops` | Production via ArgoCD | GHCR (`sha-XXXXXXX`) | Bootstrap manuel unique |
+| `gitops` | ArgoCD local/kind | GHCR (`sha-XXXXXXX`) | Bootstrap manuel unique |
+| `gke` | ArgoCD sur GKE | GHCR (`sha-XXXXXXX`) | Bootstrap manuel unique |
 
 ## Prérequis
 

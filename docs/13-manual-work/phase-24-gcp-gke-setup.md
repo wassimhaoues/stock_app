@@ -451,11 +451,78 @@ Le scénario cible retenu est :
 - `Ingress` GKE utilisant cette IP ;
 - certificat managé GKE activable plus tard quand le DNS pointera correctement vers l'Ingress.
 
-## 9. Cible GitOps à implémenter dans le dépôt
+## 9. Déployer l'application GKE avec ArgoCD
+
+Jusqu'ici, les étapes précédentes préparent le cluster, ArgoCD, le namespace, le secret bootstrap et l'exposition réseau.
+
+Elles ne déploient pas encore l'application tant que l'objet `Application` ArgoCD pour GKE n'est pas créé.
+
+### 9.1 Créer l'application ArgoCD GKE
+
+Commande :
+
+```bash
+kubectl apply -f k8s/argocd/stockpro-gke-app.yaml
+```
+
+Ce manifest déclare à ArgoCD :
+
+- le dépôt Git à surveiller ;
+- la branche `main` ;
+- le chemin `k8s/overlays/gke` ;
+- le namespace cible `stockpro`.
+
+### 9.2 Vérifier que l'application existe
+
+Avec `kubectl` :
+
+```bash
+kubectl get applications -n argocd
+```
+
+Avec la CLI ArgoCD :
+
+```bash
+argocd app list
+argocd app get stockpro-gke
+```
+
+### 9.3 Lancer la première synchronisation
+
+Si l'auto-sync n'a pas encore démarré :
+
+```bash
+argocd app sync stockpro-gke
+argocd app wait stockpro-gke --health
+```
+
+### 9.4 Ce qu'ArgoCD va créer dans `stockpro`
+
+Après création de l'application et synchronisation, ArgoCD appliquera les ressources définies dans `k8s/overlays/gke`, notamment :
+
+- les `Deployments` backend, frontend et MySQL ;
+- les `Services` Kubernetes ;
+- les `PersistentVolumeClaims` ;
+- les ressources de monitoring incluses dans l'overlay ;
+- l'`Ingress` GKE ;
+- le `ManagedCertificate`.
+
+Le namespace `stockpro` devait exister avant tout cela uniquement pour permettre la création du secret bootstrap au bon endroit.
+
+### 9.5 Commandes de vérification après premier déploiement
+
+```bash
+kubectl get pods -n stockpro
+kubectl get svc -n stockpro
+kubectl get ingress -n stockpro
+kubectl get managedcertificate -n stockpro
+```
+
+## 10. Cible GitOps à implémenter dans le dépôt
 
 Le dépôt devra évoluer vers ce modèle :
 
-### 9.1 Overlay `local`
+### 10.1 Overlay `local`
 
 Il reste inchangé :
 
@@ -464,7 +531,7 @@ Il reste inchangé :
 - `kind load docker-image` ;
 - `kubectl apply -k k8s/overlays/local`.
 
-### 9.2 Overlay `gitops`
+### 10.2 Overlay `gitops`
 
 But :
 
@@ -472,7 +539,7 @@ But :
 - permettre à ArgoCD local de suivre le même flux GitOps que GKE ;
 - garder une exposition locale compatible avec `kind`.
 
-### 9.3 Overlay `gke`
+### 10.3 Overlay `gke`
 
 But :
 
@@ -481,7 +548,7 @@ But :
 - objets `Ingress` et éventuellement certificat managé ;
 - configuration backend adaptée au domaine GKE si nécessaire.
 
-### 9.4 Pipeline CD
+### 10.4 Pipeline CD
 
 Le workflow `.github/workflows/cd.yml` devra être ajusté pour :
 
@@ -489,9 +556,9 @@ Le workflow `.github/workflows/cd.yml` devra être ajusté pour :
 - mettre à jour les tags dans `k8s/overlays/gke/kustomization.yaml` ;
 - garder une seule PR GitOps pour tous les overlays cibles.
 
-## 10. Applications ArgoCD à prévoir
+## 11. Applications ArgoCD à prévoir
 
-### 10.1 Dans GKE
+### 11.1 Dans GKE
 
 Application recommandée :
 
@@ -499,7 +566,7 @@ Application recommandée :
 - source : `k8s/overlays/gke`
 - destination : cluster GKE courant, namespace `stockpro`
 
-### 10.2 En local sur `kind`
+### 11.2 En local sur `kind`
 
 Application recommandée :
 
@@ -513,7 +580,7 @@ Important :
 - si le cluster `kind` n'est pas démarré, GKE continue de fonctionner normalement ;
 - le dépôt Git reste la source de vérité unique.
 
-## 11. Vérification finale attendue
+## 12. Vérification finale attendue
 
 Quand la phase 24 sera implémentée, le test de démonstration attendu sera :
 
@@ -524,7 +591,7 @@ Quand la phase 24 sera implémentée, le test de démonstration attendu sera :
 5. constater qu'ArgoCD sur GKE applique les nouvelles images ;
 6. constater qu'ArgoCD local applique aussi les nouvelles images si `kind` est lancé.
 
-## 12. Limites acceptées pour la démonstration
+## 13. Limites acceptées pour la démonstration
 
 - un seul nœud GKE ;
 - MySQL en pod unique avec PVC ;
@@ -532,7 +599,7 @@ Quand la phase 24 sera implémentée, le test de démonstration attendu sera :
 - coût minimal privilégié à la robustesse ;
 - domaine et certificat HTTPS optionnels au tout début, mais `Ingress` prêt dès la phase 24.
 
-## 13. Références vérifiées
+## 14. Références vérifiées
 
 Les commandes et choix de ce guide ont été alignés avec la documentation Google Cloud et GKE consultée le 14 mai 2026, notamment pour :
 

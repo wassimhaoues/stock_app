@@ -28,7 +28,6 @@
 | 21    | Améliorations backend et finition frontend    | Terminé | `feature/phase-21-backend-enhancements-frontend-polish` |
 | 22    | Gouvernance CI/CD et flux GitOps par PR       | Terminé | `feature/devops-phase-22-github-governance`             |
 | 23    | Finalisation et préparation de soutenance     | Terminé | `feature/devops-phase-23-finalization`                  |
-| 24    | Extension cloud GKE et GitOps multi-cluster   | Prévu   | `feature/devops-phase-24-gke-gitops`                    |
 
 ## Périmètre par bloc
 

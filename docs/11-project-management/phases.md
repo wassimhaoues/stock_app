@@ -30,7 +30,6 @@ Ce document résume les grandes étapes du projet telles qu'elles ont été men�
 | 21    | Améliorations backend et finition frontend    | Terminé |
 | 22    | Gouvernance CI/CD et flux GitOps par PR       | Terminé |
 | 23    | Finalisation et préparation de soutenance     | Terminé |
-| 24    | Extension cloud GKE et GitOps multi-cluster   | Prévu   |
 
 ## Détail des phases
 

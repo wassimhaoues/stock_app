@@ -5,6 +5,7 @@ import com.wassim.stock.dto.response.AuthResponse;
 import com.wassim.stock.dto.response.UtilisateurResponse;
 import com.wassim.stock.entity.Entrepot;
 import com.wassim.stock.entity.Utilisateur;
+import com.wassim.stock.logging.LogSanitizer;
 import com.wassim.stock.repository.UtilisateurRepository;
 import com.wassim.stock.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(email, request.motDePasse())
             );
         } catch (BadCredentialsException ex) {
-            log.warn("Echec de connexion pour {}", email);
+            log.warn("Echec de connexion pour {}", LogSanitizer.sanitize(email));
             throw new BadCredentialsException("Email ou mot de passe invalide");
         }
 
@@ -42,7 +43,7 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Email ou mot de passe invalide"));
 
         String token = jwtUtil.generateToken(utilisateur.getEmail(), utilisateur.getRole().name());
-        log.info("Connexion reussie pour {}", email);
+        log.info("Connexion reussie pour {}", LogSanitizer.sanitize(email));
 
         return new LoginResult(token, new AuthResponse(toResponse(utilisateur)));
     }

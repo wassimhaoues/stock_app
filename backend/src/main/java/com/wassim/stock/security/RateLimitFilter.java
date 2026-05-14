@@ -4,6 +4,7 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import io.micrometer.core.instrument.MeterRegistry;
+import com.wassim.stock.logging.LogSanitizer;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -58,11 +59,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setHeader(RATE_LIMIT_HEADER, Long.toString(probe.getRemainingTokens()));
 
         if (!probe.isConsumed()) {
-            log.warn("Rate limit atteint : ip={}, uri={}", ip, uri);
+            log.warn(
+                    "Rate limit atteint : ipHash={}, uri={}",
+                    LogSanitizer.maskedHash(ip),
+                    LogSanitizer.sanitize(uri)
+            );
             meterRegistry.counter(
                     "stockpro.rate.limit.rejections",
                     "endpoint", rule.metricEndpoint(),
-                    "ip_hash", Integer.toHexString(ip.hashCode())
+                    "ip_hash", LogSanitizer.maskedHash(ip)
             ).increment();
             response.setStatus(429);
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());

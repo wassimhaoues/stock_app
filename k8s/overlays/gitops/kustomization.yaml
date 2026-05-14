@@ -27,10 +27,10 @@ resources:
 images:
   - name: stockpro-backend
     newName: ghcr.io/wassimhaoues/stockpro-backend
-    newTag: sha-7d3d6df
+    newTag: sha-40e95bc
   - name: stockpro-frontend
     newName: ghcr.io/wassimhaoues/stockpro-frontend
-    newTag: sha-d2a84db
+    newTag: sha-408d1f9
 
 patches:
   - path: patches/expose-services.yaml

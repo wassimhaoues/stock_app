@@ -1,0 +1,10 @@
+# Certificat TLS géré par GKE.
+# Le certificat ne devient actif qu'après propagation DNS du domaine public.
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: stockpro-managed-cert
+  namespace: stockpro
+spec:
+  domains:
+    - stockpro.coworky.org

@@ -50,3 +50,7 @@ Déploiement local sur Kubernetes, mise en place d'ArgoCD et automatisation de l
 ### Bloc 5 — Exploitation et finition (phases 19–23)
 
 Logging, observabilité, durcissement CI/CD et préparation de la soutenance.
+
+### Bloc 6 — Extension cloud (phase 24)
+
+Conservation du flux local `kind`, ajout d'un overlay GKE avec `Ingress`, et extension du GitOps pour synchroniser plusieurs clusters à partir du même dépôt.

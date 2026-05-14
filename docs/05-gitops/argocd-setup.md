@@ -61,11 +61,13 @@ Voir [bootstrap.md](bootstrap.md) pour la procédure complète.
 # Créer le namespace stockpro si absent
 kubectl create namespace stockpro --dry-run=client -o yaml | kubectl apply -f -
 
-# Appliquer le manifest de l'application ArgoCD
+# Appliquer le manifest de l'application ArgoCD locale/kind
 kubectl apply -f k8s/argocd/stockpro-app.yaml
 ```
 
 Le manifest `k8s/argocd/stockpro-app.yaml` pointe vers `k8s/overlays/gitops` sur `main`.
+
+Pour la cible GKE, le manifest dédié est `k8s/argocd/stockpro-gke-app.yaml` et pointe vers `k8s/overlays/gke`.
 
 ## 5. Vérifier la synchronisation
 

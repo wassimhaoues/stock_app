@@ -63,12 +63,18 @@ stock-management/
 │   │   │   ├── .env            Secrets (gitignore)
 │   │   │   ├── .env.example    Template
 │   │   │   └── patches/expose-services.yaml  NodePort 30080/30085
-│   │   └── gitops/             Overlay ArgoCD : images GHCR, tag SHA
+│   │   ├── gitops/             Overlay ArgoCD local/kind : images GHCR, tag SHA
+│   │   │   ├── kustomization.yaml  (mis à jour automatiquement par CD)
+│   │   │   └── patches/expose-services.yaml
+│   │   └── gke/                Overlay ArgoCD cloud : images GHCR, Ingress GKE
 │   │       ├── kustomization.yaml  (mis à jour automatiquement par CD)
-│   │       └── patches/expose-services.yaml
+│   │       ├── ingress.yaml
+│   │       ├── managed-certificate.yaml
+│   │       └── patches/backend-config-cors.yaml
 │   └── argocd/
 │       ├── namespace.yaml      Namespace argocd
-│       └── stockpro-app.yaml   Application ArgoCD
+│       ├── stockpro-app.yaml   Application ArgoCD locale/kind
+│       └── stockpro-gke-app.yaml  Application ArgoCD GKE
 │
 ├── docs/                       Documentation technique (ce dossier)
 │
@@ -86,7 +92,8 @@ stock-management/
 |---------|------|
 | `.env.example` | Template à copier en `.env` avant le premier lancement |
 | `infra/mysql-init/01-schema.sql` | Source de vérité du schéma MySQL — toujours mettre à jour ce fichier lors d'un changement de schéma |
-| `k8s/overlays/gitops/kustomization.yaml` | Mis à jour automatiquement par le pipeline CD avec le tag d'image SHA |
+| `k8s/overlays/gitops/kustomization.yaml` | Cible GitOps locale/kind mise à jour automatiquement par le pipeline CD |
+| `k8s/overlays/gke/kustomization.yaml` | Cible GitOps GKE mise à jour automatiquement par le pipeline CD |
 | `sonar-project.properties` | Configuration SonarCloud (chemins des sources, rapports de couverture) |
 
 ## Fichiers dans .gitignore

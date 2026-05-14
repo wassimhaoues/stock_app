@@ -177,7 +177,36 @@ Ce document résume les grandes étapes du projet telles qu'elles ont été men�
 - Vérification des preuves à montrer pendant la démonstration.
 - Préparation du support final et des captures utiles.
 
+### Phase 24 — Extension cloud GKE et GitOps multi-cluster
+
+- Conserver l'overlay `local` basé sur `kind` sans changer le flux de développement actuel.
+- Introduire un nouvel overlay GKE dédié à un déploiement cloud simple, peu coûteux et orienté démonstration.
+- Séparer clairement les besoins de réseau :
+  - `kind` garde une exposition locale simple.
+  - GKE passe par `Ingress` au lieu de `NodePort`.
+- Faire évoluer le GitOps pour gérer deux cibles Kubernetes à partir du même dépôt Git :
+  - l'overlay `gitops` existant pour `kind`, optionnellement synchronisé si le cluster local et ArgoCD sont lancés ;
+  - un overlay GitOps pour GKE, synchronisé en continu par ArgoCD dans le cluster cloud.
+- Garder le pipeline CD inchangé dans son principe :
+  - push sur `main` ;
+  - build et push des images dans GHCR ;
+  - PR GitOps ;
+  - merge sur `main` ;
+  - ArgoCD détecte le changement et applique les nouveaux tags.
+- Faire évoluer la mise à jour GitOps pour modifier les tags dans tous les overlays GitOps concernés au même moment.
+- Préparer un bootstrap manuel GCP/GKE documenté :
+  - association de `gcloud` au projet `Stock-management` ;
+  - activation des APIs minimales ;
+  - création d'un cluster GKE Standard à un seul nœud ;
+  - installation d'ArgoCD ;
+  - création des applications ArgoCD pour `kind` et GKE ;
+  - réservation éventuelle d'une IP statique et préparation de l'Ingress.
+- Définir un objectif de démonstration clair :
+  - si seul GKE tourne, le flux GitOps met à jour GKE ;
+  - si `kind` + ArgoCD local tournent aussi, le même merge GitOps met à jour les deux clusters ;
+  - si `kind` n'est pas lancé, rien n'est bloqué côté cloud.
+
 ## Remarques finales
 
 - Le projet est terminé sur le fond fonctionnel et sur la chaîne DevOps principale.
-- La dernière phase correspond surtout à la mise en forme finale, à la vérification des preuves et à la préparation de la soutenance.
+- La phase 24 correspond à une extension cloud planifiée du socle existant, sans remise en cause du flux local `kind`.

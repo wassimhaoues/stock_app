@@ -18,6 +18,7 @@ Bienvenue dans la documentation technique de StockPro, une application web de ge
 | [10 — Architecture](10-architecture/) | Vue d'ensemble technique, structure du dépôt |
 | [11 — Gestion de projet](11-project-management/) | Feuille de route, phases, backlog |
 | [12 — Référence](12-reference/) | API REST, comptes de démo, matrice des rôles |
+| [13 — Travaux manuels](13-manual-work/) | Réglages cloud et plateforme qui ne sont pas entièrement codés |
 
 ## Démarrage rapide
 

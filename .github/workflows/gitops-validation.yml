@@ -65,10 +65,13 @@ jobs:
             infra \
             docker-compose.yml
 
-      - name: Validate kustomize build
+      - name: Validate kustomize build for local GitOps overlay
         run: kustomize build k8s/overlays/gitops > /tmp/gitops-rendered.yaml
 
-      - name: Validate manifests with kubeconform
+      - name: Validate kustomize build for GKE overlay
+        run: kustomize build k8s/overlays/gke > /tmp/gke-rendered.yaml
+
+      - name: Validate local GitOps manifests with kubeconform
         run: |
           kubeconform \
             -summary \
@@ -76,3 +79,12 @@ jobs:
             -ignore-missing-schemas \
             -kubernetes-version 1.31.0 \
             /tmp/gitops-rendered.yaml
+
+      - name: Validate GKE manifests with kubeconform
+        run: |
+          kubeconform \
+            -summary \
+            -strict \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.31.0 \
+            /tmp/gke-rendered.yaml

@@ -1,0 +1,8 @@
+# Patch GKE — autorise le futur domaine public de démonstration.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: stockpro
+data:
+  CORS_ALLOWED_ORIGINS: "https://stockpro.coworky.org,http://stockpro.coworky.org"

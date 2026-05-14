@@ -20,7 +20,7 @@ images:
     newTag: sha-40e95bc
   - name: stockpro-frontend
     newName: ghcr.io/wassimhaoues/stockpro-frontend
-    newTag: sha-d2a84db
+    newTag: sha-59a5538
 
 patches:
   - path: patches/backend-config-cors.yaml

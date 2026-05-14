@@ -30,7 +30,7 @@ images:
     newTag: sha-40e95bc
   - name: stockpro-frontend
     newName: ghcr.io/wassimhaoues/stockpro-frontend
-    newTag: sha-408d1f9
+    newTag: sha-59a5538
 
 patches:
   - path: patches/expose-services.yaml

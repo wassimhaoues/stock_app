@@ -4,9 +4,11 @@ import com.wassim.stock.dto.request.StockRequest;
 import com.wassim.stock.dto.response.PagedResponse;
 import com.wassim.stock.dto.response.StockResponse;
 import com.wassim.stock.entity.Entrepot;
+import com.wassim.stock.entity.MouvementStock;
 import com.wassim.stock.entity.Produit;
 import com.wassim.stock.entity.Role;
 import com.wassim.stock.entity.Stock;
+import com.wassim.stock.entity.TypeMouvement;
 import com.wassim.stock.entity.Utilisateur;
 import com.wassim.stock.exception.ConflictException;
 import com.wassim.stock.repository.EntrepotRepository;
@@ -17,6 +19,7 @@ import com.wassim.stock.repository.UtilisateurRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -165,6 +169,67 @@ class StockServiceTest {
         assertThat(response.enAlerte()).isTrue();
         assertThat(response.quantite()).isEqualTo(5);
         assertThat(response.seuilAlerte()).isEqualTo(5);
+        ArgumentCaptor<MouvementStock> movementCaptor = ArgumentCaptor.forClass(MouvementStock.class);
+        verify(mouvementStockRepository).save(movementCaptor.capture());
+        assertThat(movementCaptor.getValue().getType()).isEqualTo(TypeMouvement.ENTREE);
+        assertThat(movementCaptor.getValue().getQuantite()).isEqualTo(5);
+    }
+
+    @Test
+    void updateCreatesSortieHistoryWhenQuantityDecreases() {
+        Entrepot tunis = entrepot(1L, "Tunis", 100);
+        Produit laptop = produit(2L, "Laptop");
+        Utilisateur admin = utilisateur(3L, "admin@stockpro.local", Role.ADMIN, null);
+        Stock existingStock = stock(50L, laptop, tunis, 10, 5);
+
+        authenticateAs(admin.getEmail());
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(stockRepository.findById(existingStock.getId())).thenReturn(Optional.of(existingStock));
+        when(produitRepository.findById(laptop.getId())).thenReturn(Optional.of(laptop));
+        when(entrepotRepository.findById(tunis.getId())).thenReturn(Optional.of(tunis));
+        when(stockRepository.findByProduitIdAndEntrepotId(laptop.getId(), tunis.getId())).thenReturn(Optional.of(existingStock));
+        when(stockRepository.sumQuantiteByEntrepotIdExcludingStock(tunis.getId(), existingStock.getId())).thenReturn(0L);
+        when(stockRepository.save(any(Stock.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        StockResponse response = stockService.update(existingStock.getId(), new StockRequest(laptop.getId(), tunis.getId(), 6, 5));
+
+        assertThat(response.quantite()).isEqualTo(6);
+        ArgumentCaptor<MouvementStock> movementCaptor = ArgumentCaptor.forClass(MouvementStock.class);
+        verify(mouvementStockRepository).save(movementCaptor.capture());
+        assertThat(movementCaptor.getValue().getType()).isEqualTo(TypeMouvement.SORTIE);
+        assertThat(movementCaptor.getValue().getQuantite()).isEqualTo(4);
+    }
+
+    @Test
+    void updateCreatesExitAndEntryHistoryWhenStockIsMoved() {
+        Entrepot tunis = entrepot(1L, "Tunis", 100);
+        Entrepot sfax = entrepot(2L, "Sfax", 100);
+        Produit laptop = produit(2L, "Laptop");
+        Produit phone = produit(3L, "Phone");
+        Utilisateur admin = utilisateur(3L, "admin@stockpro.local", Role.ADMIN, null);
+        Stock existingStock = stock(50L, laptop, tunis, 10, 5);
+
+        authenticateAs(admin.getEmail());
+        when(utilisateurRepository.findByEmailIgnoreCase(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(stockRepository.findById(existingStock.getId())).thenReturn(Optional.of(existingStock));
+        when(produitRepository.findById(phone.getId())).thenReturn(Optional.of(phone));
+        when(entrepotRepository.findById(sfax.getId())).thenReturn(Optional.of(sfax));
+        when(stockRepository.findByProduitIdAndEntrepotId(phone.getId(), sfax.getId())).thenReturn(Optional.empty());
+        when(stockRepository.sumQuantiteByEntrepotIdExcludingStock(sfax.getId(), existingStock.getId())).thenReturn(0L);
+        when(stockRepository.save(any(Stock.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        StockResponse response = stockService.update(existingStock.getId(), new StockRequest(phone.getId(), sfax.getId(), 7, 3));
+
+        assertThat(response.produitId()).isEqualTo(phone.getId());
+        assertThat(response.entrepotId()).isEqualTo(sfax.getId());
+        ArgumentCaptor<MouvementStock> movementCaptor = ArgumentCaptor.forClass(MouvementStock.class);
+        verify(mouvementStockRepository, times(2)).save(movementCaptor.capture());
+        assertThat(movementCaptor.getAllValues())
+                .extracting(MouvementStock::getType, MouvementStock::getQuantite)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(TypeMouvement.SORTIE, 10),
+                        org.assertj.core.groups.Tuple.tuple(TypeMouvement.ENTREE, 7)
+                );
     }
 
     private void authenticateAs(String email) {

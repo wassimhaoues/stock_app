@@ -4,6 +4,7 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import io.micrometer.core.instrument.MeterRegistry;
+import com.wassim.stock.logging.ClientIpResolver;
 import com.wassim.stock.logging.LogSanitizer;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -50,7 +51,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String ip = request.getRemoteAddr();
+        String ip = ClientIpResolver.resolve(request);
         String uri = request.getRequestURI();
         RateLimitRule rule = resolveRule(request);
         Bucket bucket = resolveBucket(rule, ip);

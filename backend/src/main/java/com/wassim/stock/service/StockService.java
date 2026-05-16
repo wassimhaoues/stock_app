@@ -4,9 +4,11 @@ import com.wassim.stock.dto.request.StockRequest;
 import com.wassim.stock.dto.response.PagedResponse;
 import com.wassim.stock.dto.response.StockResponse;
 import com.wassim.stock.entity.Entrepot;
+import com.wassim.stock.entity.MouvementStock;
 import com.wassim.stock.entity.Produit;
 import com.wassim.stock.entity.Role;
 import com.wassim.stock.entity.Stock;
+import com.wassim.stock.entity.TypeMouvement;
 import com.wassim.stock.entity.Utilisateur;
 import com.wassim.stock.exception.BadRequestException;
 import com.wassim.stock.exception.ConflictException;
@@ -22,7 +24,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 
 @Service
 @Slf4j
@@ -53,6 +57,7 @@ public class StockService {
         return toResponse(stock);
     }
 
+    @Transactional
     public StockResponse create(StockRequest request) {
         Produit produit = findProduitById(request.produitId());
         Entrepot entrepot = resolveWritableEntrepot(request.entrepotId());
@@ -64,6 +69,7 @@ public class StockService {
         stock.setEntrepot(entrepot);
         applyQuantities(stock, request);
         Stock savedStock = stockRepository.save(stock);
+        recordMovementIfNeeded(produit, entrepot, request.quantite());
         log.info(
                 "Stock cree : produit={}, entrepot={}, quantite={}",
                 produit.getId(),
@@ -73,9 +79,13 @@ public class StockService {
         return toResponse(savedStock);
     }
 
+    @Transactional
     public StockResponse update(Long id, StockRequest request) {
         Stock stock = findEntityById(id);
         validateWritable(stock);
+        Produit previousProduit = stock.getProduit();
+        Entrepot previousEntrepot = stock.getEntrepot();
+        int previousQuantity = stock.getQuantite();
 
         Produit produit = findProduitById(request.produitId());
         Entrepot entrepot = resolveWritableEntrepot(request.entrepotId());
@@ -86,6 +96,7 @@ public class StockService {
         stock.setEntrepot(entrepot);
         applyQuantities(stock, request);
         Stock savedStock = stockRepository.save(stock);
+        recordHistoryForUpdate(previousProduit, previousEntrepot, previousQuantity, produit, entrepot, request.quantite());
         log.info("Stock mis a jour : id={}, nouvelle quantite={}", savedStock.getId(), savedStock.getQuantite());
         return toResponse(savedStock);
     }
@@ -115,6 +126,24 @@ public class StockService {
     private void applyQuantities(Stock stock, StockRequest request) {
         stock.setQuantite(request.quantite());
         stock.setSeuilAlerte(request.seuilAlerte());
+    }
+
+    private void recordHistoryForUpdate(Produit previousProduit,
+                                        Entrepot previousEntrepot,
+                                        int previousQuantity,
+                                        Produit newProduit,
+                                        Entrepot newEntrepot,
+                                        int newQuantity) {
+        boolean sameStockCoordinates = previousProduit.getId().equals(newProduit.getId())
+                && previousEntrepot.getId().equals(newEntrepot.getId());
+
+        if (sameStockCoordinates) {
+            recordMovementIfNeeded(newProduit, newEntrepot, newQuantity - previousQuantity);
+            return;
+        }
+
+        recordMovement(previousProduit, previousEntrepot, TypeMouvement.SORTIE, previousQuantity);
+        recordMovement(newProduit, newEntrepot, TypeMouvement.ENTREE, newQuantity);
     }
 
     private Stock findEntityById(Long id) {
@@ -170,6 +199,28 @@ public class StockService {
     private long getUsedCapacityExcludingStock(Long entrepotId, Long stockId) {
         Long usedCapacity = stockRepository.sumQuantiteByEntrepotIdExcludingStock(entrepotId, stockId);
         return usedCapacity == null ? 0 : usedCapacity;
+    }
+
+    private void recordMovementIfNeeded(Produit produit, Entrepot entrepot, int quantityDelta) {
+        if (quantityDelta > 0) {
+            recordMovement(produit, entrepot, TypeMouvement.ENTREE, quantityDelta);
+        } else if (quantityDelta < 0) {
+            recordMovement(produit, entrepot, TypeMouvement.SORTIE, Math.abs(quantityDelta));
+        }
+    }
+
+    private void recordMovement(Produit produit, Entrepot entrepot, TypeMouvement type, int quantite) {
+        if (quantite <= 0) {
+            return;
+        }
+
+        MouvementStock mouvementStock = new MouvementStock();
+        mouvementStock.setProduit(produit);
+        mouvementStock.setEntrepot(entrepot);
+        mouvementStock.setType(type);
+        mouvementStock.setQuantite(quantite);
+        mouvementStock.setDate(LocalDateTime.now());
+        mouvementStockRepository.save(mouvementStock);
     }
 
     private void validateReadable(Stock stock) {

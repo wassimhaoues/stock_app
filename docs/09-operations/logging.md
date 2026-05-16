@@ -31,8 +31,8 @@
 
 ## Formats par environnement
 
-- Profil `dev` : logs console lisibles avec timestamp, niveau, `correlationId`, `userEmail`, logger court et message.
-- Profils `docker` et `k8s` : logs JSON structurés sur la sortie standard pour faciliter la collecte et l'indexation.
+- Profil `dev` : logs console lisibles avec timestamp, niveau, `correlationId`, `userEmail`, `clientIp`, logger court et message.
+- Profils `docker` et `k8s` : logs JSON structurés sur la sortie standard pour faciliter la collecte et l'indexation, avec `clientIp` et `clientIpHash`.
 - Niveaux par défaut : racine en `INFO`, `org.springframework.security` et `org.hibernate.SQL` en `WARN`, avec `com.wassim.stock` en `DEBUG` seulement en `dev`.
 
 ## Lire les logs
@@ -46,6 +46,8 @@
 - Chaque requête HTTP reçoit un `correlationId` court, ajouté dans le MDC et renvoyé dans l'en-tête `X-Correlation-Id`.
 - Le même identifiant apparaît dans toutes les lignes de log générées pendant la requête.
 - Pour tracer un incident signalé depuis le frontend, relever la valeur `X-Correlation-Id` dans la réponse HTTP puis filtrer les logs avec cette valeur.
+- L'IP cliente résolue est ajoutée dans le MDC sous `clientIp`. En environnement derrière proxy ou Ingress, la résolution privilégie `X-Forwarded-For`, puis `X-Real-IP`, puis `Forwarded`, avant `remoteAddr`.
+- `clientIpHash` fournit une version hashée utile pour les métriques ou corrélations sans exposer systématiquement l'adresse complète.
 
 ## Règles de sécurité
 

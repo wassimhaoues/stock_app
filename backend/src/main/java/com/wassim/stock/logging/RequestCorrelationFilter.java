@@ -19,6 +19,8 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
 
     private static final String CORRELATION_ID_KEY = "correlationId";
     private static final String USER_EMAIL_KEY = "userEmail";
+    private static final String CLIENT_IP_KEY = "clientIp";
+    private static final String CLIENT_IP_HASH_KEY = "clientIpHash";
     private static final String CORRELATION_HEADER = "X-Correlation-Id";
     private static final String ANONYMOUS_USER = "anonymous";
 
@@ -29,8 +31,11 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         String correlationId = UUID.randomUUID().toString().substring(0, 8);
 
         try {
+            String clientIp = ClientIpResolver.resolve(request);
             MDC.put(CORRELATION_ID_KEY, correlationId);
             MDC.put(USER_EMAIL_KEY, resolveUserEmail());
+            MDC.put(CLIENT_IP_KEY, clientIp);
+            MDC.put(CLIENT_IP_HASH_KEY, LogSanitizer.maskedHash(clientIp));
             response.setHeader(CORRELATION_HEADER, correlationId);
             filterChain.doFilter(request, response);
         } finally {

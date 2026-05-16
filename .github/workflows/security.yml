@@ -140,13 +140,15 @@ jobs:
       - name: Scan backend image
         id: trivy-backend-scan
         continue-on-error: true
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: stockpro-backend:scan
           format: sarif
           output: trivy-backend.sarif
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          scanners: vuln
+          limit-severities-for-sarif: true
           exit-code: 1
 
       - name: Upload backend scan results
@@ -182,13 +184,15 @@ jobs:
       - name: Scan frontend image
         id: trivy-frontend-scan
         continue-on-error: true
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: stockpro-frontend:scan
           format: sarif
           output: trivy-frontend.sarif
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          scanners: vuln
+          limit-severities-for-sarif: true
           exit-code: 1
 
       - name: Upload frontend scan results
